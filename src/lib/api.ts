@@ -1,7 +1,8 @@
-// BACKEND SEAM: every function in this file currently reads from
-// localStorage / Zustand stores. When the real backend lands, swap
-// each function body to a fetch() call. Signatures must not change.
+// Data-access seam. Reads are synchronous against the hydrated Zustand caches
+// (the stores are populated from the backend on bootstrap). Mutations that
+// change server state (bill creation) go through the HTTP client.
 
+import { ApiClientError, http } from '@/lib/apiClient'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { useBillingStore } from '@/store/billingStore'
 import type { CreateBillInput, SalesBill, Section } from '@/types'
@@ -20,8 +21,6 @@ export class InsufficientStockError extends Error {
   }
 }
 
-const PHONE_RE = /^[+]?[\d\s-]{7,15}$/
-
 export const api = {
   inventory: {
     listBySection(section: Section) {
@@ -39,24 +38,39 @@ export const api = {
   },
 
   bills: {
-    create(input: CreateBillInput): SalesBill {
-      if (input.customerPhone && !PHONE_RE.test(input.customerPhone)) {
-        throw new Error('Invalid customer phone number')
-      }
-      const inventory = useInventoryStore.getState()
-      // Check all stock before touching anything (all-or-nothing)
-      for (const item of input.items) {
-        const product = inventory.products.find((p) => p.id === item.productId)
-        if (!product) throw new Error(`Product ${item.productId} not found`)
-        if (product.stock < item.quantity) {
-          throw new InsufficientStockError(item.productName, product.stock, item.quantity)
+    /** Create a bill on the backend (atomic stock decrement) and update caches. */
+    async create(input: CreateBillInput): Promise<SalesBill> {
+      try {
+        const bill = await http.post<SalesBill>('/bills', {
+          customerName: input.customerName,
+          customerAddress: input.customerAddress,
+          customerPhone: input.customerPhone ?? '',
+          bookingDate: input.bookingDate,
+          deliveryDate: input.deliveryDate,
+          transport: input.transport,
+          transportTime: input.transportTime,
+          section: input.section,
+          items: input.items,
+          discount: input.discount ?? 0,
+          paidAmount: input.paidAmount ?? 0,
+        })
+        useBillingStore.getState().addBillToCache(bill)
+        // Stock changed — refresh the inventory cache.
+        await useInventoryStore.getState().refreshProducts()
+        return bill
+      } catch (err) {
+        if (err instanceof ApiClientError && err.status === 409) {
+          const d = err.details as
+            | { productName?: string; available?: number; requested?: number }
+            | undefined
+          throw new InsufficientStockError(
+            d?.productName ?? 'item',
+            d?.available ?? 0,
+            d?.requested ?? 0,
+          )
         }
+        throw err
       }
-      // All checks passed — decrement atomically
-      for (const item of input.items) {
-        inventory.decrementStock(item.productId, item.quantity)
-      }
-      return useBillingStore.getState().createBill(input)
     },
 
     list({
@@ -65,12 +79,18 @@ export const api = {
       section,
       sections,
       userId,
-    }: { from?: string; to?: string; section?: Section; sections?: Section[]; userId?: string } = {}): SalesBill[] {
+    }: {
+      from?: string
+      to?: string
+      section?: Section
+      sections?: Section[]
+      userId?: string
+    } = {}): SalesBill[] {
       const store = useBillingStore.getState()
       let bills = from && to ? store.getBillsByDateRange(from, to) : store.bills
       if (sections?.length) bills = bills.filter((b) => sections.includes(b.section))
-      else if (section)     bills = bills.filter((b) => b.section === section)
-      if (userId)           bills = bills.filter((b) => b.createdBy === userId)
+      else if (section) bills = bills.filter((b) => b.section === section)
+      if (userId) bills = bills.filter((b) => b.createdBy === userId)
       return bills
     },
 

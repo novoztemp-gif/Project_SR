@@ -1,12 +1,18 @@
-import { ArrowRight, Hammer, Power, ShieldCheck } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowRight, Hammer, Loader2, Lock, Power, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { COMPANY } from '@/lib/brand'
 import { SECTION_COLORS } from '@/lib/constants'
-import { getAdminUser } from '@/lib/userSections'
+import { http } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
-import { type Counter, useCounterStore } from '@/store/counterStore'
+import type { AuthUser } from '@/types'
 
 const AVATAR_CLASSES: Record<string, string> = {
   deep: 'from-brand-dark to-brand-deepest',
@@ -17,63 +23,58 @@ const AVATAR_CLASSES: Record<string, string> = {
   charcoal: 'from-brand-dark to-brand-deepest',
 }
 
-const ACCENT_CLASSES = [
-  'border-brand-mid/40 bg-brand-mid/10 text-brand-mid dark:text-brand-light',
-  'border-brand-light/40 bg-brand-light/10 text-brand-dark dark:text-brand-light',
-  'border-brand-dark/40 bg-brand-dark/10 text-brand-dark dark:text-brand-light',
-  'border-brand-mid/40 bg-brand-mid/10 text-brand-mid dark:text-brand-light',
-  'border-brand-light/40 bg-brand-light/10 text-brand-dark dark:text-brand-light',
-]
-
-function roleTone(process: Counter['process']) {
-  return process.some((item) => item === 'Glass' || item === 'Plywood')
-    ? 'text-brand-mid dark:text-brand-light'
-    : 'text-brand-dark dark:text-brand-muted'
-}
-
-function CounterCard({
-  counter,
+function UserCard({
+  user,
   index,
   onSelect,
 }: {
-  counter: Counter
+  user: AuthUser
   index: number
-  onSelect: (userId: string) => void
+  onSelect: (user: AuthUser) => void
 }) {
+  const isAdmin = user.role === 'admin'
   return (
     <button
       type="button"
-      onClick={() => onSelect(counter.id)}
+      onClick={() => onSelect(user)}
       className="group h-full text-left transition duration-200 hover:-translate-y-1"
       style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition duration-200 group-hover:border-brand-mid/50 group-hover:glow-brand">
         <div className="flex items-start justify-between gap-4">
-          <div className={cn('flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br font-mono text-sm font-bold text-white ring-2 ring-transparent transition group-hover:ring-brand-mid/50', AVATAR_CLASSES[counter.avatarColor] ?? AVATAR_CLASSES.deep)}>
-            {counter.initials}
+          <div className={cn('flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br font-mono text-sm font-bold text-white ring-2 ring-transparent transition group-hover:ring-brand-mid/50', AVATAR_CLASSES[user.avatarColor ?? 'deep'] ?? AVATAR_CLASSES.deep)}>
+            {user.initials ?? (isAdmin ? 'SV' : '?')}
           </div>
-          <span className={cn('rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest glow-brand', ACCENT_CLASSES[index % ACCENT_CLASSES.length])}>
-            {counter.label}
+          <span className="rounded-full border border-brand-light/40 bg-brand-light/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-brand-dark dark:text-brand-light glow-brand">
+            {isAdmin ? 'Owner' : user.label}
           </span>
         </div>
 
         <div className="mt-6 flex-1">
-          <h2 className="text-xl font-bold text-foreground">{counter.name}</h2>
-          <p className={cn('mt-1 text-sm font-medium', roleTone(counter.process))}>Billing counter workspace</p>
+          <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
+          <p className="mt-1 text-sm font-medium text-brand-mid dark:text-brand-light">
+            {isAdmin ? 'Full administration workspace' : 'Billing counter workspace'}
+          </p>
           <div className="mt-4 flex flex-wrap gap-1.5">
-            {counter.process.map((process) => (
-              <span
-                key={process}
-                className="rounded-full border px-2.5 py-1 text-xs font-medium"
-                style={{
-                  backgroundColor: `${SECTION_COLORS[process]}20`,
-                  borderColor: `${SECTION_COLORS[process]}40`,
-                  color: SECTION_COLORS[process],
-                }}
-              >
-                {process}
+            {isAdmin ? (
+              <span className="rounded-full border border-brand-light/30 bg-brand-light/10 px-2.5 py-1 text-xs font-medium text-brand-dark dark:text-brand-light">
+                All sections
               </span>
-            ))}
+            ) : (
+              user.process.map((process) => (
+                <span
+                  key={process}
+                  className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                  style={{
+                    backgroundColor: `${SECTION_COLORS[process]}20`,
+                    borderColor: `${SECTION_COLORS[process]}40`,
+                    color: SECTION_COLORS[process],
+                  }}
+                >
+                  {process}
+                </span>
+              ))
+            )}
           </div>
         </div>
 
@@ -90,14 +91,52 @@ function CounterCard({
 
 export function LoginPage() {
   const login = useAuthStore((state) => state.login)
-  const counters = useCounterStore((state) => state.counters)
   const navigate = useNavigate()
-  const admin = getAdminUser()
-  const activeCounters = counters.filter((counter) => counter.active)
 
-  function handleSelect(userId: string) {
-    login(userId)
-    navigate('/dashboard')
+  const [users, setUsers] = useState<AuthUser[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [selected, setSelected] = useState<AuthUser | null>(null)
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    http
+      .get<AuthUser[]>('/auth/users')
+      .then((list) => {
+        if (active) setUsers(list)
+      })
+      .catch(() => {
+        if (active) toast.error('Could not reach the server. Is the backend running?')
+      })
+      .finally(() => {
+        if (active) setLoadingUsers(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const counters = users.filter((u) => u.role.startsWith('billing_'))
+  const admin = users.find((u) => u.role === 'admin')
+
+  async function handleLogin(event: React.FormEvent) {
+    event.preventDefault()
+    if (!selected) return
+    setSubmitting(true)
+    try {
+      await login(selected.id, password)
+      navigate('/dashboard')
+    } catch {
+      toast.error('Incorrect password')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function closeDialog() {
+    setSelected(null)
+    setPassword('')
   }
 
   return (
@@ -133,40 +172,48 @@ export function LoginPage() {
           </p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {activeCounters.map((counter, index) => (
-            <CounterCard key={counter.id} counter={counter} index={index} onSelect={handleSelect} />
-          ))}
-
-          <button type="button" onClick={() => handleSelect(admin.id)} className="group h-full text-left transition duration-200 hover:-translate-y-1">
-            <div className="flex h-full flex-col rounded-2xl border border-brand-light/40 bg-card p-6 transition duration-200 group-hover:glow-highlight">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-dark to-brand-deepest font-mono text-sm font-bold text-white ring-2 ring-brand-light/30">
-                  SV
-                </div>
-                <span className="rounded-full border border-brand-light/40 bg-brand-light/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-brand-dark dark:text-brand-light">
-                  Owner
-                </span>
-              </div>
-
-              <div className="mt-6 flex-1">
-                <h2 className="text-xl font-bold text-foreground">{admin.name}</h2>
-                <p className="mt-1 text-sm font-medium text-brand-dark dark:text-brand-light">Full administration workspace</p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-brand-light/30 bg-brand-light/10 px-2.5 py-1 text-xs font-medium text-brand-dark dark:text-brand-light">All sections</span>
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                <span className="text-sm text-muted-foreground">Tap to sign in</span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted text-brand-dark transition group-hover:border-brand-light group-hover:bg-brand-light group-hover:text-brand-deepest group-hover:glow-highlight">
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </div>
-            </div>
-          </button>
-        </div>
+        {loadingUsers ? (
+          <div className="mt-16 flex items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading workspaces…
+          </div>
+        ) : (
+          <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {counters.map((counter, index) => (
+              <UserCard key={counter.id} user={counter} index={index} onSelect={setSelected} />
+            ))}
+            {admin && (
+              <UserCard user={admin} index={counters.length} onSelect={setSelected} />
+            )}
+          </div>
+        )}
       </main>
+
+      <Dialog open={selected !== null} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-4 w-4" /> {selected?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={submitting || !password}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <footer className="relative z-10 px-5 pb-8 text-center text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-2">

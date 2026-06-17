@@ -84,7 +84,7 @@ export function CounterManagementPage() {
     })
   }
 
-  function saveCounter() {
+  async function saveCounter() {
     if (!form.label.trim() || !form.name.trim()) {
       toast.error('Counter label and full name are required.')
       return
@@ -101,11 +101,14 @@ export function CounterManagementPage() {
       active: form.active,
     }
 
-    if (editingCounter) updateCounter(editingCounter.id, data)
-    else addCounter(data)
-
-    toast.success('Counter saved.')
-    setFormOpen(false)
+    try {
+      if (editingCounter) await updateCounter(editingCounter.id, data)
+      else await addCounter(data)
+      toast.success('Counter saved.')
+      setFormOpen(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save counter')
+    }
   }
 
   function handleDrop(targetId: string) {

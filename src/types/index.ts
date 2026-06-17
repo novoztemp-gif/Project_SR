@@ -33,6 +33,17 @@ export interface User {
   createdAt: string // ISO-8601
 }
 
+/** Public user shape returned by the backend (login / me / counters). */
+export interface AuthUser extends User {
+  label?: string | null
+  initials?: string | null
+  avatarColor?: string | null
+  active: boolean
+  process: SectionType[]
+  /** Sections this user may access (admins get all). */
+  sections: Section[]
+}
+
 // ─── Inventory ────────────────────────────────────────────────────────────────
 
 export interface Godown {

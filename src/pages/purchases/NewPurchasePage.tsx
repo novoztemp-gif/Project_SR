@@ -239,22 +239,26 @@ export function NewPurchasePage() {
     setScanOpen(false)
   }
 
-  function onSubmit(values: FormValues) {
-    const id = addPurchase({
-      vendorName: values.vendorName,
-      date: new Date(values.date).toISOString(),
-      section: values.section,
-      godownId: values.godownId,
-      imageUrl: values.imageUrl,
-      items: values.items.map((item) => ({
-        ...item,
-        subtotal: item.quantity * item.unitPrice,
-      })),
-      createdBy: currentUser.id,
-    })
+  async function onSubmit(values: FormValues) {
+    try {
+      const id = await addPurchase({
+        vendorName: values.vendorName,
+        date: new Date(values.date).toISOString(),
+        section: values.section,
+        godownId: values.godownId,
+        imageUrl: values.imageUrl,
+        items: values.items.map((item) => ({
+          ...item,
+          subtotal: item.quantity * item.unitPrice,
+        })),
+        createdBy: currentUser.id,
+      })
 
-    toast.success('Purchase saved. Print to apply stock.')
-    navigate(`/purchases/${id}`)
+      toast.success('Purchase saved. Print to apply stock.')
+      navigate(`/purchases/${id}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save purchase')
+    }
   }
 
   return (

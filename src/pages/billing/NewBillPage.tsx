@@ -100,12 +100,12 @@ export function NewBillPage() {
   const finalAmount   = total - discount
   const balanceAmount = finalAmount - paidAmount
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     const firstProduct = products.find((p) => p.id === values.items[0]?.productId)
     const section = firstProduct?.section ?? getUserSections(currentUser.id)[0]
 
     try {
-      const bill = api.bills.create({
+      const bill = await api.bills.create({
         customerName:    values.customerName    || undefined,
         customerAddress: values.customerAddress || undefined,
         customerPhone:   values.customerPhone   || '',

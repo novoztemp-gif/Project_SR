@@ -20,7 +20,7 @@ import {
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { SidebarInner } from '@/components/layout/Sidebar'
 import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
-import { getActiveUsers, getUserSections } from '@/lib/userSections'
+import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { cn } from '@/lib/utils'
@@ -40,7 +40,7 @@ function godownName(godownId: string) {
 }
 
 export function Topbar({ title, className }: TopbarProps) {
-  const { currentUser, logout, login } = useAuthStore()
+  const { currentUser, logout } = useAuthStore()
   const products = useInventoryStore((state) => state.products)
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = React.useState(false)
@@ -204,23 +204,6 @@ export function Topbar({ title, className }: TopbarProps) {
             <LogOut size={14} className="mr-2" />
             Log out
           </DropdownMenuItem>
-
-          {import.meta.env.DEV && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                Dev · switch user
-              </DropdownMenuLabel>
-              {getActiveUsers().map((u) => (
-                <DropdownMenuItem
-                  key={u.id}
-                  onClick={() => { login(u.id); window.location.reload() }}
-                >
-                  {u.name}
-                </DropdownMenuItem>
-              ))}
-            </>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

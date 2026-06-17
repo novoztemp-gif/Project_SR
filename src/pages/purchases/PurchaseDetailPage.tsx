@@ -31,11 +31,15 @@ export function PurchaseDetailPage() {
 
   const isApplied = bill.printedAt !== null
 
-  function handlePrintAndApply() {
+  async function handlePrintAndApply() {
     if (!bill) return
-    applyAndPrint(bill.id)
-    toast.success('Stock applied. Opening print dialog.')
-    window.print()
+    try {
+      await applyAndPrint(bill.id)
+      toast.success('Stock applied. Opening print dialog.')
+      window.print()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to apply stock')
+    }
   }
 
   function handleReprint() {

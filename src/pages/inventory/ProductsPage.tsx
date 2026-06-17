@@ -121,21 +121,24 @@ export function ProductsPage() {
     setFormOpen(true)
   }
 
-  function handleSubmit(values: ProductFormValues) {
+  async function handleSubmit(values: ProductFormValues) {
     if (!values.name || !values.sku || !values.unit) {
       toast.error('Name, SKU, and unit are required')
       return
     }
 
-    if (dialogMode === 'edit' && editingProduct) {
-      updateProductDefinition(editingProduct.id, values)
-      toast.success('Product updated')
-    } else {
-      addProductDefinition(values)
-      toast.success('Product added at stock 0')
+    try {
+      if (dialogMode === 'edit' && editingProduct) {
+        await updateProductDefinition(editingProduct.id, values)
+        toast.success('Product updated')
+      } else {
+        await addProductDefinition(values)
+        toast.success('Product added at stock 0')
+      }
+      setFormOpen(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save product')
     }
-
-    setFormOpen(false)
   }
 
   function requestDelete(product: Product) {
@@ -153,11 +156,15 @@ export function ProductsPage() {
     setDeleteTarget(product)
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleteTarget) return
-    deleteProduct(deleteTarget.id)
-    toast.success('Product deleted')
-    setDeleteTarget(null)
+    try {
+      await deleteProduct(deleteTarget.id)
+      toast.success('Product deleted')
+      setDeleteTarget(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete product')
+    }
   }
 
   function exportProducts() {

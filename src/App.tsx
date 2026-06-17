@@ -1,6 +1,10 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useParams } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { Toaster } from 'sonner'
+
+import { useAuthStore } from '@/store/authStore'
 
 import { AppShell } from '@/components/layout/AppShell'
 import { CounterManagementPage } from '@/pages/admin/CounterManagementPage'
@@ -36,12 +40,32 @@ function LegacyPurchaseDetailRedirect() {
   return <Navigate to={`/purchases/${id ?? ''}`} replace />
 }
 
+/** Validates a persisted session before the routes mount. */
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const status = useAuthStore((s) => s.status)
+  const initialize = useAuthStore((s) => s.initialize)
+
+  useEffect(() => {
+    void initialize()
+  }, [initialize])
+
+  if (status !== 'ready') {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background text-muted-foreground">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Starting up…
+      </div>
+    )
+  }
+  return <>{children}</>
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
     <>
       <BrowserRouter>
+        <AuthGate>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -82,6 +106,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </AuthGate>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
     </>

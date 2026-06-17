@@ -66,12 +66,12 @@ export function GodownsPage() {
     setTransferQty(Math.min(1, product.stock))
   }
 
-  function confirmTransfer() {
+  async function confirmTransfer() {
     if (!transferProduct) return
     const destination = GODOWNS_SEED.find((godown) => godown.id === toGodownId)
 
     try {
-      transferStock(transferProduct.id, transferProduct.godownId, toGodownId, transferQty)
+      await transferStock(transferProduct.id, transferProduct.godownId, toGodownId, transferQty)
       toast.success(`Transferred ${transferQty} ${transferProduct.unit} of ${transferProduct.name} to ${destination?.name ?? toGodownId}`)
       setTransferProduct(null)
     } catch (error) {

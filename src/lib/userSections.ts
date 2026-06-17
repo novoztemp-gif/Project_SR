@@ -1,61 +1,32 @@
-import { MOCK_USERS, SECTIONS } from '@/lib/constants'
+import { SECTIONS } from '@/lib/constants'
+import { useAuthStore } from '@/store/authStore'
 import { useCounterStore } from '@/store/counterStore'
-import type { Role, Section, SectionType, User } from '@/types'
-
-const SECTION_BY_LABEL: Record<SectionType, Section> = {
-  Glass: 'glass',
-  Plywood: 'plywood',
-  Plumbing: 'plumbing',
-  Painting: 'painting',
-  Electrical: 'electrical',
-}
-
-export function processToSections(process: SectionType[]): Section[] {
-  return process.map((label) => SECTION_BY_LABEL[label])
-}
+import type { Role, Section } from '@/types'
 
 export function getAllSections(): Section[] {
   return SECTIONS.map((section) => section.key)
 }
 
-export function getAdminUser() {
-  return MOCK_USERS.find((user) => user.role === 'admin')!
-}
-
+/**
+ * Sections the given user may access. In practice this is only ever called for
+ * the currently-logged-in user, whose accessible sections are attached to the
+ * auth record by the backend.
+ */
 export function getUserSections(userId: string): Section[] {
-  const admin = getAdminUser()
-  if (userId === admin.id || userId === 'admin') return getAllSections()
-
-  const counter = useCounterStore.getState().counters.find((item) => item.id === userId)
-  return counter ? processToSections(counter.process) : []
-}
-
-export function getUserSectionsForRole(role: Role): Section[] {
-  if (role === 'admin') return getAllSections()
-  const counter = useCounterStore.getState().counters.find((item) => item.role === role)
-  return counter ? processToSections(counter.process) : []
-}
-
-export function getActiveUsers(): User[] {
-  const counters = useCounterStore.getState().counters
-    .filter((counter) => counter.active)
-    .map((counter) => ({
-      id: counter.id,
-      name: counter.name,
-      email: `${counter.id}@hardwareco.local`,
-      role: counter.role,
-      createdAt: '2024-01-10T09:00:00.000Z',
-    }))
-
-  return [...counters, getAdminUser()]
-}
-
-export function getUserName(userId: string) {
-  const counter = useCounterStore.getState().counters.find((item) => item.id === userId)
-  if (counter) return counter.name
-  return MOCK_USERS.find((user) => user.id === userId)?.name ?? userId
+  const current = useAuthStore.getState().currentUser
+  if (current && current.id === userId) return current.sections
+  // Fallback for admin inspecting a known counter from the hydrated cache.
+  return []
 }
 
 export function isBillingRole(role: Role) {
   return role.startsWith('billing_')
+}
+
+/** Best-effort display name for a bill/purchase creator id. */
+export function getUserName(userId: string): string {
+  const current = useAuthStore.getState().currentUser
+  if (current && current.id === userId) return current.name
+  const counter = useCounterStore.getState().counters.find((c) => c.id === userId)
+  return counter?.name ?? userId
 }

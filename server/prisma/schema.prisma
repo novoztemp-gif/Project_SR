@@ -1,0 +1,172 @@
+// SR Plywood & Glasses — billing backend schema.
+// Mirrors the frontend types in ../../src/types/index.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────────
+
+/// Lowercase section keys, matching the frontend `Section` union.
+enum Section {
+  glass
+  plywood
+  plumbing
+  painting
+  electrical
+}
+
+enum BillStatus {
+  paid
+  pending
+  partial
+}
+
+// ─── Users / Counters ───────────────────────────────────────────────────────────
+// A "counter" (billing_*) and the "owner" (admin) are both rows here.
+// `processes` holds the sections a billing user may work in; admins implicitly
+// get all sections. `createdBy` references on bills/purchases are loose strings
+// (legacy ids like "u-1" may appear), so they are NOT foreign keys.
+
+model User {
+  id           String    @id
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String // 'admin' | 'billing_*'
+  label        String? // e.g. "COUNTER 1" (billing users only)
+  initials     String?
+  avatarColor  String?
+  active       Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  processes    Section[]
+  createdAt    DateTime  @default(now())
+
+  @@index([role])
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────────────
+
+model Godown {
+  id       String    @id
+  name     String
+  location String
+  products Product[]
+}
+
+model Product {
+  id                String   @id @default(uuid())
+  name              String
+  spec              String?
+  sku               String
+  unit              String
+  hsnCode           String   @default("")
+  taxRate           Float    @default(18)
+  section           Section
+  godownId          String
+  stock             Float    @default(0)
+  costPrice         Float    @default(0)
+  salePrice         Float
+  lowStockThreshold Float    @default(5)
+  updatedAt         DateTime @updatedAt
+  godown            Godown   @relation(fields: [godownId], references: [id])
+
+  @@index([section])
+  @@index([godownId])
+}
+
+model TransferLog {
+  id            String   @id @default(uuid())
+  productId     String
+  productName   String
+  fromGodownId  String
+  toGodownId    String
+  qty           Float
+  transferredAt DateTime @default(now())
+  transferredBy String
+}
+
+// ─── Sales / Billing ────────────────────────────────────────────────────────────
+
+model SalesBill {
+  id              String      @id @default(uuid())
+  billNumber      Int         @unique
+  date            DateTime    @default(now())
+  customerName    String?
+  customerAddress String?
+  customerPhone   String
+  bookingDate     String?
+  deliveryDate    String?
+  transport       String?
+  transportTime   String?
+  section         Section
+  subtotal        Float
+  total           Float
+  discount        Float       @default(0)
+  paidAmount      Float       @default(0)
+  status          BillStatus
+  createdBy       String
+  createdAt       DateTime    @default(now())
+  items           SalesItem[]
+
+  @@index([section])
+  @@index([createdBy])
+  @@index([date])
+}
+
+model SalesItem {
+  id          String    @id @default(uuid())
+  billId      String
+  productId   String
+  productName String
+  quantity    Float
+  unit        String
+  glassSize   String?
+  model       String?
+  sqFt        Float?
+  unitPrice   Float
+  subtotal    Float
+  bill        SalesBill @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([billId])
+}
+
+// ─── Purchases ──────────────────────────────────────────────────────────────────
+
+model PurchaseBill {
+  id            String         @id @default(uuid())
+  voucherNumber String         @unique
+  vendorName    String
+  date          DateTime
+  section       Section
+  godownId      String
+  imageUrl      String?
+  subtotal      Float
+  total         Float
+  createdBy     String
+  createdAt     DateTime       @default(now())
+  printedAt     DateTime?
+  items         PurchaseItem[]
+
+  @@index([section])
+}
+
+model PurchaseItem {
+  id            String       @id @default(uuid())
+  purchaseId    String
+  productId     String // may be "" for an inline new product
+  productName   String
+  sizeDimension String?
+  quantity      Float
+  unit          String
+  unitPrice     Float
+  subtotal      Float
+  purchase      PurchaseBill @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseId])
+}
