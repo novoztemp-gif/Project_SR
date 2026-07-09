@@ -1,3 +1,5 @@
+import { http } from '@/lib/apiClient'
+
 export interface ParsedBillItem {
   name: string
   qty: number
@@ -12,20 +14,11 @@ export interface ParsedBill {
   items: ParsedBillItem[]
 }
 
-export async function extractBillFromImage(imageDataUrl: string): Promise<ParsedBill> {
-  void imageDataUrl
-
-  // TODO: replace with backend vision endpoint — never call Anthropic with a key in the browser.
-  await new Promise((resolve) => window.setTimeout(resolve, 1000))
-
-  return {
-    customerName: 'Amit Sharma',
-    customerPhone: '+91 98765 43210',
-    customerAddress: '22 MG Road, Bengaluru',
-    items: [
-      { name: 'Saint Gobain Clear Glass 8mm', qty: 2, sqFt: 48, rate: 145 },
-      { name: 'Plywood 18mm Commercial', qty: 3, sqFt: 0, rate: 1850 },
-      { name: 'Mirror Polish Edge Work', qty: 1, sqFt: 48, rate: 35 },
-    ],
-  }
+/**
+ * Send a base64 data URL of a bill (image or PDF) to the backend, which runs it
+ * through the vision LLM and returns structured details. The API key stays on the
+ * server — the browser only ever ships the data URL.
+ */
+export async function extractBillFromImage(dataUrl: string): Promise<ParsedBill> {
+  return http.post<ParsedBill>('/bills/extract', { dataUrl })
 }

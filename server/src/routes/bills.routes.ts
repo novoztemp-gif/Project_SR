@@ -4,6 +4,7 @@ import { Section } from '@prisma/client'
 
 import { prisma } from '../prisma.js'
 import { computeItemSubtotal, getBillStatus } from '../lib/billing.js'
+import { extractBillFromDataUrl } from '../lib/billExtract.js'
 import { allowedSectionsForUser } from '../lib/sections.js'
 import { assertSectionAccess, authenticate } from '../middleware/auth.js'
 import { ApiError, asyncHandler } from '../middleware/error.js'
@@ -40,6 +41,25 @@ const createBillSchema = z.object({
   discount: z.number().nonnegative().optional(),
   paidAmount: z.number().nonnegative().optional(),
 })
+
+const extractSchema = z.object({
+  // A base64 data URL of the bill — image/* or application/pdf.
+  dataUrl: z.string().regex(/^data:[^;]+;base64,/, 'Expected a base64 data URL'),
+})
+
+/**
+ * POST /api/bills/extract — read a scanned/uploaded bill (image or PDF) with an
+ * LLM and return structured customer + line-item details. Does NOT create a bill;
+ * the client reviews the result and submits POST /api/bills separately.
+ */
+billsRouter.post(
+  '/extract',
+  asyncHandler(async (req, res) => {
+    const { dataUrl } = extractSchema.parse(req.body)
+    const parsed = await extractBillFromDataUrl(dataUrl)
+    res.json(parsed)
+  }),
+)
 
 /**
  * POST /api/bills — create a sales bill.

@@ -35,6 +35,7 @@ export function BillScanDialog({
 
   const [mode, setMode] = React.useState<'camera' | 'upload'>('camera')
   const [imageDataUrl, setImageDataUrl] = React.useState<string>()
+  const isPdf = !!imageDataUrl && imageDataUrl.startsWith('data:application/pdf')
   const [cameraMessage, setCameraMessage] = React.useState<string>()
   const [isExtracting, setIsExtracting] = React.useState(false)
 
@@ -156,7 +157,7 @@ export function BillScanDialog({
             Scan the bill
           </DialogTitle>
           <DialogDescription>
-            AI reads the bill and fills the form — connects when the backend is configured.
+            AI reads the bill (image or PDF) and fills the form — needs the backend key configured.
           </DialogDescription>
         </DialogHeader>
 
@@ -196,7 +197,7 @@ export function BillScanDialog({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 className="hidden"
                 onChange={handleUpload}
               />
@@ -207,17 +208,25 @@ export function BillScanDialog({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <ImageUp className="mr-2 h-4 w-4" />
-                Choose bill image
+                Choose bill image or PDF
               </Button>
             </TabsContent>
           </Tabs>
         ) : (
           <div className="space-y-4">
-            <img
-              src={imageDataUrl}
-              alt="Bill preview"
-              className="max-h-[50vh] w-full rounded-md border object-contain"
-            />
+            {isPdf ? (
+              <embed
+                src={imageDataUrl}
+                type="application/pdf"
+                className="h-[50vh] w-full rounded-md border"
+              />
+            ) : (
+              <img
+                src={imageDataUrl}
+                alt="Bill preview"
+                className="max-h-[50vh] w-full rounded-md border object-contain"
+              />
+            )}
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => setImageDataUrl(undefined)}>
                 Retake

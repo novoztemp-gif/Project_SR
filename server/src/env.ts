@@ -9,6 +9,12 @@ const envSchema = z.object({
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
   SEED_ADMIN_PASSWORD: z.string().default('admin123'),
   SEED_COUNTER_PASSWORD: z.string().default('counter123'),
+  // ─── Bill scan / LLM extraction (OpenAI-compatible) ───
+  // Optional so the server still boots without a key; the /extract route
+  // returns 503 until OPENAI_API_KEY is set.
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-5.5'),
+  OPENAI_BASE_URL: z.string().default('https://api.openai.com/v1'),
 })
 
 const parsed = envSchema.safeParse(process.env)
