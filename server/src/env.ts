@@ -13,7 +13,7 @@ const envSchema = z.object({
   // Optional so the server still boots without a key; the /extract route
   // returns 503 until OPENAI_API_KEY is set.
   OPENAI_API_KEY: z.string().optional(),
-  OPENAI_MODEL: z.string().default('gpt-5.5'),
+  OPENAI_MODEL: z.string().default('gpt-5.4'),
   OPENAI_BASE_URL: z.string().default('https://api.openai.com/v1'),
 })
 
