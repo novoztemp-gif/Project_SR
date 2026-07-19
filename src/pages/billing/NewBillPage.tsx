@@ -63,6 +63,16 @@ function isSqFtUnit(unit?: string) {
   return unit?.trim().toLowerCase() === 'sq.ft'
 }
 
+/** Split a product name into lowercase alphanumeric tokens for order-insensitive matching. */
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
 export function NewBillPage() {
   const navigate    = useNavigate()
   const currentUser = useAuthStore((s) => s.currentUser)!
@@ -140,11 +150,29 @@ export function NewBillPage() {
   }
 
   function findScannedProduct(name: string) {
-    const normalizedName = name.trim().toLowerCase()
-    return products.find((product) => {
-      const productName = product.name.trim().toLowerCase()
-      return productName === normalizedName || productName.includes(normalizedName) || normalizedName.includes(productName)
-    })
+    const scan = tokenize(name)
+    if (!scan.length) return undefined
+    const scanSet = new Set(scan)
+
+    let best: { product: (typeof products)[number]; score: number } | undefined
+    for (const product of products) {
+      const prod = tokenize(product.name)
+      if (!prod.length) continue
+      const prodSet = new Set(prod)
+
+      const inter = [...scanSet].filter((t) => prodSet.has(t)).length
+      if (!inter) continue
+      const union = new Set([...scanSet, ...prodSet]).size
+      const jaccard = inter / union
+      // Order-insensitive: match on strong token overlap, OR when every scanned
+      // token (2+) is present in the product (the scan doesn't contradict it).
+      const scanFullyIn = scan.length >= 2 && scan.every((t) => prodSet.has(t))
+
+      if ((jaccard >= 0.6 || scanFullyIn) && (!best || jaccard > best.score)) {
+        best = { product, score: jaccard }
+      }
+    }
+    return best?.product
   }
 
   function setScannedItem(index: number, item: ParsedBill['items'][number]) {

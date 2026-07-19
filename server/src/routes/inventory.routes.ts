@@ -99,11 +99,18 @@ const productDefinitionSchema = z.object({
   lowStockThreshold: z.number().nonnegative(),
 })
 
-/** POST /api/inventory/products — create a product definition (stock starts at 0). */
+// Create allows an optional opening stock (default 0). Used by the "quick-add
+// from a scanned bill" flow so the new product has enough stock to be billed
+// immediately; normal product creation still defaults to 0 (stock via purchases).
+const createProductSchema = productDefinitionSchema.extend({
+  openingStock: z.number().nonnegative().default(0),
+})
+
+/** POST /api/inventory/products — create a product definition (optional opening stock). */
 inventoryRouter.post(
   '/products',
   asyncHandler(async (req, res) => {
-    const data = productDefinitionSchema.parse(req.body)
+    const data = createProductSchema.parse(req.body)
     assertSectionAccess(req.user!, data.section)
 
     const godown = await prisma.godown.findUnique({ where: { id: data.godownId } })
@@ -119,7 +126,7 @@ inventoryRouter.post(
         taxRate: 18,
         section: data.section,
         godownId: data.godownId,
-        stock: 0,
+        stock: data.openingStock,
         costPrice: 0,
         salePrice: data.salePrice,
         lowStockThreshold: data.lowStockThreshold,

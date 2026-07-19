@@ -12,6 +12,8 @@ export interface ProductDefinitionInput {
   section: Section
   godownId: string
   lowStockThreshold: number
+  /** Opening stock for the new product (create only; ignored on update). */
+  openingStock?: number
 }
 
 interface InventoryState {

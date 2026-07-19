@@ -75,8 +75,7 @@ export function WeeklyBarChart({ days }: { days: (Pick<WeeklyRevenueDay, 'label'
             dataKey="revenue"
             radius={[6, 6, 0, 0]}
             activeBar={{ opacity: 0.75 }}
-            isAnimationActive
-            animationDuration={600}
+            isAnimationActive={false}
           >
             {data.map((day, index) => (
               <Cell key={`${day.label}-${index}`} fill={day.color} />
