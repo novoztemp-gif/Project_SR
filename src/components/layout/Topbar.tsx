@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, PackagePlus, Search, User } from 'lucide-react'
+import { Bell, LogOut, Menu, PackagePlus, User } from 'lucide-react'
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -11,13 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import {
   Sheet,
   SheetContent,
   SheetTitle,
 } from '@/components/ui/sheet'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { TopbarSearch } from '@/components/layout/TopbarSearch'
 import { SidebarInner } from '@/components/layout/Sidebar'
 import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
@@ -89,17 +89,7 @@ export function Topbar({ title, className }: TopbarProps) {
       </span>
 
       {/* Search */}
-      <div className="relative hidden sm:block">
-        <Search
-          size={14}
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          type="search"
-          placeholder="Search bills, products, customers…"
-          className="h-8 w-56 pl-8 text-xs lg:w-72"
-        />
-      </div>
+      <TopbarSearch />
 
       {/* Theme toggle */}
       <ThemeToggle />

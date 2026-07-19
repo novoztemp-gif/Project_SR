@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { Ruler, Trash2 } from 'lucide-react'
+import { Plus, Ruler, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
+import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
 import {
   Command,
   CommandEmpty,
@@ -79,6 +80,7 @@ function getProductType(section?: Section) {
 export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
   const [open, setOpen] = useState(false)
   const [measurementsOpen, setMeasurementsOpen] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { register, setValue, control, formState: { errors } } = useFormContext()
   const currentUser = useAuthStore((s) => s.currentUser)!
   const products = useInventoryStore((s) => s.products)
@@ -110,6 +112,18 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
     setValue(`items.${index}.quantity`,    1)
     setValue(`items.${index}.sqFt`,        0,                  { shouldValidate: true })
     setOpen(false)
+  }
+
+  // A scanned item that couldn't be matched to inventory: name is filled but no product is linked.
+  const isUnmatchedScan = !!scannedProductName && !selectedProductId
+
+  // Link a freshly quick-added product to this line, preserving the scanned quantity.
+  function handleLinkCreated(product: Product) {
+    setValue(`items.${index}.productId`,   product.id,        { shouldValidate: true })
+    setValue(`items.${index}.productName`, product.name)
+    setValue(`items.${index}.unit`,        product.unit)
+    setValue(`items.${index}.unitPrice`,   product.salePrice, { shouldValidate: true })
+    setValue(`items.${index}.sqFt`,        0)
   }
 
   return (
@@ -149,12 +163,7 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
                             key={product.id}
                             value={`${product.section}-${product.id}-${product.name}`}
                             className="flex cursor-pointer items-center bg-transparent px-3 py-2 text-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                            onMouseDown={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                            }}
                             onSelect={() => handleSelectProduct(product)}
-                            onClick={() => handleSelectProduct(product)}
                           >
                             <span className="flex-1">{product.name}</span>
                             <span className="font-mono text-xs text-muted-foreground">
@@ -169,9 +178,23 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
               </Command>
             </PopoverContent>
           </Popover>
-          {itemErrors?.productId && (
+          {isUnmatchedScan ? (
+            <div className="mt-1 flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5">
+              <span className="text-xs text-amber-700 dark:text-amber-400">Not in inventory</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setQuickAddOpen(true)}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add to inventory
+              </Button>
+            </div>
+          ) : itemErrors?.productId ? (
             <p className="text-xs text-destructive mt-0.5">{String(itemErrors.productId.message)}</p>
-          )}
+          ) : null}
         </div>
 
         <div className="flex w-40 items-center gap-1">
@@ -262,6 +285,15 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
           onClose={() => setMeasurementsOpen(false)}
         />
       )}
+
+      <QuickAddProductDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        initialName={String(scannedProductName ?? '')}
+        initialRate={unitPrice}
+        initialQty={quantity}
+        onCreated={handleLinkCreated}
+      />
     </div>
   )
 }
