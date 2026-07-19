@@ -1,45 +1,20 @@
-// SR Plywood & Glasses — billing backend schema.
-// Mirrors the frontend types in ../../src/types/index.ts.
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
-// ─── Enums ─────────────────────────────────────────────────────────────────────
-
-/// Lowercase section keys, matching the frontend `Section` union.
-enum Section {
-  glass
-  plywood
-  plumbing
-  painting
-  electrical
-}
-
-enum BillStatus {
-  paid
-  pending
-  partial
-}
-
-// ─── Users / Counters ───────────────────────────────────────────────────────────
-// A "counter" (billing_*) and the "owner" (admin) are both rows here.
-// `processes` holds the sections a billing user may work in; admins implicitly
-// get all sections. `createdBy` references on bills/purchases are loose strings
-// (legacy ids like "u-1" may appear), so they are NOT foreign keys.
 
 model User {
   id           String    @id
   name         String
   email        String    @unique
   passwordHash String
-  role         String // 'admin' | 'billing_*'
-  label        String? // e.g. "COUNTER 1" (billing users only)
+  role         String
+  label        String?
   initials     String?
   avatarColor  String?
   active       Boolean   @default(true)
@@ -49,8 +24,6 @@ model User {
 
   @@index([role])
 }
-
-// ─── Inventory ──────────────────────────────────────────────────────────────────
 
 model Godown {
   id       String    @id
@@ -90,8 +63,6 @@ model TransferLog {
   transferredAt DateTime @default(now())
   transferredBy String
 }
-
-// ─── Sales / Billing ────────────────────────────────────────────────────────────
 
 model SalesBill {
   id              String      @id @default(uuid())
@@ -136,8 +107,6 @@ model SalesItem {
   @@index([billId])
 }
 
-// ─── Purchases ──────────────────────────────────────────────────────────────────
-
 model PurchaseBill {
   id            String         @id @default(uuid())
   voucherNumber String         @unique
@@ -159,7 +128,7 @@ model PurchaseBill {
 model PurchaseItem {
   id            String       @id @default(uuid())
   purchaseId    String
-  productId     String // may be "" for an inline new product
+  productId     String
   productName   String
   sizeDimension String?
   quantity      Float
@@ -169,4 +138,19 @@ model PurchaseItem {
   purchase      PurchaseBill @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
   @@index([purchaseId])
+}
+
+/// Lowercase section keys, matching the frontend `Section` union.
+enum Section {
+  glass
+  plywood
+  plumbing
+  painting
+  electrical
+}
+
+enum BillStatus {
+  paid
+  pending
+  partial
 }
