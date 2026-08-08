@@ -69,6 +69,7 @@ billsRouter.post(
 billsRouter.post(
   '/',
   asyncHandler(async (req, res) => {
+    console.log('[bills] entering POST /api/bills, items:', req.body?.items?.length)
     const input = createBillSchema.parse(req.body)
     assertSectionAccess(req.user!, input.section)
 
@@ -76,6 +77,7 @@ billsRouter.post(
       throw new ApiError(400, 'Invalid customer phone number')
     }
 
+    console.log('[bills] before transaction, item count:', input.items.length)
     const bill = await prisma.$transaction(async (tx) => {
       // 1. Validate stock for every item before touching anything.
       for (const item of input.items) {
@@ -89,6 +91,7 @@ billsRouter.post(
           })
         }
       }
+      console.log('[bills] stock validated for all items')
 
       // 2. Decrement stock.
       for (const item of input.items) {
@@ -97,6 +100,7 @@ billsRouter.post(
           data: { stock: { decrement: item.quantity } },
         })
       }
+      console.log('[bills] after inventory update')
 
       // 3. Compute totals + next bill number, then create the bill.
       const items = input.items.map((item) => ({
@@ -117,7 +121,7 @@ billsRouter.post(
       const agg = await tx.salesBill.aggregate({ _max: { billNumber: true } })
       const billNumber = (agg._max.billNumber ?? 0) + 1
 
-      return tx.salesBill.create({
+      const created = await tx.salesBill.create({
         data: {
           billNumber,
           customerName: input.customerName,
@@ -138,7 +142,10 @@ billsRouter.post(
         },
         include: { items: true },
       })
-    })
+      console.log('[bills] after bill + item creation, billId:', created.id)
+      return created
+    }, { timeout: 20000 })
+    console.log('[bills] after transaction, before response')
 
     res.status(201).json(bill)
   }),

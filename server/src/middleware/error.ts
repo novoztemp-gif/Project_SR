@@ -43,7 +43,10 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     }
   }
 
-  console.error('Unhandled error:', err)
+  console.error('========== BILL SAVE ERROR ==========')
+  console.error(err)
+  console.error(err instanceof Error ? err.stack : err)
+  console.error('====================================')
   return res.status(500).json({ error: 'Internal server error' })
 }
 
