@@ -1,7 +1,7 @@
 // Thin fetch wrapper for the backend API. The auth token is kept in localStorage
 // (written by authStore) so this module has no import cycle with the store.
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api').replace(/\/$/, '')
+const API_BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
 const TOKEN_KEY = 'billing-app-token'
 
 export function getToken(): string | null {
@@ -33,7 +33,7 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
-  const url = new URL(`${API_BASE}${path}`)
+  const url = new URL(`${API_BASE}${path}`, window.location.origin)
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== '') url.searchParams.set(key, String(value))
