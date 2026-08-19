@@ -7,7 +7,10 @@ async function main() {
   await prisma.$connect()
 
   const app = createApp()
-  const server = app.listen(env.PORT, () => {
+  // Bind to localhost only — the reverse proxy (Apache/nginx) is the sole
+  // public entry point and forwards to 127.0.0.1, so this port shouldn't be
+  // reachable directly from the internet.
+  const server = app.listen(env.PORT, '127.0.0.1', () => {
     console.log(`🚀 SR billing API listening on http://localhost:${env.PORT}`)
     console.log(`   CORS origin: ${env.CLIENT_ORIGIN}`)
   })
