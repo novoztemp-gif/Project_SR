@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ApiClientError } from '@/lib/apiClient'
 import { extractBillFromImage, type ParsedBill } from '@/lib/billScan'
 
 interface BillScanDialogProps {
@@ -141,8 +142,9 @@ export function BillScanDialog({
       onExtract(parsed)
       handleOpenChange(false)
       toast.success('Bill scanned — review and save')
-    } catch {
-      toast.error('Could not extract bill details')
+    } catch (err) {
+      const message = err instanceof ApiClientError ? err.message : 'Could not extract bill details'
+      toast.error(message)
     } finally {
       setIsExtracting(false)
     }

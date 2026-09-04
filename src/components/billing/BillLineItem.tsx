@@ -230,7 +230,15 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
             type="number"
             className="w-16 text-right font-mono tabular-nums"
             min={1}
-            max={selectedProduct?.stock ?? undefined}
+            // Guard against a self-contradictory min > max: at 0 or negative
+            // stock (data drift, concurrent sales, etc.) `max=stock` would
+            // silently brick the *entire* form via native HTML5 validation
+            // with no visible error anywhere — confirmed as the actual cause
+            // of "can't add 10+ items" reports. The backend's own stock
+            // check already rejects genuinely insufficient orders with a
+            // clear toast, so this is purely a UI nudge, not the source of
+            // truth — skip it rather than let it break submission.
+            max={selectedProduct && selectedProduct.stock >= 1 ? selectedProduct.stock : undefined}
             {...register(`items.${index}.quantity`)}
           />
         </div>

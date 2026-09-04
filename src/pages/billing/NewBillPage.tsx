@@ -16,6 +16,7 @@ import { BillScanDialog } from '@/components/billing/BillScanDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
 import { api, InsufficientStockError } from '@/lib/api'
 import type { ParsedBill } from '@/lib/billScan'
+import { findBestProductMatch } from '@/lib/productMatch'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -61,16 +62,6 @@ const EMPTY_ITEM = {
 
 function isSqFtUnit(unit?: string) {
   return unit?.trim().toLowerCase() === 'sq.ft'
-}
-
-/** Split a product name into lowercase alphanumeric tokens for order-insensitive matching. */
-function tokenize(s: string): string[] {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
 }
 
 export function NewBillPage() {
@@ -149,41 +140,17 @@ export function NewBillPage() {
     }
   }
 
-  function findScannedProduct(name: string) {
-    const scan = tokenize(name)
-    if (!scan.length) return undefined
-    const scanSet = new Set(scan)
-
-    let best: { product: (typeof products)[number]; score: number } | undefined
-    for (const product of products) {
-      const prod = tokenize(product.name)
-      if (!prod.length) continue
-      const prodSet = new Set(prod)
-
-      const inter = [...scanSet].filter((t) => prodSet.has(t)).length
-      if (!inter) continue
-      const union = new Set([...scanSet, ...prodSet]).size
-      const jaccard = inter / union
-      // Order-insensitive: match on strong token overlap, OR when every scanned
-      // token (2+) is present in the product (the scan doesn't contradict it).
-      const scanFullyIn = scan.length >= 2 && scan.every((t) => prodSet.has(t))
-
-      if ((jaccard >= 0.6 || scanFullyIn) && (!best || jaccard > best.score)) {
-        best = { product, score: jaccard }
-      }
-    }
-    return best?.product
-  }
-
   function setScannedItem(index: number, item: ParsedBill['items'][number]) {
-    const product = findScannedProduct(item.name)
-    const isSqFtProduct = isSqFtUnit(product?.unit)
+    const product = findBestProductMatch(item.name, products)
 
     form.setValue(`items.${index}.productId`, product?.id ?? '', { shouldValidate: true })
     form.setValue(`items.${index}.productName`, product?.name ?? item.name, { shouldValidate: true })
     form.setValue(`items.${index}.quantity`, item.qty, { shouldValidate: true })
     form.setValue(`items.${index}.unit`, product?.unit ?? 'pcs', { shouldValidate: true })
-    form.setValue(`items.${index}.sqFt`, product ? (isSqFtProduct ? item.sqFt : 0) : item.sqFt, { shouldValidate: true })
+    // Trust the scanned sq.ft value whenever the bill had one — it's harmless
+    // even for a non-sq.ft product since the total only uses it when the
+    // item's unit is sq.ft (see `total` above).
+    form.setValue(`items.${index}.sqFt`, item.sqFt, { shouldValidate: true })
     form.setValue(`items.${index}.unitPrice`, product?.salePrice ?? item.rate, { shouldValidate: true })
   }
 
@@ -203,8 +170,7 @@ export function NewBillPage() {
       Number(firstItem?.unitPrice ?? 0) === 0
 
     const scannedItems = parsed.items.map((item) => {
-      const product = findScannedProduct(item.name)
-      const isSqFtProduct = isSqFtUnit(product?.unit)
+      const product = findBestProductMatch(item.name, products)
 
       return {
         productId: product?.id ?? '',
@@ -213,7 +179,7 @@ export function NewBillPage() {
         unit: product?.unit ?? 'pcs',
         glassSize: '',
         model: '',
-        sqFt: product ? (isSqFtProduct ? item.sqFt : 0) : item.sqFt,
+        sqFt: item.sqFt,
         unitPrice: product?.salePrice ?? item.rate,
       }
     })

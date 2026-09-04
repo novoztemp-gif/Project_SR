@@ -62,12 +62,14 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   if (res.status === 204) return undefined as T
 
   let payload: unknown = null
+  let parseFailed = false
   const text = await res.text()
   if (text) {
     try {
       payload = JSON.parse(text)
     } catch {
       payload = text
+      parseFailed = true
     }
   }
 
@@ -78,6 +80,15 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     // Auto-logout on auth failure.
     if (res.status === 401) setToken(null)
     throw new ApiClientError(res.status, message, details)
+  }
+
+  // The API always answers with JSON (or an empty body, handled above). A 200
+  // with non-JSON text means the request never actually reached the backend —
+  // e.g. a misconfigured dev proxy or reverse proxy routed it to the SPA's own
+  // index.html instead. Silently returning that HTML as if it were the real
+  // payload was masking real failures as generic, unrelated crashes downstream.
+  if (parseFailed) {
+    throw new ApiClientError(res.status, 'Server returned an unexpected (non-JSON) response — check the API routing/proxy')
   }
 
   return payload as T

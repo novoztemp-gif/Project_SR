@@ -1,13 +1,7 @@
-// LLM-backed bill extraction. Takes a base64 data URL (image OR PDF) and asks
-// an OpenAI-compatible vision model to return structured bill details.
-//
+// LLM-backed SALES bill extraction. Takes a base64 data URL (image OR PDF) of
+// a customer-facing bill and asks a vision model to return structured details.
 // The API key lives ONLY on the server (env.OPENAI_API_KEY) — never the browser.
-// Uses the OpenAI Responses API so images and PDFs share one code path:
-//   - image  -> { type: 'input_image', image_url }
-//   - PDF    -> { type: 'input_file', filename, file_data }
-
-import { env } from '../env.js'
-import { ApiError } from '../middleware/error.js'
+import { callVisionExtraction, round2 } from './visionExtract.js'
 
 export interface ParsedBillItem {
   name: string
@@ -21,22 +15,6 @@ export interface ParsedBill {
   customerPhone?: string
   customerAddress?: string
   items: ParsedBillItem[]
-}
-
-// data:<mime>;base64,<payload>
-const DATA_URL_RE = /^data:([^;]+);base64,/
-
-function detectKind(dataUrl: string): { mime: string; isPdf: boolean } {
-  const match = DATA_URL_RE.exec(dataUrl)
-  if (!match) {
-    throw new ApiError(400, 'Expected a base64 data URL (data:<mime>;base64,...)')
-  }
-  const mime = match[1].toLowerCase()
-  const isPdf = mime === 'application/pdf'
-  if (!isPdf && !mime.startsWith('image/')) {
-    throw new ApiError(400, `Unsupported file type "${mime}" — upload an image or PDF`)
-  }
-  return { mime, isPdf }
 }
 
 const EXTRACTION_INSTRUCTIONS = [
@@ -82,87 +60,10 @@ const BILL_SCHEMA = {
   },
 } as const
 
-/** Pull the concatenated text output out of a Responses API payload. */
-function readOutputText(payload: any): string {
-  if (typeof payload?.output_text === 'string' && payload.output_text) {
-    return payload.output_text
-  }
-  const chunks: string[] = []
-  for (const item of payload?.output ?? []) {
-    for (const content of item?.content ?? []) {
-      if (content?.type === 'output_text' && typeof content.text === 'string') {
-        chunks.push(content.text)
-      }
-    }
-  }
-  return chunks.join('')
-}
-
 export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBill> {
-  if (!env.OPENAI_API_KEY) {
-    throw new ApiError(503, 'Bill extraction is not configured — set OPENAI_API_KEY on the server')
-  }
+  const parsed = await callVisionExtraction(dataUrl, EXTRACTION_INSTRUCTIONS, BILL_SCHEMA, 'parsed_bill')
 
-  const { mime, isPdf } = detectKind(dataUrl)
-
-  const filePart = isPdf
-    ? { type: 'input_file', filename: 'bill.pdf', file_data: dataUrl }
-    : { type: 'input_image', image_url: dataUrl }
-
-  const body = {
-    model: env.OPENAI_MODEL,
-    input: [
-      {
-        role: 'user',
-        content: [
-          { type: 'input_text', text: 'Extract the bill details from this document.' },
-          filePart,
-        ],
-      },
-    ],
-    instructions: EXTRACTION_INSTRUCTIONS,
-    text: {
-      format: {
-        type: 'json_schema',
-        name: 'parsed_bill',
-        strict: true,
-        schema: BILL_SCHEMA,
-      },
-    },
-  }
-
-  let res: Response
-  try {
-    res = await fetch(`${env.OPENAI_BASE_URL}/responses`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify(body),
-    })
-  } catch (err) {
-    throw new ApiError(502, 'Could not reach the extraction service', String(err))
-  }
-
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new ApiError(502, `Extraction model error (${res.status})`, detail.slice(0, 500))
-  }
-
-  const payload = await res.json().catch(() => null)
-  const text = readOutputText(payload)
-  if (!text) throw new ApiError(502, 'Extraction model returned no content')
-
-  let parsed: ParsedBill
-  try {
-    parsed = JSON.parse(text)
-  } catch {
-    throw new ApiError(502, 'Extraction model returned invalid JSON')
-  }
-
-  // Normalise so the client always gets a well-formed shape.
-  void mime // available for logging if needed
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawItems: any[] = Array.isArray(parsed.items) ? parsed.items : []
   return {
     customerName: parsed.customerName ?? '',
@@ -188,8 +89,4 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
       return { name: String(it?.name ?? ''), qty, sqFt, rate: unitRate }
     }),
   }
-}
-
-function round2(n: number): number {
-  return Math.round(n * 100) / 100
 }
