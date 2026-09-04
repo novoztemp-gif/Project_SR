@@ -49,9 +49,6 @@ build with Node.js already bundled inside it, nothing else to install.
    the exe later (e.g. a newer downloaded version) just re-installs over
    the previous copy.
 
-(`install.bat` still exists in this folder as a manual fallback — not
-needed for normal use, since the exe now installs itself.)
-
 This part (packaging into a single .exe, and the self-install step) hasn't
 been run against a real Windows machine yet — only verified as a valid
 Windows executable and functionally tested as plain Node.js. The first
