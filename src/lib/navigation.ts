@@ -146,6 +146,6 @@ export function getNavFor(role: Role): NavItem[] {
     (item) =>
       item.showInSidebar &&
       (item.roles.includes(role) ||
-        (role.startsWith('billing_') && item.roles.some((itemRole) => itemRole.startsWith('billing_'))))
+        (role?.startsWith('billing_') && item.roles.some((itemRole) => itemRole.startsWith('billing_'))))
   )
 }

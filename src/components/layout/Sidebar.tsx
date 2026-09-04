@@ -66,7 +66,7 @@ export function SidebarInner({ onNavigate }: SidebarInnerProps) {
 
   const navItems = currentUser
     ? getNavFor(currentUser.role).filter(
-        (item) => !(currentUser.role.startsWith('billing_') && item.path === '/reports/monthly')
+        (item) => !(currentUser.role?.startsWith('billing_') && item.path === '/reports/monthly')
       )
     : []
   const accessibleSections = currentUser

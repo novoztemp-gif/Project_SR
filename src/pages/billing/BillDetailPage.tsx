@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useLocation, useParams, Navigate } from 'react-router-dom'
 import { ArrowLeft, FilePlus, Printer } from 'lucide-react'
 
@@ -17,9 +17,16 @@ export function BillDetailPage() {
   const rawBill = id ? api.bills.get(id) : undefined
   const bill = id ? api.bills.get(id, allowedSections) : undefined
   const shouldPrint = Boolean((location.state as { print?: boolean } | null)?.print)
+  // Guards against firing window.print() more than once for the same
+  // navigation — without it, React StrictMode's dev-only double effect
+  // invocation (and any later re-render that changes `bill`'s reference,
+  // e.g. a cache refresh) reopens the print dialog again right after the
+  // first one closes, since window.print() blocks until dismissed.
+  const hasPrintedRef = useRef(false)
 
   useEffect(() => {
-    if (bill && shouldPrint) {
+    if (bill && shouldPrint && !hasPrintedRef.current) {
+      hasPrintedRef.current = true
       window.setTimeout(() => window.print(), 0)
     }
   }, [bill, shouldPrint])
