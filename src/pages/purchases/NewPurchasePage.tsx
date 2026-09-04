@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera, ImageIcon, Plus, Ruler, ScanLine, X } from 'lucide-react'
+import { FileText, Plus, Ruler, ScanLine, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -9,13 +9,15 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
+import { PurchaseScanDialog } from '@/components/purchases/PurchaseScanDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
+import { findBestProductMatch } from '@/lib/productMatch'
+import type { ParsedPurchase } from '@/lib/purchaseScan'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { usePurchaseStore } from '@/store/purchaseStore'
@@ -89,10 +91,9 @@ export function NewPurchasePage() {
   const products = useInventoryStore((state) => state.products)
   const addPurchase = usePurchaseStore((state) => state.addPurchase)
   const allowedSections = getUserSections(currentUser.id)
-  const videoRef = React.useRef<HTMLVideoElement | null>(null)
-  const streamRef = React.useRef<MediaStream | null>(null)
   const [scanOpen, setScanOpen] = React.useState(false)
   const [scannerOpen, setScannerOpen] = React.useState(false)
+  const [scannerImageDataUrl, setScannerImageDataUrl] = React.useState<string>()
   const [measurementsIndex, setMeasurementsIndex] = React.useState<number | null>(null)
 
   const form = useForm<FormInput, unknown, FormValues>({
@@ -107,7 +108,7 @@ export function NewPurchasePage() {
     },
   })
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' })
+  const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'items' })
   const watchedSection = useWatch({ control: form.control, name: 'section' }) as Section
   const watchedGodownId = useWatch({ control: form.control, name: 'godownId' })
   const watchedItems = useWatch({ control: form.control, name: 'items' })
@@ -118,52 +119,6 @@ export function NewPurchasePage() {
     (sum, item) => sum + Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0),
     0
   )
-
-  const stopCamera = React.useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
-    if (videoRef.current) videoRef.current.srcObject = null
-  }, [])
-
-  React.useEffect(() => {
-    if (!scanOpen) {
-      stopCamera()
-      return
-    }
-
-    let cancelled = false
-
-    async function startCamera() {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        toast.error('Camera access denied. Please use Upload instead.')
-        setScanOpen(false)
-        return
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop())
-          return
-        }
-        streamRef.current = stream
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          await videoRef.current.play()
-        }
-      } catch {
-        toast.error('Camera access denied. Please use Upload instead.')
-        setScanOpen(false)
-      }
-    }
-
-    startCamera()
-
-    return () => {
-      cancelled = true
-      stopCamera()
-    }
-  }, [scanOpen, stopCamera])
 
   React.useEffect(() => {
     const state = location.state as { restockProductId?: string } | null
@@ -205,38 +160,38 @@ export function NewPurchasePage() {
     form.setValue(`items.${index}.unitPrice`, product.costPrice, { shouldValidate: true })
   }
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file) return
+  function handlePurchaseExtract(parsed: ParsedPurchase, scannedImageDataUrl: string) {
+    form.setValue('vendorName', parsed.vendorName, { shouldValidate: true })
+    form.setValue('imageUrl', scannedImageDataUrl, { shouldValidate: true })
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        form.setValue('imageUrl', reader.result)
+    const currentItems = form.getValues('items') ?? []
+    const firstItem = currentItems[0]
+    const canReuseFirstItem =
+      currentItems.length === 1 &&
+      !firstItem?.productId &&
+      !firstItem?.productName &&
+      Number(firstItem?.quantity ?? 1) === 1 &&
+      Number(firstItem?.unitPrice ?? 0) === 0
+
+    const scannedItems = parsed.items.map((item) => {
+      const product = findBestProductMatch(item.name, products)
+
+      return {
+        productId: product?.id ?? '',
+        productName: product?.name ?? item.name,
+        sizeDimension: '',
+        quantity: item.qty || 1,
+        unit: product?.unit ?? 'pcs',
+        unitPrice: product?.costPrice ?? item.rate,
+        subtotal: 0,
       }
+    })
+
+    if (canReuseFirstItem && scannedItems.length) {
+      replace(scannedItems)
+    } else {
+      append(scannedItems)
     }
-    reader.readAsDataURL(file)
-  }
-
-  function handleScanOpenChange(open: boolean) {
-    if (!open) stopCamera()
-    setScanOpen(open)
-  }
-
-  function captureImage() {
-    const video = videoRef.current
-    if (!video || !video.videoWidth || !video.videoHeight) return
-
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    const context = canvas.getContext('2d')
-    if (!context) return
-
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-    form.setValue('imageUrl', canvas.toDataURL('image/jpeg', 0.9))
-    stopCamera()
-    setScanOpen(false)
   }
 
   async function onSubmit(values: FormValues) {
@@ -340,27 +295,29 @@ export function NewPurchasePage() {
             <CardContent>
               {imageUrl ? (
                 <div className="flex items-center gap-3">
-                  <img src={imageUrl} alt="Purchase reference" className="h-20 w-20 rounded-md border border-border object-cover" />
+                  {imageUrl.startsWith('data:application/pdf') ? (
+                    <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-md border border-border bg-muted text-muted-foreground">
+                      <FileText className="h-6 w-6" />
+                      <span className="text-[10px] font-medium">PDF</span>
+                    </div>
+                  ) : (
+                    <img src={imageUrl} alt="Purchase reference" className="h-20 w-20 rounded-md border border-border object-cover" />
+                  )}
                   <Button type="button" variant="outline" size="sm" onClick={() => form.setValue('imageUrl', undefined)}>
                     <X className="mr-2 h-4 w-4" />
                     Remove
                   </Button>
                 </div>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="flex cursor-pointer items-center gap-3 rounded-md border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-                    <ImageIcon className="h-5 w-5" />
-                    <span>Upload photo</span>
-                    <input type="file" accept="image/*" className="sr-only" onChange={handleFileChange} />
-                  </label>
+                <div className="grid gap-3 sm:grid-cols-2">
                   <Button
                     type="button"
                     variant="outline"
                     className="h-auto justify-start gap-3 px-4 py-5 text-sm font-normal text-muted-foreground"
                     onClick={() => setScanOpen(true)}
                   >
-                    <Camera className="h-5 w-5" />
-                    Scan image (camera)
+                    <ScanLine className="h-5 w-5" />
+                    Scan the Purchase Bill
                   </Button>
                   <Button
                     type="button"
@@ -459,12 +416,15 @@ export function NewPurchasePage() {
 
                     <div className="space-y-2">
                       <Label>Qty</Label>
-                      <Input type="number" min={1} className="font-mono tabular-nums" {...form.register(`items.${index}.quantity`, { valueAsNumber: true })} />
+                      {/* step must allow fractional values (e.g. sq.ft quantities like
+                          195.3) — without it the browser defaults to step=1 and silently
+                          blocks the whole form's submission with no visible error at all. */}
+                      <Input type="number" min={1} step="0.01" className="font-mono tabular-nums" {...form.register(`items.${index}.quantity`, { valueAsNumber: true })} />
                     </div>
 
                     <div className="space-y-2">
                       <Label>Unit price</Label>
-                      <Input type="number" min={0} className="font-mono tabular-nums" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
+                      <Input type="number" min={0} step="0.01" className="font-mono tabular-nums" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
                     </div>
 
                     <Button
@@ -503,31 +463,24 @@ export function NewPurchasePage() {
         </Card>
       </form>
 
-      <Dialog open={scanOpen} onOpenChange={handleScanOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Scan image</DialogTitle>
-          </DialogHeader>
-          <video
-            ref={videoRef}
-            className="aspect-video w-full rounded-md border border-border bg-muted object-cover"
-            muted
-            playsInline
-          />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleScanOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={captureImage}>
-              Capture
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PurchaseScanDialog
+        open={scanOpen}
+        onOpenChange={(open) => {
+          setScanOpen(open)
+          if (!open) setScannerImageDataUrl(undefined)
+        }}
+        onExtract={handlePurchaseExtract}
+        initialImageDataUrl={scannerImageDataUrl}
+        extractingLabel={scannerImageDataUrl ? 'Reading scanned document…' : undefined}
+      />
       <ScannerConnectDialog
         open={scannerOpen}
         onOpenChange={setScannerOpen}
-        onImageScanned={(imageDataUrl) => form.setValue('imageUrl', imageDataUrl, { shouldValidate: true })}
+        allowPdf
+        onImageScanned={(imageDataUrl) => {
+          setScannerImageDataUrl(imageDataUrl)
+          setScanOpen(true)
+        }}
       />
 
       {measurementsIndex !== null && (

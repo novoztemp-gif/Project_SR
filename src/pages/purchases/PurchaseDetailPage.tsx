@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Printer } from 'lucide-react'
+import { CheckCircle2, FileText, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { PrintablePurchase } from '@/components/purchases/PrintablePurchase'
@@ -31,19 +31,17 @@ export function PurchaseDetailPage() {
 
   const isApplied = bill.printedAt !== null
 
-  async function handlePrintAndApply() {
+  async function handleApplyStock() {
     if (!bill) return
     try {
       await applyAndPrint(bill.id)
-      toast.success('Stock applied. Opening print dialog.')
-      window.print()
+      toast.success('Stock applied')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to apply stock')
     }
   }
 
-  function handleReprint() {
-    toast.info('Opening reprint dialog. Stock is unchanged.')
+  function handlePrint() {
     window.print()
   }
 
@@ -60,17 +58,16 @@ export function PurchaseDetailPage() {
               Stock applied on {formatDate(bill.printedAt)}
             </p>
           )}
-          {isApplied ? (
-            <Button variant="outline" onClick={handleReprint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Reprint
-            </Button>
-          ) : (
-            <Button onClick={handlePrintAndApply}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print &amp; apply stock
+          {!isApplied && (
+            <Button onClick={handleApplyStock}>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Apply stock
             </Button>
           )}
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" />
+            {isApplied ? 'Reprint' : 'Print'}
+          </Button>
         </div>
       </div>
 
@@ -89,11 +86,18 @@ export function PurchaseDetailPage() {
 
       {bill.imageUrl && (
         <div className="mx-auto mb-4 max-w-3xl">
-          <img
-            src={bill.imageUrl}
-            alt="Purchase reference"
-            className="h-24 rounded-md border border-border object-cover"
-          />
+          {bill.imageUrl.startsWith('data:application/pdf') ? (
+            <div className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-border bg-muted text-muted-foreground">
+              <FileText className="h-6 w-6" />
+              <span className="text-[10px] font-medium">PDF</span>
+            </div>
+          ) : (
+            <img
+              src={bill.imageUrl}
+              alt="Purchase reference"
+              className="h-24 rounded-md border border-border object-cover"
+            />
+          )}
         </div>
       )}
 

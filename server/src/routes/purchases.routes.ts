@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { Section } from '@prisma/client'
+import { Prisma, Section } from '@prisma/client'
 
 import { prisma } from '../prisma.js'
 import { allowedSectionsForUser } from '../lib/sections.js'
+import { extractPurchaseFromDataUrl } from '../lib/purchaseExtract.js'
 import { assertSectionAccess, authenticate } from '../middleware/auth.js'
 import { ApiError, asyncHandler } from '../middleware/error.js'
 
@@ -11,6 +12,11 @@ export const purchasesRouter = Router()
 purchasesRouter.use(authenticate)
 
 const SectionEnum = z.nativeEnum(Section)
+
+const extractSchema = z.object({
+  // A base64 data URL of the purchase invoice — image/* or application/pdf.
+  dataUrl: z.string().regex(/^data:[^;]+;base64,/, 'Expected a base64 data URL'),
+})
 
 const createPurchaseSchema = z.object({
   vendorName: z.string().min(1),
@@ -32,9 +38,21 @@ const createPurchaseSchema = z.object({
     .min(1, 'A purchase needs at least one item'),
 })
 
-/** Computes the next voucher number, e.g. PUR-2026-0006. */
-async function nextVoucherNumber(date: Date): Promise<string> {
-  const rows = await prisma.purchaseBill.findMany({ select: { voucherNumber: true } })
+/**
+ * Computes the next voucher number, e.g. PUR-2026-0006. Takes a transaction
+ * client and must be called from inside prisma.$transaction. Merely wrapping
+ * the read + create in a transaction is NOT enough on its own — Postgres's
+ * default READ COMMITTED doesn't lock on a plain read, so concurrent
+ * transactions can all read the same max before any of them commits
+ * (confirmed even after adding $transaction: 10 concurrent submissions → 1
+ * succeeded, 9 rejected with a confusing 409). An advisory lock serializes
+ * just this critical section — the second concurrent call blocks here until
+ * the first commits, then correctly sees the updated max. Released
+ * automatically at commit/rollback.
+ */
+async function nextVoucherNumber(tx: Prisma.TransactionClient, date: Date): Promise<string> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('purchase_voucher_number'))`
+  const rows = await tx.purchaseBill.findMany({ select: { voucherNumber: true } })
   const maxSeq = rows.reduce((max, { voucherNumber }) => {
     const seq = Number(voucherNumber.match(/(\d+)$/)?.[1] ?? 0)
     return seq > max ? seq : max
@@ -53,6 +71,21 @@ purchasesRouter.get(
       orderBy: { date: 'desc' },
     })
     res.json(purchases)
+  }),
+)
+
+/**
+ * POST /api/purchases/extract — read a scanned/uploaded purchase invoice
+ * (image or PDF) with an LLM and return the vendor name + line items. Does
+ * NOT create a purchase; the client reviews the result and submits
+ * POST /api/purchases separately.
+ */
+purchasesRouter.post(
+  '/extract',
+  asyncHandler(async (req, res) => {
+    const { dataUrl } = extractSchema.parse(req.body)
+    const parsed = await extractPurchaseFromDataUrl(dataUrl)
+    res.json(parsed)
   }),
 )
 
@@ -75,22 +108,24 @@ purchasesRouter.post(
     }))
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
 
-    const purchase = await prisma.purchaseBill.create({
-      data: {
-        voucherNumber: await nextVoucherNumber(date),
-        vendorName: input.vendorName,
-        date,
-        section: input.section,
-        godownId: input.godownId,
-        imageUrl: input.imageUrl,
-        subtotal,
-        total: subtotal,
-        createdBy: req.user!.id,
-        printedAt: null,
-        items: { create: items },
-      },
-      include: { items: true },
-    })
+    const purchase = await prisma.$transaction(async (tx) => {
+      return tx.purchaseBill.create({
+        data: {
+          voucherNumber: await nextVoucherNumber(tx, date),
+          vendorName: input.vendorName,
+          date,
+          section: input.section,
+          godownId: input.godownId,
+          imageUrl: input.imageUrl,
+          subtotal,
+          total: subtotal,
+          createdBy: req.user!.id,
+          printedAt: null,
+          items: { create: items },
+        },
+        include: { items: true },
+      })
+    }, { timeout: 20000 })
     res.status(201).json(purchase)
   }),
 )
