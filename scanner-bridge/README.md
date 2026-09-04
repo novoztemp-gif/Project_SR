@@ -23,23 +23,35 @@ scanner hardware directly, using the right mechanism for each connection type:
   any reason, its own "Scan to PC" / "Scan to Folder" software still works
   — the Bridge also watches a folder and picks up files saved there.
 
-## One-time setup
+## One-time setup — Windows
+
+1. Install [Node.js](https://nodejs.org) (the LTS version) if it isn't
+   already on this computer. (WIA, used for USB scanners, is already built
+   into Windows — nothing else to install.)
+2. Copy this whole `scanner-bridge` folder onto the computer (e.g. to
+   `C:\SRBilling\scanner-bridge`).
+3. Double-click **`install.bat`**. It installs everything needed — takes a
+   minute, only needed once.
+4. Double-click **`start.bat`** any time you need to scan. Leave that
+   window open while scanning bills.
+
+**Optional — start it automatically every time this computer turns on**
+(recommended for a counter machine, so no one has to remember to launch it):
+1. Press `Win + R`, type `shell:startup`, press Enter — this opens the
+   Startup folder.
+2. Right-click **`start.bat`** → *Show more options* → *Send to* → *Desktop
+   (create shortcut)*, then drag that new shortcut into the Startup folder
+   window from step 1.
+3. From then on, the Scanner Bridge window opens by itself on login. It can
+   be minimized, just not closed.
+
+## One-time setup — Mac/Linux
 
 1. Install [Node.js](https://nodejs.org) (the LTS version) if it isn't
    already on this computer.
-2. **Mac/Linux only**, for USB scanner support: install SANE —
-   `brew install sane-backends` on Mac, or `sudo apt install sane-utils` on
-   Debian/Ubuntu. (Windows doesn't need this — WIA is built in.)
-3. Open a terminal in this folder and run:
-   ```
-   npm install
-   ```
-4. Start it:
-   ```
-   npm start
-   ```
-   You'll see a message telling you which folder it's watching (used only
-   for the folder-fallback method above).
+2. For USB scanner support, install SANE — `brew install sane-backends` on
+   Mac, or `sudo apt install sane-utils` on Debian/Ubuntu.
+3. Open a terminal in this folder and run `npm install`, then `npm start`.
 
 **Mac only — one extra step the first time:** macOS will likely ask for
 "Local Network" permission the first time this runs, needed to find network
@@ -49,7 +61,9 @@ whichever app you launched this from) is allowed.
 
 ## Every day use
 
-1. Start this program (`npm start` in this folder) and leave the window open.
+1. Start this program — double-click `start.bat` on Windows (or run
+   `npm start` in a terminal on Mac/Linux) — and leave the window open. (If
+   you set up auto-start above, this already happened on login.)
 2. In SR Billing, click **Scan from Scanner**.
 3. Pick your scanner from the list and click it — it scans immediately, no
    other software needed. If it's not listed, click **Refresh**, or enter

@@ -17,13 +17,15 @@ try {
     if ($result.Count -eq 0) {
         Write-Output '[]'
     } else {
-        # ConvertTo-Json collapses a single-item array to a bare object, not
-        # an array — wrap explicitly so the caller always gets an array.
-        # (Avoids -AsArray, which needs PowerShell 6.2+; this works on the
-        # PowerShell 5.1 that ships with Windows 10/11 too.)
-        $json = ConvertTo-Json -InputObject $result -Compress
-        if ($result.Count -eq 1) { $json = "[$json]" }
-        Write-Output $json
+        # ConvertTo-Json's well-known single-item collapse only happens when
+        # a collection is piped in ($result | ConvertTo-Json unwraps it
+        # element-by-element first) — passed via -InputObject like this, the
+        # whole array is bound as one argument and correctly stays an array
+        # even for exactly one item (verified directly). Wrapping it in an
+        # extra "[...]" here for the count-1 case double-nested the JSON
+        # instead — the single-scanner case is the most common one this
+        # would ever hit in practice.
+        Write-Output (ConvertTo-Json -InputObject $result -Compress)
     }
 } catch {
     Write-Output '[]'
