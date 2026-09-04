@@ -38,6 +38,30 @@ function isAllowedOrigin(origin) {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
 }
 
+// Self-install on Windows: on first run, copy this exe into the Startup
+// folder so Windows launches it automatically on every future login — a
+// plain .exe placed there needs no shortcut, registry entry, or admin
+// rights. This is what lets the whole thing ship as a single file: someone
+// downloads scanner-bridge.exe and double-clicks it once, and there's
+// nothing else to install or run again. Only applies to the packaged .exe
+// (process.pkg is set only when running inside one) — running from source
+// with `node src/server.js` is unaffected.
+function selfInstallOnWindows() {
+  if (process.platform !== 'win32' || !process.pkg) return
+  try {
+    const startupDir = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    const target = path.join(startupDir, 'SRBillingScannerBridge.exe')
+    const current = process.execPath
+    if (path.resolve(current).toLowerCase() === path.resolve(target).toLowerCase()) return // already the installed copy
+    fs.mkdirSync(startupDir, { recursive: true })
+    fs.copyFileSync(current, target)
+    console.log('[scanner-bridge] Installed — this will now start automatically every time this computer turns on.')
+  } catch (err) {
+    console.error('[scanner-bridge] Could not install to the Startup folder (will still run this time):', err.message)
+  }
+}
+selfInstallOnWindows()
+
 fs.mkdirSync(SCAN_FOLDER, { recursive: true })
 
 /** @type {{ id: string, filename: string, mimeType: string, dataUrl: string, scannedAt: string, consumed: boolean }[]} */

@@ -23,34 +23,39 @@ scanner hardware directly, using the right mechanism for each connection type:
   any reason, its own "Scan to PC" / "Scan to Folder" software still works
   — the Bridge also watches a folder and picks up files saved there.
 
-## Deploying to a client's Windows PC (no Node.js, no terminal)
+## Deploying to a client's Windows PC — one file, one click
 
 This is the real deployment path — for a client's counter computer, not a
-developer machine. It ships as just two files: `scanner-bridge.exe` (a
-standalone build with Node.js already bundled inside it — nothing else to
-install) and `install.bat`.
+developer machine. It's a single file: `scanner-bridge.exe` — a standalone
+build with Node.js already bundled inside it, nothing else to install.
 
-1. Build the exe once, from a machine with this source checked out:
+1. Build it once, from a machine with this source checked out:
    ```
    npm install
    npm run build:exe
    ```
    This produces `dist-exe/scanner-bridge.exe`.
-2. Copy `dist-exe/scanner-bridge.exe` and `install.bat` together onto the
-   client's PC (USB stick, file transfer during a remote-support session,
-   however's convenient) — into the same folder.
-3. Double-click **`install.bat`**. It copies the program into Windows'
-   Startup folder (so it launches automatically every login, no shortcut or
-   admin rights needed) and starts it immediately so you can test right
-   away.
-4. That's it — nothing else to install, no Node.js, no npm. The client
-   never has to touch this again; it just runs quietly in the background
-   from every login onward.
+2. Get that one file onto the client's PC however's convenient (download
+   link, USB stick, file transfer during a remote-support session).
+3. Double-click it. On this very first run it silently copies itself into
+   Windows' Startup folder (a plain .exe placed there is launched by
+   Windows automatically on every future login — no shortcut, registry
+   entry, or admin rights needed), then keeps running immediately so you
+   can test right away. The console window it opens will say "Installed —
+   this will now start automatically every time this computer turns on."
+4. That's it — nothing else to install, no Node.js, no npm, no second
+   file, no install script. The client never has to touch this again; it
+   just runs quietly in the background from every login onward. Re-running
+   the exe later (e.g. a newer downloaded version) just re-installs over
+   the previous copy.
 
-This part (packaging into a single .exe) hasn't been run against a real
-Windows machine or real scanner hardware yet — only verified as a valid
-Windows executable and functionally tested as plain Node.js. The first real
-install on an actual client PC is also its first real-world test.
+(`install.bat` still exists in this folder as a manual fallback — not
+needed for normal use, since the exe now installs itself.)
+
+This part (packaging into a single .exe, and the self-install step) hasn't
+been run against a real Windows machine yet — only verified as a valid
+Windows executable and functionally tested as plain Node.js. The first
+real run on an actual Windows PC is also its first real-world test.
 
 ## Developer / source setup — Windows
 
@@ -79,8 +84,8 @@ whichever app you launched this from) is allowed.
 
 ## Every day use
 
-1. On a client PC set up via `install.bat`, this already happened
-   automatically on login — nothing to start. Otherwise (developer/source
+1. On a client PC, this already happened automatically on login after the
+   first double-click — nothing to start. Otherwise (developer/source
    setup), start it — double-click `start.bat` on Windows, or run
    `npm start` in a terminal on Mac/Linux — and leave the window open.
 2. In SR Billing, click **Scan from Scanner**.
