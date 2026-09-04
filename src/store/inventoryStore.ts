@@ -62,7 +62,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     try {
       transferLog = await http.get<TransferLogEntry[]>('/inventory/transfers')
     } catch {
-      transferLog = []
+      // transferLog already defaults to []
     }
     set({ products, godowns, transferLog, hydrated: true })
   },
