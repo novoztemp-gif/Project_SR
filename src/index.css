@@ -231,6 +231,21 @@
 }
 
 @media print {
+  html, body {
+    /* Some print drivers silently drop "unnecessary" colors/backgrounds
+       unless told to reproduce them exactly — belt-and-suspenders with the
+       forced black/white below. */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    /* The app's dark theme + dotted background pattern was never reset
+       here — only .printable-bill was forced to white. Since that box is
+       only as tall as its content (position: absolute, height: auto), any
+       leftover page area shows the dark body underneath it on the actual
+       printed page, even though it's invisible in the on-screen print
+       preview. This is what prints as a dark/black region on real paper. */
+    background: white !important;
+    background-image: none !important;
+  }
   aside,
   header,
   [data-sonner-toaster],
@@ -239,7 +254,11 @@
   }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,
-  .report-printable, .report-printable * { visibility: visible; }
+  .report-printable, .report-printable * {
+    visibility: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
   .printable-bill,
   .report-printable {
     position: absolute;
@@ -248,6 +267,22 @@
     width: 100%;
     background: white !important;
     color: black !important;
+  }
+  /* The bill normally uses the custom Geist/Geist Mono web fonts (loaded
+     from Google Fonts). The on-screen Print Preview renders fine — it's
+     live DOM rendering with the font already loaded/cached — but the
+     actual print job goes through a separate rasterization pipeline (CUPS
+     on macOS/Linux) that has to embed the font's glyph outlines into the
+     print stream, and a downloaded web font is a known weak point there
+     versus one already installed on the system. If that embedding fails,
+     borders/backgrounds/layout (plain CSS, no glyph data) still print fine
+     while all text renders blank — matching "layout prints, no text."
+     Force system fonts for print only; on-screen appearance is untouched. */
+  .printable-bill,
+  .printable-bill *,
+  .report-printable,
+  .report-printable * {
+    font-family: ui-monospace, Consolas, 'SF Mono', Menlo, monospace !important;
   }
   .receipt-edge { display: none; }
   .printable-bill *,
@@ -266,7 +301,12 @@
   .printable-bill {
     box-sizing: border-box;
     max-width: 100%;
-    padding: 0 !important;
+    /* A built-in safety margin independent of the browser's own "Margins"
+       print-dialog setting — relying on @page's margin alone meant picking
+       "Margins: None" there (or the dialog remembering a prior "None"
+       choice) sent content flush to the paper edge, past the printer's
+       physical unprintable border, clipping right-aligned columns. */
+    padding: 8mm !important;
     font-size: 11px;
   }
   .printable-bill table {
@@ -292,5 +332,12 @@
   .report-printable tfoot td {
     font-weight: 700 !important;
   }
-  @page { margin: 12mm; size: A4 portrait; }
+  /* No `size` here on purpose: forcing "A4 portrait" (confirmed by directly
+     generating a PDF asking for A5 and getting back A4-shaped output anyway)
+     silently overrode the browser's own Paper size AND Layout/Orientation
+     controls — Chrome hid the orientation toggle entirely once the page CSS
+     declared one, which is what made landscape unreachable. The layout below
+     is already fluid (%, table-layout:fixed), so it doesn't need to hardcode
+     a page size to render correctly on A4, A5, or landscape. */
+  @page { margin: 4mm; }
 }
