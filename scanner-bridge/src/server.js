@@ -88,6 +88,20 @@ watcher.on('error', (err) => console.error('[scanner-bridge] watcher error:', er
 const bonjour = startDiscovery()
 
 const app = express()
+// Chrome/Edge's Private Network Access check blocks a page loaded from a
+// public site (https://sraibilling.com) from reaching a private-network
+// address like 127.0.0.1 via fetch(), unless the local server explicitly
+// allows it on the preflight response — regular CORS alone doesn't cover
+// this. Without it, the browser silently blocks the request before it ever
+// reaches the routes below: /health answers fine when visited directly
+// (plain navigation, not subject to this check) while the app's own fetch
+// calls fail, surfacing as "Scanner Bridge isn't running". This server only
+// ever listens on 127.0.0.1 to begin with, so there's no meaningful
+// security downside to allowing it unconditionally.
+app.use((_req, res, next) => {
+  res.setHeader('Access-Control-Allow-Private-Network', 'true')
+  next()
+})
 app.use(
   cors({
     origin: (origin, callback) => {
