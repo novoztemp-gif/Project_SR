@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Check, ExternalLink, ImageUp, Loader2, Search, ScanLine, XCircle } from 'lucide-react'
+import { AlertTriangle, FolderOpen, ImageUp, Loader2, Printer, RefreshCw, Usb, Wifi } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -12,26 +12,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useScanner } from '@/lib/useScanner'
+import { useScannerBridge, type ScannerDevice } from '@/lib/useScannerBridge'
 
 interface ScannerConnectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onImageScanned: (imageDataUrl: string) => void
   allowPdf?: boolean
-}
-
-function isMacPlatform() {
-  return /mac/i.test(navigator.platform)
-}
-
-function scannerLabel(scannerUrl?: string) {
-  if (!scannerUrl) return ''
-  try {
-    return new URL(scannerUrl).hostname
-  } catch {
-    return scannerUrl
-  }
 }
 
 function readFileAsDataUrl(file: File) {
@@ -46,6 +33,10 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
+function deviceIcon(kind: ScannerDevice['kind']) {
+  return kind === 'network' ? Wifi : Usb
+}
+
 export function ScannerConnectDialog({
   open,
   onOpenChange,
@@ -54,35 +45,39 @@ export function ScannerConnectDialog({
 }: ScannerConnectDialogProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [manualIp, setManualIp] = React.useState('')
+  const [manualPort, setManualPort] = React.useState('80')
+  const [verifying, setVerifying] = React.useState(false)
   const {
     status,
-    scannerUrl,
-    scannedImage,
-    networkResults,
-    searchProgress,
+    folder,
+    scan,
+    devices,
+    devicesLoading,
+    scanError,
+    connect,
+    consumeAndReset,
+    verifyManualScanner,
+    scanFromDevice,
+    refreshDevices,
     reset,
-    detectScanner,
-    connectToIp,
-    searchNetwork,
-    scanNow,
-  } = useScanner()
+  } = useScannerBridge()
 
   React.useEffect(() => {
     if (!open) {
       reset()
       setManualIp('')
+      setManualPort('80')
       return
     }
-
-    void detectScanner()
-  }, [detectScanner, open, reset])
+    void connect()
+  }, [open, connect, reset])
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
 
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    if ((file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && !allowPdf) {
       toast.error('PDF scanning requires backend — image files only for now')
       return
     }
@@ -92,130 +87,188 @@ export function ScannerConnectDialog({
     onOpenChange(false)
   }
 
-  function openScannerApp() {
-    window.open(isMacPlatform() ? 'x-apple.systempreferences:' : 'ms-photos:')
-  }
-
-  function useCompletedScan() {
-    if (!scannedImage) return
-    onImageScanned(scannedImage)
+  async function useCompletedScan() {
+    if (!scan) return
+    if (scan.mimeType === 'application/pdf' && !allowPdf) {
+      toast.error("PDF scans aren't supported here — image files only for now")
+      void consumeAndReset(scan.id)
+      void connect()
+      return
+    }
+    onImageScanned(scan.dataUrl)
+    void consumeAndReset(scan.id)
     onOpenChange(false)
   }
 
-  const networkPercent = searchProgress.total
-    ? Math.round((searchProgress.completed / searchProgress.total) * 100)
-    : 0
+  async function scanAnother() {
+    if (scan) void consumeAndReset(scan.id)
+    void connect()
+  }
+
+  async function handleManualConnect() {
+    const port = Number(manualPort) || 80
+    if (!manualIp.trim()) return
+    setVerifying(true)
+    const ok = await verifyManualScanner(manualIp.trim(), port)
+    setVerifying(false)
+    if (ok) toast.success('Scanner found — click Scan now')
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ScanLine className="h-5 w-5" />
-            Connect to Scanner
+            <FolderOpen className="h-5 w-5" />
+            Scan from Scanner
           </DialogTitle>
           <DialogDescription>
-            No scanner detected automatically. Try these options:
+            Uses the Scanner Bridge — a small helper running on this computer.
           </DialogDescription>
         </DialogHeader>
 
-        {status === 'searching' && (
+        {status === 'checking' && (
           <div className="flex items-center gap-3 rounded-md border border-border bg-muted p-4 text-sm">
             <Loader2 className="h-4 w-4 animate-spin text-brand-mid" />
-            <span>Searching for scanner…</span>
+            <span>Connecting to Scanner Bridge…</span>
           </div>
         )}
 
-        {status === 'found' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-4 text-sm">
-              <Check className="h-4 w-4 text-brand-mid" />
-              <span>Scanner found at {scannerLabel(scannerUrl)} ✓</span>
-            </div>
-            <Button type="button" className="w-full" onClick={scanNow}>
-              Scan now
-            </Button>
-          </div>
-        )}
-
-        {status === 'scanning' && (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Scanning document…</p>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full w-2/3 animate-pulse rounded-full bg-brand-mid" />
-            </div>
-          </div>
-        )}
-
-        {status === 'complete' && scannedImage && (
-          <div className="space-y-4">
-            <p className="text-sm font-medium">Scan complete</p>
-            <img
-              src={scannedImage}
-              alt="Scanned document"
-              className="max-h-64 w-full rounded-md border border-border object-contain"
-            />
-            <Button type="button" className="w-full" onClick={useCompletedScan}>
-              Use this scan
-            </Button>
-          </div>
-        )}
-
-        {status === 'not-found' && (
+        {status === 'connected' && (
           <div className="space-y-5">
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-4 text-sm">
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-              <span>No scanner found</span>
-            </div>
-
             <div className="space-y-2">
-              <Label>Open scanner app</Label>
-              <Button type="button" variant="outline" className="w-full justify-start" onClick={openScannerApp}>
-                <ExternalLink className="h-4 w-4" />
-                Open scanner app
-              </Button>
-            </div>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
+                  <Printer className="h-3.5 w-3.5" />
+                  LAN/WiFi &amp; USB scanners
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  disabled={devicesLoading}
+                  onClick={() => void refreshDevices()}
+                >
+                  <RefreshCw className={devicesLoading ? 'h-3 w-3 animate-spin' : 'h-3 w-3'} />
+                  Refresh
+                </Button>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="scanner-ip">Enter scanner IP</Label>
-              <div className="flex gap-2">
+              {devicesLoading && !devices ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Searching this network and computer for scanners…
+                </div>
+              ) : devices && devices.length > 0 ? (
+                <div className="space-y-2">
+                  {devices.map((device) => {
+                    const Icon = deviceIcon(device.kind)
+                    const fullLabel = device.kind === 'network' ? `${device.name} (${device.host})` : device.name
+                    return (
+                      <Button
+                        key={`${device.kind}:${device.id}`}
+                        type="button"
+                        className="w-full justify-start overflow-hidden"
+                        title={fullLabel}
+                        onClick={() => void scanFromDevice(device)}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{device.name}</span>
+                      </Button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  No scanners found yet. If yours doesn't appear, enter its
+                  network IP address below.
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-1">
                 <Input
-                  id="scanner-ip"
                   value={manualIp}
                   onChange={(event) => setManualIp(event.target.value)}
                   placeholder="192.168.1.105"
+                  className="flex-1"
                 />
-                <Button type="button" variant="outline" onClick={() => void connectToIp(manualIp)}>
-                  Connect
+                <Input
+                  value={manualPort}
+                  onChange={(event) => setManualPort(event.target.value)}
+                  placeholder="Port"
+                  className="w-20"
+                />
+                <Button type="button" variant="outline" disabled={verifying} onClick={() => void handleManualConnect()}>
+                  {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
                 </Button>
+              </div>
+              {scanError && <p className="text-xs text-destructive">{scanError}</p>}
+            </div>
+
+            <div className="flex items-center gap-3 rounded-md border border-border bg-muted p-4 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-brand-mid" />
+              <span>Or scan with your printer's own app — waiting…</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Saves to:
+              <br />
+              <code className="break-all">{folder}</code>
+            </p>
+          </div>
+        )}
+
+        {status === 'scanning-device' && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 rounded-md border border-border bg-muted p-4 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-brand-mid" />
+              <span>Scanning… this can take up to a minute.</span>
+            </div>
+          </div>
+        )}
+
+        {status === 'scan-ready' && scan && (
+          <div className="space-y-4">
+            <p className="text-sm font-medium">Scan received</p>
+            {scan.mimeType === 'application/pdf' ? (
+              <embed src={scan.dataUrl} type="application/pdf" className="h-64 w-full rounded-md border" />
+            ) : (
+              <img
+                src={scan.dataUrl}
+                alt="Scanned document"
+                className="max-h-64 w-full rounded-md border border-border object-contain"
+              />
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" className="flex-1" onClick={() => void scanAnother()}>
+                <RefreshCw className="h-4 w-4" />
+                Scan another
+              </Button>
+              <Button type="button" className="flex-1" onClick={() => void useCompletedScan()}>
+                Use this scan
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {status === 'not-connected' && (
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 rounded-md border border-border bg-muted p-4 text-sm">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="space-y-1">
+                <p>Scanner Bridge isn't running on this computer.</p>
+                <p className="text-xs text-muted-foreground">
+                  Start it once (see setup guide) and leave it running while
+                  scanning bills — it's how this computer reaches your
+                  scanner.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Button type="button" variant="outline" className="w-full justify-start" onClick={() => void searchNetwork()}>
-                <Search className="h-4 w-4" />
-                Search network
-              </Button>
-              {searchProgress.total > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Searching for scanners on your network…</p>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-brand-mid" style={{ width: `${networkPercent}%` }} />
-                  </div>
-                </div>
-              )}
-              {networkResults.map((result) => (
-                <Button
-                  key={result}
-                  type="button"
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => void connectToIp(result)}
-                >
-                  Scanner at {scannerLabel(result)}
-                </Button>
-              ))}
-            </div>
+            <Button type="button" variant="outline" className="w-full justify-start" onClick={() => void connect()}>
+              <RefreshCw className="h-4 w-4" />
+              Retry connection
+            </Button>
 
             <div className="space-y-2">
               <Button type="button" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
