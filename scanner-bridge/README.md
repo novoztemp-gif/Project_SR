@@ -23,27 +23,45 @@ scanner hardware directly, using the right mechanism for each connection type:
   any reason, its own "Scan to PC" / "Scan to Folder" software still works
   — the Bridge also watches a folder and picks up files saved there.
 
-## One-time setup — Windows
+## Deploying to a client's Windows PC (no Node.js, no terminal)
+
+This is the real deployment path — for a client's counter computer, not a
+developer machine. It ships as just two files: `scanner-bridge.exe` (a
+standalone build with Node.js already bundled inside it — nothing else to
+install) and `install.bat`.
+
+1. Build the exe once, from a machine with this source checked out:
+   ```
+   npm install
+   npm run build:exe
+   ```
+   This produces `dist-exe/scanner-bridge.exe`.
+2. Copy `dist-exe/scanner-bridge.exe` and `install.bat` together onto the
+   client's PC (USB stick, file transfer during a remote-support session,
+   however's convenient) — into the same folder.
+3. Double-click **`install.bat`**. It copies the program into Windows'
+   Startup folder (so it launches automatically every login, no shortcut or
+   admin rights needed) and starts it immediately so you can test right
+   away.
+4. That's it — nothing else to install, no Node.js, no npm. The client
+   never has to touch this again; it just runs quietly in the background
+   from every login onward.
+
+This part (packaging into a single .exe) hasn't been run against a real
+Windows machine or real scanner hardware yet — only verified as a valid
+Windows executable and functionally tested as plain Node.js. The first real
+install on an actual client PC is also its first real-world test.
+
+## Developer / source setup — Windows
+
+If you're working on this code directly (not deploying to a client) and
+have Node.js installed:
 
 1. Install [Node.js](https://nodejs.org) (the LTS version) if it isn't
    already on this computer. (WIA, used for USB scanners, is already built
    into Windows — nothing else to install.)
-2. Copy this whole `scanner-bridge` folder onto the computer (e.g. to
-   `C:\SRBilling\scanner-bridge`).
-3. Double-click **`install.bat`**. It installs everything needed — takes a
-   minute, only needed once.
-4. Double-click **`start.bat`** any time you need to scan. Leave that
-   window open while scanning bills.
-
-**Optional — start it automatically every time this computer turns on**
-(recommended for a counter machine, so no one has to remember to launch it):
-1. Press `Win + R`, type `shell:startup`, press Enter — this opens the
-   Startup folder.
-2. Right-click **`start.bat`** → *Show more options* → *Send to* → *Desktop
-   (create shortcut)*, then drag that new shortcut into the Startup folder
-   window from step 1.
-3. From then on, the Scanner Bridge window opens by itself on login. It can
-   be minimized, just not closed.
+2. Open a terminal in this folder and run `npm install`.
+3. Double-click **`start.bat`** to run it, or `npm start` from the terminal.
 
 ## One-time setup — Mac/Linux
 
@@ -61,9 +79,10 @@ whichever app you launched this from) is allowed.
 
 ## Every day use
 
-1. Start this program — double-click `start.bat` on Windows (or run
-   `npm start` in a terminal on Mac/Linux) — and leave the window open. (If
-   you set up auto-start above, this already happened on login.)
+1. On a client PC set up via `install.bat`, this already happened
+   automatically on login — nothing to start. Otherwise (developer/source
+   setup), start it — double-click `start.bat` on Windows, or run
+   `npm start` in a terminal on Mac/Linux — and leave the window open.
 2. In SR Billing, click **Scan from Scanner**.
 3. Pick your scanner from the list and click it — it scans immediately, no
    other software needed. If it's not listed, click **Refresh**, or enter
