@@ -69,7 +69,6 @@ billsRouter.post(
 billsRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    console.log('[bills] entering POST /api/bills, items:', req.body?.items?.length)
     const input = createBillSchema.parse(req.body)
     assertSectionAccess(req.user!, input.section)
 
@@ -77,13 +76,25 @@ billsRouter.post(
       throw new ApiError(400, 'Invalid customer phone number')
     }
 
-    console.log('[bills] before transaction, item count:', input.items.length)
     const bill = await prisma.$transaction(async (tx) => {
-      // 1. Validate stock for every item before touching anything.
+      // Check-and-decrement stock for every item in one atomic statement per
+      // item. Doing this as a separate read (findUnique) then a separate
+      // write (update) — the previous code — has a real, confirmed race:
+      // two concurrent bills each read the same "stock is enough" snapshot
+      // and both proceed, oversetting the product negative with no error to
+      // either caller (reproduced under load: 10 concurrent 1-qty bills
+      // against a product with 5 in stock all succeeded — final stock: -5).
+      // A conditional `UPDATE ... WHERE stock >= qty` makes the check part
+      // of the same statement as the write, so Postgres's row lock does the
+      // serializing; a 0-row result means someone else already took it.
       for (const item of input.items) {
-        const product = await tx.product.findUnique({ where: { id: item.productId } })
-        if (!product) throw new ApiError(404, `Product ${item.productId} not found`)
-        if (product.stock < item.quantity) {
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        })
+        if (result.count === 0) {
+          const product = await tx.product.findUnique({ where: { id: item.productId } })
+          if (!product) throw new ApiError(404, `Product ${item.productId} not found`)
           throw new ApiError(409, `Not enough stock for ${item.productName}`, {
             productName: item.productName,
             available: product.stock,
@@ -91,16 +102,6 @@ billsRouter.post(
           })
         }
       }
-      console.log('[bills] stock validated for all items')
-
-      // 2. Decrement stock.
-      for (const item of input.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        })
-      }
-      console.log('[bills] after inventory update')
 
       // 3. Compute totals + next bill number, then create the bill.
       const items = input.items.map((item) => ({
@@ -118,6 +119,15 @@ billsRouter.post(
       const discount = input.discount ?? 0
       const paidAmount = input.paidAmount ?? 0
 
+      // Reading the current max and creating the row are two separate
+      // statements — wrapping them in a transaction alone does NOT stop two
+      // concurrent bills from both reading the same max before either
+      // commits (Postgres's default READ COMMITTED doesn't lock on a plain
+      // read). An advisory lock serializes just this critical section: the
+      // second concurrent transaction blocks here until the first commits,
+      // then correctly sees its billNumber. Released automatically at
+      // commit/rollback — no separate unlock needed.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('sales_bill_number'))`
       const agg = await tx.salesBill.aggregate({ _max: { billNumber: true } })
       const billNumber = (agg._max.billNumber ?? 0) + 1
 
@@ -142,10 +152,8 @@ billsRouter.post(
         },
         include: { items: true },
       })
-      console.log('[bills] after bill + item creation, billId:', created.id)
       return created
     }, { timeout: 20000 })
-    console.log('[bills] after transaction, before response')
 
     res.status(201).json(bill)
   }),

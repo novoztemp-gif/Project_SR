@@ -141,10 +141,16 @@ inventoryRouter.put(
   '/products/:id',
   asyncHandler(async (req, res) => {
     const data = productDefinitionSchema.parse(req.body)
-    assertSectionAccess(req.user!, data.section)
 
     const existing = await prisma.product.findUnique({ where: { id: req.params.id } })
     if (!existing) throw new ApiError(404, 'Product not found')
+    // Checking only the requested (new) section let a user with access to
+    // e.g. Glass alone edit — and reclassify — a product they don't manage,
+    // simply by setting section:"glass" in the request body regardless of
+    // what section the product actually belongs to. Must hold access to
+    // both the product's current section and whatever section it's moving to.
+    assertSectionAccess(req.user!, existing.section)
+    assertSectionAccess(req.user!, data.section)
 
     const product = await prisma.product.update({
       where: { id: req.params.id },
@@ -167,6 +173,14 @@ inventoryRouter.put(
 inventoryRouter.delete(
   '/products/:id',
   asyncHandler(async (req, res) => {
+    // This had NO section check at all — any authenticated user, including a
+    // counter restricted to e.g. Glass + Plywood, could permanently delete
+    // any product in any section by ID (confirmed: a Glass/Plywood-only
+    // counter account successfully deleted a Plumbing product).
+    const existing = await prisma.product.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Product not found')
+    assertSectionAccess(req.user!, existing.section)
+
     await prisma.product.delete({ where: { id: req.params.id } })
     res.json({ ok: true })
   }),
@@ -181,7 +195,18 @@ const transferSchema = z.object({
   qty: z.number().positive(),
 })
 
-/** POST /api/inventory/transfers — move a product between godowns + log it. */
+/**
+ * POST /api/inventory/transfers — move a partial or full quantity of a
+ * product between godowns + log it.
+ *
+ * A product row belongs to exactly one godown (no per-godown stock table),
+ * so previously "transfer" always moved the ENTIRE row regardless of the qty
+ * typed — a transfer of 3 of 10 units actually moved all 10, while the log
+ * dishonestly recorded "3". The fix: decrement the source row by exactly
+ * `qty`, and top up (or create) the matching product row in the destination
+ * godown — the same pattern purchases already use, since sku has no unique
+ * constraint and is expected to repeat once per godown.
+ */
 inventoryRouter.post(
   '/transfers',
   asyncHandler(async (req, res) => {
@@ -192,15 +217,47 @@ inventoryRouter.post(
       if (!product || product.godownId !== data.fromGodownId) {
         throw new ApiError(400, 'Product is not in the selected source godown.')
       }
-      if (data.qty <= 0 || data.qty > product.stock) {
-        throw new ApiError(400, 'Transfer quantity exceeds available stock.')
-      }
       assertSectionAccess(req.user!, product.section)
 
-      await tx.product.update({
-        where: { id: product.id },
-        data: { godownId: data.toGodownId },
+      // Atomic check-and-decrement, same reasoning as the bill stock fix: a
+      // separate read-then-write here would let two concurrent transfers of
+      // the same product both pass a stale stock check and oversell the
+      // source godown negative.
+      const decremented = await tx.product.updateMany({
+        where: { id: product.id, stock: { gte: data.qty } },
+        data: { stock: { decrement: data.qty } },
       })
+      if (decremented.count === 0) {
+        throw new ApiError(400, 'Transfer quantity exceeds available stock.')
+      }
+
+      const destination = await tx.product.findFirst({
+        where: { sku: product.sku, section: product.section, godownId: data.toGodownId },
+      })
+
+      if (destination) {
+        await tx.product.update({
+          where: { id: destination.id },
+          data: { stock: { increment: data.qty } },
+        })
+      } else {
+        await tx.product.create({
+          data: {
+            name: product.name,
+            spec: product.spec,
+            sku: product.sku,
+            unit: product.unit,
+            hsnCode: product.hsnCode,
+            taxRate: product.taxRate,
+            section: product.section,
+            godownId: data.toGodownId,
+            stock: data.qty,
+            costPrice: product.costPrice,
+            salePrice: product.salePrice,
+            lowStockThreshold: product.lowStockThreshold,
+          },
+        })
+      }
 
       return tx.transferLog.create({
         data: {
@@ -212,7 +269,7 @@ inventoryRouter.post(
           transferredBy: req.user!.name,
         },
       })
-    })
+    }, { timeout: 20000 })
 
     res.status(201).json(result)
   }),

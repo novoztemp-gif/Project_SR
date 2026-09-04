@@ -172,7 +172,13 @@ export function GodownsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button type="button" variant="outline" size="sm" onClick={() => openTransfer(product)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={product.stock < 1}
+                          onClick={() => openTransfer(product)}
+                        >
                           <ArrowRightLeft className="mr-2 h-4 w-4" />
                           Transfer
                         </Button>
@@ -230,7 +236,10 @@ export function GodownsPage() {
                   id="transferQty"
                   type="number"
                   min={1}
-                  max={transferProduct.stock}
+                  // Guard against a self-contradictory min > max: at 0 stock
+                  // (data drift, a just-sold-out item, etc.) max={0} would
+                  // silently make this field permanently invalid.
+                  max={transferProduct.stock >= 1 ? transferProduct.stock : undefined}
                   value={transferQty}
                   onChange={(event) => setTransferQty(Number(event.target.value))}
                 />
