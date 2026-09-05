@@ -13,7 +13,8 @@
     "bonjour-service": "^1.4.4",
     "chokidar": "^3.6.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jimp": "^1.6.1"
   },
   "devDependencies": {
     "@yao-pkg/pkg": "^6.10.0",

@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import crypto from 'node:crypto'
+import { Jimp } from 'jimp'
 import { startDiscovery, listDiscovered, verifyScanner, performScan } from './escl.js'
 import { listSaneDevices, scanSaneDevice } from './sane.js'
 import { listWiaDevices, scanWiaDevice } from './wia.js'
@@ -67,13 +68,57 @@ fs.mkdirSync(SCAN_FOLDER, { recursive: true })
 /** @type {{ id: string, filename: string, mimeType: string, dataUrl: string, scannedAt: string, consumed: boolean }[]} */
 const scans = []
 const MAX_TRACKED_SCANS = 20
+const MAX_SCAN_DIMENSION = 2500
 
-function pushScan({ buffer, mimeType, filename }) {
+// Normalizes a scanned image into a clean, correctly-labeled JPEG before
+// it's ever shown to the extraction API — regardless of what a scanner
+// driver actually produced. Fixes two real bugs, both reproduced directly
+// against the live extraction endpoint:
+//   - Some WIA drivers ignore the requested transfer format and save their
+//     own native format (commonly BMP) anyway; the file was still labeled
+//     "image/jpeg" here, and the vision model correctly rejected the
+//     mismatch with "does not represent a valid image" (a 400 surfaced to
+//     the user as "Extraction model error (400)").
+//   - A scanner defaulting to its full physical bed rather than the actual
+//     paper size (no scan-area constrained) produced an oversized image
+//     whose payload was large enough to fail outright.
+// Jimp auto-detects the real format from the bytes rather than trusting
+// the claimed mimeType, and re-encodes to JPEG regardless of source
+// format (BMP, PNG, TIFF, GIF, or already JPEG). PDFs are passed through
+// untouched — Jimp only handles raster images.
+async function normalizeScan(buffer, mimeType) {
+  if (mimeType === 'application/pdf') return { buffer, mimeType }
+  try {
+    // Jimp.read() has a bug where it silently drops decode options for
+    // Buffer input (only forwards them on the fetch-a-URL path) —
+    // Jimp.fromBuffer() is the same operation but actually honors them.
+    // The raised limits matter here specifically: jpeg-js's defaults
+    // reject decoding a full-platen oversized scan outright (confirmed:
+    // an 8400x12000 scan hit both its megapixel and memory caps) — we
+    // want to actually decode those, precisely so we can then shrink them.
+    const image = await Jimp.fromBuffer(buffer, {
+      'image/jpeg': { maxResolutionInMP: 500, maxMemoryUsageInMB: 4096 },
+    })
+    const { width, height } = image.bitmap
+    if (width > MAX_SCAN_DIMENSION || height > MAX_SCAN_DIMENSION) {
+      if (width >= height) image.resize({ w: MAX_SCAN_DIMENSION })
+      else image.resize({ h: MAX_SCAN_DIMENSION })
+    }
+    const normalized = await image.getBuffer('image/jpeg')
+    return { buffer: normalized, mimeType: 'image/jpeg' }
+  } catch (err) {
+    console.error('[scanner-bridge] Could not normalize scanned image, using it as-is:', err.message)
+    return { buffer, mimeType }
+  }
+}
+
+async function pushScan({ buffer, mimeType, filename }) {
+  const normalized = await normalizeScan(buffer, mimeType)
   const scan = {
     id: crypto.randomUUID(),
     filename,
-    mimeType,
-    dataUrl: `data:${mimeType};base64,${buffer.toString('base64')}`,
+    mimeType: normalized.mimeType,
+    dataUrl: `data:${normalized.mimeType};base64,${normalized.buffer.toString('base64')}`,
     scannedAt: new Date().toISOString(),
     consumed: false,
   }
@@ -82,7 +127,7 @@ function pushScan({ buffer, mimeType, filename }) {
   return scan
 }
 
-function trackScan(filePath) {
+async function trackScan(filePath) {
   const ext = path.extname(filePath).toLowerCase()
   const mimeType = MIME_BY_EXT[ext]
   if (!mimeType) return // ignore non-scan files (e.g. .DS_Store, partial downloads)
@@ -95,7 +140,7 @@ function trackScan(filePath) {
   }
   if (buffer.length === 0) return
 
-  const scan = pushScan({ buffer, mimeType, filename: path.basename(filePath) })
+  const scan = await pushScan({ buffer, mimeType, filename: path.basename(filePath) })
   console.log(`[scanner-bridge] new scan detected (folder): ${scan.filename} (${(buffer.length / 1024).toFixed(0)} KB)`)
 }
 
@@ -190,7 +235,7 @@ app.post('/scan-device', async (req, res) => {
     else return res.status(400).json({ error: 'Unknown device kind' })
 
     const ext = result.mimeType.includes('pdf') ? 'pdf' : result.mimeType.includes('png') ? 'png' : 'jpg'
-    const scan = pushScan({ buffer: result.buffer, mimeType: result.mimeType, filename: `scan-${Date.now()}.${ext}` })
+    const scan = await pushScan({ buffer: result.buffer, mimeType: result.mimeType, filename: `scan-${Date.now()}.${ext}` })
     console.log(`[scanner-bridge] new scan detected (${device.kind}, ${device.name}): ${scan.filename}`)
     res.json(scan)
   } catch (err) {
