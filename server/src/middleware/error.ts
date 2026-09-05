@@ -43,6 +43,19 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     }
   }
 
+  // Thrown by body-parser before a request even reaches a route handler —
+  // was falling through to the generic 500 below, surfacing as an opaque
+  // "Internal server error" for what's really just a large photo (confirmed
+  // directly: a 14.5MB image produced exactly that).
+  if (
+    err &&
+    typeof err === 'object' &&
+    'type' in err &&
+    (err as { type?: string }).type === 'entity.too.large'
+  ) {
+    return res.status(413).json({ error: 'File is too large — try a smaller image' })
+  }
+
   console.error('========== BILL SAVE ERROR ==========')
   console.error(err)
   console.error(err instanceof Error ? err.stack : err)

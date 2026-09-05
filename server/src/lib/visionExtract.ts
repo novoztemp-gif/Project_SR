@@ -3,11 +3,14 @@
 // back strict JSON" — this is that call, factored out so the two callers only
 // have to supply their own instructions/schema, not duplicate the OpenAI
 // Responses API request/response handling.
+import sharp from 'sharp'
+
 import { env } from '../env.js'
 import { ApiError } from '../middleware/error.js'
 
 // data:<mime>;base64,<payload>
 const DATA_URL_RE = /^data:([^;]+);base64,/
+const MAX_IMAGE_DIMENSION = 2500
 
 export function detectKind(dataUrl: string): { mime: string; isPdf: boolean } {
   const match = DATA_URL_RE.exec(dataUrl)
@@ -20,6 +23,35 @@ export function detectKind(dataUrl: string): { mime: string; isPdf: boolean } {
     throw new ApiError(400, `Unsupported file type "${mime}" — upload an image or PDF`)
   }
   return { mime, isPdf }
+}
+
+/**
+ * Re-encodes an uploaded/scanned image into a clean, correctly-labeled JPEG
+ * before it's ever shown to the vision model — decoding from the real bytes
+ * rather than trusting whatever the browser/device claimed the format was,
+ * and capping oversized dimensions (a full-resolution phone photo or an
+ * uncropped scanner-bed image can be tens of megapixels). Mirrors the same
+ * normalization scanner-bridge does for its own scans — this covers the
+ * direct Upload path, which never goes through scanner-bridge at all.
+ * PDFs pass through untouched (sharp only handles raster images). On any
+ * decode failure, falls back to the original bytes rather than blocking
+ * the request outright — better to let the model's own error surface than
+ * to invent a new failure mode here.
+ */
+async function normalizeImage(dataUrl: string): Promise<string> {
+  try {
+    const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
+    const input = Buffer.from(base64, 'base64')
+    const normalized = await sharp(input)
+      .rotate() // apply EXIF orientation before it's lost, then strip it
+      .resize({ width: MAX_IMAGE_DIMENSION, height: MAX_IMAGE_DIMENSION, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+    return `data:image/jpeg;base64,${normalized.toString('base64')}`
+  } catch (err) {
+    console.error('[extract] Could not normalize image, using it as-is:', err)
+    return dataUrl
+  }
 }
 
 /** Pull the concatenated text output out of a Responses API payload. */
@@ -61,10 +93,11 @@ export async function callVisionExtraction(
   }
 
   const { isPdf } = detectKind(dataUrl)
+  const normalizedDataUrl = isPdf ? dataUrl : await normalizeImage(dataUrl)
 
   const filePart = isPdf
-    ? { type: 'input_file', filename: 'document.pdf', file_data: dataUrl }
-    : { type: 'input_image', image_url: dataUrl }
+    ? { type: 'input_file', filename: 'document.pdf', file_data: normalizedDataUrl }
+    : { type: 'input_image', image_url: normalizedDataUrl }
 
   const body = {
     model: env.OPENAI_MODEL,

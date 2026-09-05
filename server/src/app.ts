@@ -18,7 +18,12 @@ export function createApp() {
       credentials: true,
     }),
   )
-  app.use(express.json({ limit: '10mb' })) // 10mb to accommodate base64 scan/receipt images
+  // 30mb: base64-encodes a photo/scan, which adds ~33% overhead on top of
+  // the original file — a plain, unremarkable phone photo can be 12-20MB,
+  // and 10mb was rejecting those outright with a raw PayloadTooLargeError
+  // that surfaced to the user as a generic "Internal server error"
+  // (confirmed directly: a 14.5MB photo produced exactly that).
+  app.use(express.json({ limit: '30mb' }))
 
   app.get('/health', (_req, res) => res.json({ ok: true, service: 'sr-billing-server' }))
 
