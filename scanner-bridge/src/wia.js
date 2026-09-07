@@ -136,12 +136,48 @@ export async function listWiaDevices() {
   }
 }
 
+// Mirrors the same reasoning as the eSCL network path's 503 retry: a
+// scanner that just finished a previous job (or has another program's
+// handle on it, e.g. the printer's own "Scan 2" app running in the
+// background) reports itself busy for a few seconds rather than queuing
+// the request — confirmed directly against a real Epson L380. Not a real
+// failure, so retry a few times before surfacing anything to the user.
+const BUSY_RETRY_ATTEMPTS = 4
+const BUSY_RETRY_DELAY_MS = 3000
+
+function isDeviceBusyError(err) {
+  return /device is busy/i.test(err?.message ?? '')
+}
+
 export async function scanWiaDevice(deviceId) {
   if (!isWindows()) throw new Error('WIA scanning is only available on Windows')
   const scriptPath = writeTempScript('srbilling-scan-wia-device.ps1', SCAN_DEVICE_SCRIPT)
-  const outputPath = path.join(os.tmpdir(), `srbilling-wia-${Date.now()}.jpg`)
-  await runPowerShell(['-File', scriptPath, '-DeviceId', deviceId, '-OutputPath', outputPath], 90000)
-  const buffer = fs.readFileSync(outputPath)
-  fs.unlinkSync(outputPath)
-  return { buffer, mimeType: 'image/jpeg' }
+
+  let lastErr
+  for (let attempt = 1; attempt <= BUSY_RETRY_ATTEMPTS; attempt += 1) {
+    const outputPath = path.join(os.tmpdir(), `srbilling-wia-${Date.now()}.jpg`)
+    try {
+      await runPowerShell(['-File', scriptPath, '-DeviceId', deviceId, '-OutputPath', outputPath], 90000)
+      const buffer = fs.readFileSync(outputPath)
+      fs.unlinkSync(outputPath)
+      return { buffer, mimeType: 'image/jpeg' }
+    } catch (err) {
+      lastErr = err
+      try {
+        fs.unlinkSync(outputPath)
+      } catch {
+        // No partial file to clean up — fine.
+      }
+      if (!isDeviceBusyError(err) || attempt === BUSY_RETRY_ATTEMPTS) break
+      console.log(`[scanner-bridge] Scanner busy, retrying (${attempt}/${BUSY_RETRY_ATTEMPTS})…`)
+      await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_DELAY_MS))
+    }
+  }
+
+  if (isDeviceBusyError(lastErr)) {
+    throw new Error(
+      'Scanner is busy — close any other scanning program (like Epson Scan 2 or Windows Fax and Scan) and try again in a few seconds.',
+    )
+  }
+  throw lastErr
 }
