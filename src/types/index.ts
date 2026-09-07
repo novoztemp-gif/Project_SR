@@ -1,14 +1,15 @@
 // ─── Enums / Union Types ──────────────────────────────────────────────────────
 
-/** Matches the five product departments / nav sections */
+/** Matches the product departments / nav sections */
 export type Section =
   | 'glass'
   | 'plywood'
   | 'plumbing'
   | 'painting'
   | 'electrical'
+  | 'hardware'
 
-export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical'
+export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
 
 export type BillingRole = `billing_${string}`
 export type Role = 'admin' | BillingRole

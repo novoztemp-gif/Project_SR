@@ -13,6 +13,7 @@ const SECTION_BY_TYPE: Record<string, Section> = {
   Plumbing: 'plumbing',
   Painting: 'painting',
   Electrical: 'electrical',
+  Hardware: 'hardware',
 }
 
 // ─── Godowns ───────────────────────────────────────────────────────────────────
@@ -189,7 +190,7 @@ async function main() {
       role: 'admin',
       active: true,
       sortOrder: 0,
-      processes: ['glass', 'plywood', 'plumbing', 'painting', 'electrical'],
+      processes: ['glass', 'plywood', 'plumbing', 'painting', 'electrical', 'hardware'],
     },
   })
 

@@ -16,7 +16,7 @@ countersRouter.use(authenticate, requireAdmin)
 
 const AVATAR_COLORS = ['deep', 'mint', 'leaf', 'forest', 'highlight', 'charcoal']
 
-const SectionTypeEnum = z.enum(['Glass', 'Plywood', 'Plumbing', 'Painting', 'Electrical'])
+const SectionTypeEnum = z.enum(['Glass', 'Plywood', 'Plumbing', 'Painting', 'Electrical', 'Hardware'])
 
 const counterSchema = z.object({
   name: z.string().min(1),

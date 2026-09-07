@@ -18,8 +18,8 @@ export interface ParsedBill {
 }
 
 const EXTRACTION_INSTRUCTIONS = [
-  'You are a data-entry assistant for a hardware retailer (glass, plywood, plumbing,',
-  'painting, electrical). Read the attached customer bill/invoice and extract the',
+  'You are a data-entry assistant for a building materials retailer (glass, plywood,',
+  'plumbing, painting, electrical, hardware). Read the attached customer bill/invoice and extract the',
   'customer details and every line item. For each item return these fields exactly as',
   'printed, no currency symbols:',
   '- name: the item description.',

@@ -14,6 +14,7 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'plumbing',   label: 'Plumbing',   colorVar: '--section-plumbing' },
   { key: 'painting',   label: 'Painting',   colorVar: '--section-painting' },
   { key: 'electrical', label: 'Electrical', colorVar: '--section-electrical' },
+  { key: 'hardware',   label: 'Hardware',   colorVar: '--section-hardware' },
 ]
 
 export const SECTION_COLORS: Record<string, string> = {
@@ -22,6 +23,7 @@ export const SECTION_COLORS: Record<string, string> = {
   Plumbing: '#81C784',
   Painting: '#F06292',
   Electrical: '#FFD54F',
+  Hardware: '#90A4AE',
 }
 
 export interface MeasurementPreset {
@@ -97,6 +99,17 @@ export const MEASUREMENT_PRESETS: Record<string, MeasurementPreset[]> = {
     { label: '16A', value: '16A' },
     { label: '20A', value: '20A' },
     { label: '32A', value: '32A' },
+  ],
+  Hardware: [
+    { label: '1 inch', value: '1"' },
+    { label: '1.5 inch', value: '1.5"' },
+    { label: '2 inch', value: '2"' },
+    { label: '3 inch', value: '3"' },
+    { label: '4 inch', value: '4"' },
+    { label: '6 inch', value: '6"' },
+    { label: 'Small', value: 'Small' },
+    { label: 'Medium', value: 'Medium' },
+    { label: 'Large', value: 'Large' },
   ],
 }
 

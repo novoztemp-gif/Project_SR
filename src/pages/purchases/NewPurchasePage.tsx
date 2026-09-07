@@ -74,6 +74,8 @@ function getSizePlaceholder(section?: Section) {
       return 'e.g. 1/2 inch / 3 m'
     case 'electrical':
       return 'e.g. 10 m / 6 mm2'
+    case 'hardware':
+      return 'e.g. 2 inch / Small'
     default:
       return 'e.g. size or dimension'
   }

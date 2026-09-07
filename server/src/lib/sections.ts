@@ -1,7 +1,7 @@
 import { Section } from '@prisma/client'
 
 /** Capitalized process labels used by the frontend Counter UI. */
-export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical'
+export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
 
 export const ALL_SECTIONS: Section[] = [
   Section.glass,
@@ -9,6 +9,7 @@ export const ALL_SECTIONS: Section[] = [
   Section.plumbing,
   Section.painting,
   Section.electrical,
+  Section.hardware,
 ]
 
 const TYPE_BY_SECTION: Record<Section, SectionType> = {
@@ -17,6 +18,7 @@ const TYPE_BY_SECTION: Record<Section, SectionType> = {
   plumbing: 'Plumbing',
   painting: 'Painting',
   electrical: 'Electrical',
+  hardware: 'Hardware',
 }
 
 const SECTION_BY_TYPE: Record<SectionType, Section> = {
@@ -25,6 +27,7 @@ const SECTION_BY_TYPE: Record<SectionType, Section> = {
   Plumbing: Section.plumbing,
   Painting: Section.painting,
   Electrical: Section.electrical,
+  Hardware: Section.hardware,
 }
 
 export function sectionToType(section: Section): SectionType {

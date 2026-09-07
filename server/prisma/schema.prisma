@@ -147,6 +147,7 @@ enum Section {
   plumbing
   painting
   electrical
+  hardware
 }
 
 enum BillStatus {

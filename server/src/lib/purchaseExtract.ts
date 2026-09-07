@@ -19,8 +19,8 @@ export interface ParsedPurchase {
 }
 
 const EXTRACTION_INSTRUCTIONS = [
-  'You are a data-entry assistant for a hardware retailer (glass, plywood, plumbing,',
-  'painting, electrical) reading a PURCHASE invoice/bill from one of its suppliers.',
+  'You are a data-entry assistant for a building materials retailer (glass, plywood,',
+  'plumbing, painting, electrical, hardware) reading a PURCHASE invoice/bill from one of its suppliers.',
   'The document was issued BY the supplier/vendor TO this business — extract the',
   'SELLER/SUPPLIER identity (usually the company name in the letterhead, header, or',
   '"From" field, often with a GST/logo block), NOT the buyer/"Bill To" name.',
