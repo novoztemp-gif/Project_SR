@@ -49,6 +49,7 @@ export function ScannerConnectDialog({
   const [verifying, setVerifying] = React.useState(false)
   const {
     status,
+    notConnectedReason,
     folder,
     scan,
     devices,
@@ -256,12 +257,34 @@ export function ScannerConnectDialog({
             <div className="flex items-start gap-3 rounded-md border border-border bg-muted p-4 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="space-y-1">
-                <p>Scanner Bridge isn't running on this computer.</p>
-                <p className="text-xs text-muted-foreground">
-                  Start it once (see setup guide) and leave it running while
-                  scanning bills — it's how this computer reaches your
-                  scanner.
-                </p>
+                {notConnectedReason === 'lost-connection' ? (
+                  <>
+                    <p>Lost connection to Scanner Bridge.</p>
+                    <p className="text-xs text-muted-foreground">
+                      It may have closed, or your computer briefly paused it.
+                      Make sure its window is still open, then try again.
+                    </p>
+                  </>
+                ) : notConnectedReason === 'maybe-blocked' ? (
+                  <>
+                    <p>Can't reach Scanner Bridge on this computer.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Check that its window is open and running. If it is,
+                      your browser may have blocked this page from reaching
+                      it — look for a blocked-permission icon near the
+                      address bar, allow it, then reload this page.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>Scanner Bridge isn't running on this computer.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Start it once (see setup guide) and leave it running
+                      while scanning bills — it's how this computer reaches
+                      your scanner.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 

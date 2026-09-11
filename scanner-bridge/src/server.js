@@ -5,10 +5,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import crypto from 'node:crypto'
+import http from 'node:http'
 import { Jimp } from 'jimp'
 import { startDiscovery, listDiscovered, verifyScanner, performScan } from './escl.js'
 import { listSaneDevices, scanSaneDevice } from './sane.js'
 import { listWiaDevices, scanWiaDevice } from './wia.js'
+import { initLogger, log } from './log.js'
 
 const PORT = Number(process.env.SCAN_BRIDGE_PORT) || 8787
 const SCAN_FOLDER = process.env.SCAN_FOLDER || path.join(os.homedir(), 'SRBilling Scans')
@@ -56,14 +58,15 @@ function selfInstallOnWindows() {
     if (path.resolve(current).toLowerCase() === path.resolve(target).toLowerCase()) return // already the installed copy
     fs.mkdirSync(startupDir, { recursive: true })
     fs.copyFileSync(current, target)
-    console.log('[scanner-bridge] Installed — this will now start automatically every time this computer turns on.')
+    log('[scanner-bridge] Installed — this will now start automatically every time this computer turns on.')
   } catch (err) {
-    console.error('[scanner-bridge] Could not install to the Startup folder (will still run this time):', err.message)
+    log(`[scanner-bridge] Could not install to the Startup folder (will still run this time): ${err.message}`)
   }
 }
-selfInstallOnWindows()
 
 fs.mkdirSync(SCAN_FOLDER, { recursive: true })
+initLogger(SCAN_FOLDER)
+selfInstallOnWindows()
 
 /** @type {{ id: string, filename: string, mimeType: string, dataUrl: string, scannedAt: string, consumed: boolean }[]} */
 const scans = []
@@ -107,7 +110,7 @@ async function normalizeScan(buffer, mimeType) {
     const normalized = await image.getBuffer('image/jpeg')
     return { buffer: normalized, mimeType: 'image/jpeg' }
   } catch (err) {
-    console.error('[scanner-bridge] Could not normalize scanned image, using it as-is:', err.message)
+    log(`[scanner-bridge] Could not normalize scanned image, using it as-is: ${err.message}`)
     return { buffer, mimeType }
   }
 }
@@ -141,7 +144,7 @@ async function trackScan(filePath) {
   if (buffer.length === 0) return
 
   const scan = await pushScan({ buffer, mimeType, filename: path.basename(filePath) })
-  console.log(`[scanner-bridge] new scan detected (folder): ${scan.filename} (${(buffer.length / 1024).toFixed(0)} KB)`)
+  log(`[scanner-bridge] new scan detected (folder): ${scan.filename} (${(buffer.length / 1024).toFixed(0)} KB)`)
 }
 
 // awaitWriteFinish avoids reading a file mid-write while the scan software
@@ -152,7 +155,7 @@ const watcher = chokidar.watch(SCAN_FOLDER, {
   awaitWriteFinish: { stabilityThreshold: 800, pollInterval: 200 },
 })
 watcher.on('add', trackScan)
-watcher.on('error', (err) => console.error('[scanner-bridge] watcher error:', err))
+watcher.on('error', (err) => log(`[scanner-bridge] watcher error: ${err.message}`))
 
 const bonjour = startDiscovery()
 
@@ -202,12 +205,37 @@ app.post('/consume/:id', (req, res) => {
 // Windows) — all driven directly by this process, so unlike the browser
 // none of this is blocked by CORS. ---
 
-app.get('/devices', async (_req, res) => {
+// USB device enumeration (WIA especially) is COM automation against a real
+// driver — slow-ish and occasionally flaky right after this process starts,
+// most notably right after a fresh Windows boot: confirmed real-world, a
+// scanner can take 20-30s to finish registering with Windows after login,
+// so a single enumeration attempt made right when someone opens the scan
+// screen can come back empty even though the exact same call succeeds
+// moments later. Rather than making /devices block on a slow/retried call
+// (and risk the frontend's own request timing out), keep a cache
+// continuously refreshed in the background from the moment this process
+// starts — by the time anyone actually opens the dialog, several attempts
+// have typically already happened, and /devices just returns whatever's
+// most recently known, instantly.
+let cachedUsbDevices = { sane: [], wia: [] }
+const USB_REFRESH_INTERVAL_MS = 5000
+
+async function refreshUsbDevices() {
   const [sane, wia] = await Promise.all([listSaneDevices(), listWiaDevices()])
+  const before = cachedUsbDevices
+  cachedUsbDevices = { sane, wia }
+  if (before.sane.length !== sane.length || before.wia.length !== wia.length) {
+    log(`[scanner-bridge] device scan: ${sane.length} SANE, ${wia.length} WIA device(s) found`)
+  }
+}
+void refreshUsbDevices()
+setInterval(() => { void refreshUsbDevices() }, USB_REFRESH_INTERVAL_MS).unref()
+
+app.get('/devices', (_req, res) => {
   const devices = [
     ...listDiscovered().map((s) => ({ kind: 'network', id: `${s.host}:${s.port}`, name: s.name, ...s })),
-    ...sane.map((d) => ({ kind: 'usb-sane', id: d.id, name: d.name })),
-    ...wia.map((d) => ({ kind: 'usb-wia', id: d.id, name: d.name })),
+    ...cachedUsbDevices.sane.map((d) => ({ kind: 'usb-sane', id: d.id, name: d.name })),
+    ...cachedUsbDevices.wia.map((d) => ({ kind: 'usb-wia', id: d.id, name: d.name })),
   ]
   res.json(devices)
 })
@@ -223,10 +251,19 @@ app.post('/verify-network', async (req, res) => {
   }
 })
 
+// A simple in-flight lock: two overlapping WIA scan attempts on the same
+// process (e.g. a double-click, or a retry firing while a slow scan is
+// still finishing) is itself a real way to make a driver report "device is
+// busy" — self-inflicted, not the printer's fault. Reject a second attempt
+// outright instead of letting it race the first.
+let scanInProgress = false
+
 app.post('/scan-device', async (req, res) => {
   const device = req.body
   if (!device?.kind) return res.status(400).json({ error: 'device is required' })
+  if (scanInProgress) return res.status(409).json({ error: 'A scan is already in progress — please wait for it to finish.' })
 
+  scanInProgress = true
   try {
     let result
     if (device.kind === 'network') result = await performScan(device)
@@ -236,30 +273,100 @@ app.post('/scan-device', async (req, res) => {
 
     const ext = result.mimeType.includes('pdf') ? 'pdf' : result.mimeType.includes('png') ? 'png' : 'jpg'
     const scan = await pushScan({ buffer: result.buffer, mimeType: result.mimeType, filename: `scan-${Date.now()}.${ext}` })
-    console.log(`[scanner-bridge] new scan detected (${device.kind}, ${device.name}): ${scan.filename}`)
+    log(`[scanner-bridge] new scan detected (${device.kind}, ${device.name}): ${scan.filename}`)
     res.json(scan)
   } catch (err) {
-    console.error('[scanner-bridge] scan failed:', err)
+    log(`[scanner-bridge] scan failed (${device.kind}, ${device.name}): ${err.message}`)
     res.status(502).json({ error: err.message || 'Scan failed' })
+  } finally {
+    scanInProgress = false
   }
 })
 
-const server = app.listen(PORT, '127.0.0.1', () => {
-  console.log('========================================')
-  console.log(' SR Billing Scanner Bridge')
-  console.log('========================================')
-  console.log(`Watching folder: ${SCAN_FOLDER}`)
-  console.log(`Listening on:    http://127.0.0.1:${PORT}`)
-  console.log('')
-  console.log('Network scanners on this WiFi/LAN are auto-discovered and can')
-  console.log('be triggered directly from SR Billing. For USB-only scanners,')
-  console.log('point their "Scan to PC" / "Scan to Folder" software at the')
-  console.log('folder above. Leave this window open while scanning bills.')
-  console.log('========================================')
+function printStartupBanner() {
+  log('========================================')
+  log(' SR Billing Scanner Bridge — RUNNING')
+  log('========================================')
+  log(`Watching folder: ${SCAN_FOLDER}`)
+  log(`Listening on:    http://127.0.0.1:${PORT}`)
+  log('')
+  log('Network scanners on this WiFi/LAN are auto-discovered and can')
+  log('be triggered directly from SR Billing. For USB-only scanners,')
+  log('point their "Scan to PC" / "Scan to Folder" software at the')
+  log('folder above. Leave this window open while scanning bills.')
+  log('========================================')
+  // A non-technical user has no other way to tell "still working" apart
+  // from "silently died" — this window doesn't otherwise print anything
+  // once startup finishes. unref() so this timer alone never keeps the
+  // process alive against a real shutdown signal.
+  setInterval(() => {
+    log(`[scanner-bridge] still running, watching for scans — ${new Date().toLocaleTimeString()}`)
+  }, 5 * 60 * 1000).unref()
+}
+
+const server = app.listen(PORT, '127.0.0.1', printStartupBanner)
+
+// app.listen() throwing unhandled here used to kill the whole process
+// silently on a port conflict (a stale/zombie previous instance, or
+// double-launching after self-install already copied the exe into the
+// Startup folder) — no console output a non-technical user would ever see
+// past a window that flashes and closes. Handle it explicitly instead.
+server.on('error', async (err) => {
+  if (err.code !== 'EADDRINUSE') {
+    log(`[scanner-bridge] Failed to start: ${err.message}`)
+    watcher.close()
+    bonjour?.destroy()
+    process.exit(1)
+    return
+  }
+  const alreadyHealthy = await new Promise((resolve) => {
+    const req = http.get({ host: '127.0.0.1', port: PORT, path: '/health', timeout: 2000 }, (res) => {
+      let body = ''
+      res.on('data', (chunk) => { body += chunk })
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body)?.ok === true)
+        } catch {
+          resolve(false)
+        }
+      })
+    })
+    req.on('error', () => resolve(false))
+    req.on('timeout', () => { req.destroy(); resolve(false) })
+  })
+
+  // Setting process.exitCode alone isn't enough here — chokidar's watcher
+  // and the bonjour mDNS socket are still-open handles keeping the event
+  // loop alive, so the process would otherwise just hang forever instead
+  // of actually closing (confirmed directly: without this, a second
+  // instance sat there indefinitely rather than exiting). This server
+  // never finished starting in this branch, so there's no `server` to
+  // close — just release the handles this process did open, then exit.
+  watcher.close()
+  bonjour?.destroy()
+
+  if (alreadyHealthy) {
+    log('========================================')
+    log(' SR Billing Scanner Bridge is already running')
+    log('========================================')
+    log('Another copy of this app is already open and working on this')
+    log(`computer (port ${PORT}). You can close this window — the other`)
+    log('one is already handling scans.')
+    log('========================================')
+    process.exit(0)
+  } else {
+    log('========================================')
+    log(' SR Billing Scanner Bridge could not start')
+    log('========================================')
+    log(`Something else on this computer is already using port ${PORT}.`)
+    log('Restart your computer and try again, or contact support.')
+    log('========================================')
+    process.exit(1)
+  }
 })
 
 function shutdown() {
-  console.log('\n[scanner-bridge] shutting down…')
+  log('\n[scanner-bridge] shutting down…')
   watcher.close()
   bonjour?.destroy()
   server.close(() => process.exit(0))

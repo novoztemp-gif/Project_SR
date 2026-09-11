@@ -4,6 +4,15 @@ export const SCANNER_BRIDGE_URL = 'http://127.0.0.1:8787'
 const POLL_INTERVAL_MS = 1500
 const HEALTH_TIMEOUT_MS = 2000
 const DEVICE_SCAN_TIMEOUT_MS = 60000
+// A single dropped /latest or /health request (a GC pause, the bridge's
+// Node event loop briefly blocked by a WIA/PowerShell call, one lost
+// packet) used to be treated as proof the bridge was dead — confirmed as
+// the main cause of "bridge not working" reports that resolved themselves
+// a moment later. Require a few consecutive failures, spaced out, before
+// actually declaring it down.
+const POLL_FAILURE_THRESHOLD = 3
+const HEALTH_RETRY_ATTEMPTS = 3
+const HEALTH_RETRY_DELAY_MS = 700
 // Network scanner discovery (mDNS) is asynchronous and can legitimately take
 // several seconds after the bridge starts — a device that announces itself a
 // few seconds late would otherwise never appear, since /devices was only
@@ -13,6 +22,13 @@ const DEVICE_SCAN_TIMEOUT_MS = 60000
 const DEVICE_POLL_INTERVAL_MS = 4000
 
 type BridgeStatus = 'checking' | 'connected' | 'scanning-device' | 'scan-ready' | 'not-connected'
+// 'lost-connection' — was connected, then polling failed past the
+// threshold (may well recover on retry). 'maybe-blocked' — never connected
+// this session on an https: origin, where a Private Network Access
+// permission denial and a genuinely-closed port are indistinguishable at
+// the fetch() level — this is a heuristic, not detection. 'bridge-down' —
+// never connected, non-https origin (dev), plain "not running."
+type NotConnectedReason = 'bridge-down' | 'lost-connection' | 'maybe-blocked'
 
 interface BridgeScan {
   id: string
@@ -49,8 +65,10 @@ export function useScannerBridge() {
   const [devices, setDevices] = React.useState<ScannerDevice[]>()
   const [devicesLoading, setDevicesLoading] = React.useState(false)
   const [scanError, setScanError] = React.useState<string>()
+  const [notConnectedReason, setNotConnectedReason] = React.useState<NotConnectedReason>('bridge-down')
   const pollTimer = React.useRef<number | undefined>(undefined)
   const devicePollTimer = React.useRef<number | undefined>(undefined)
+  const pollFailureCount = React.useRef(0)
   // Both pollers reschedule themselves via setTimeout — referencing the
   // useCallback-wrapped function by name from inside its own body works at
   // runtime (the setTimeout callback only fires well after the const is
@@ -102,19 +120,28 @@ export function useScannerBridge() {
     devicePollTimer.current = window.setTimeout(() => pollDevicesOnceRef.current(), DEVICE_POLL_INTERVAL_MS)
   }, [])
 
-  // Folder-watch channel: cheap, so it's fine to poll frequently.
+  // Folder-watch channel: cheap, so it's fine to poll frequently. A single
+  // failed poll no longer ends the session — only POLL_FAILURE_THRESHOLD
+  // consecutive failures do, since a transient blip here used to look
+  // identical to the bridge actually being down.
   const pollOnce = React.useCallback(async () => {
     try {
       const res = await fetchWithTimeout(`${SCANNER_BRIDGE_URL}/latest`, {}, POLL_INTERVAL_MS)
       if (res.ok) {
+        pollFailureCount.current = 0
         const found = (await res.json()) as BridgeScan
         setScan(found)
         setStatus('scan-ready')
         return
       }
+      throw new Error('poll failed')
     } catch {
-      setStatus('not-connected')
-      return
+      pollFailureCount.current += 1
+      if (pollFailureCount.current >= POLL_FAILURE_THRESHOLD) {
+        setStatus('not-connected')
+        setNotConnectedReason('lost-connection')
+        return
+      }
     }
     pollTimer.current = window.setTimeout(() => pollOnceRef.current(), POLL_INTERVAL_MS)
   }, [])
@@ -144,24 +171,35 @@ export function useScannerBridge() {
 
   const connect = React.useCallback(async () => {
     stopPolling()
+    pollFailureCount.current = 0
     setStatus('checking')
     setScan(undefined)
     setScanError(undefined)
     setDevices(undefined)
 
-    try {
-      const res = await fetchWithTimeout(`${SCANNER_BRIDGE_URL}/health`)
-      if (!res.ok) throw new Error('unhealthy')
-      const body = (await res.json()) as { ok: boolean; folder: string }
-      setFolder(body.folder)
-      setStatus('connected')
-      void refreshDevices()
-      devicePollTimer.current = window.setTimeout(pollDevicesOnce, DEVICE_POLL_INTERVAL_MS)
-      await drainStaleScan()
-      void pollOnce()
-    } catch {
-      setStatus('not-connected')
+    for (let attempt = 1; attempt <= HEALTH_RETRY_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await fetchWithTimeout(`${SCANNER_BRIDGE_URL}/health`)
+        if (!res.ok) throw new Error('unhealthy')
+        const body = (await res.json()) as { ok: boolean; folder: string }
+        setFolder(body.folder)
+        setStatus('connected')
+        void refreshDevices()
+        devicePollTimer.current = window.setTimeout(pollDevicesOnce, DEVICE_POLL_INTERVAL_MS)
+        await drainStaleScan()
+        void pollOnce()
+        return
+      } catch {
+        if (attempt < HEALTH_RETRY_ATTEMPTS) {
+          await new Promise((resolve) => window.setTimeout(resolve, HEALTH_RETRY_DELAY_MS))
+        }
+      }
     }
+    setStatus('not-connected')
+    // Private Network Access only ever applies when an https: page reaches
+    // into a private/loopback address — on a plain http: dev origin a
+    // failure can only mean the bridge genuinely isn't running.
+    setNotConnectedReason(location.protocol === 'https:' ? 'maybe-blocked' : 'bridge-down')
   }, [drainStaleScan, pollDevicesOnce, pollOnce, refreshDevices, stopPolling])
 
   const consumeAndReset = React.useCallback(async (id: string) => {
@@ -232,6 +270,7 @@ export function useScannerBridge() {
 
   const reset = React.useCallback(() => {
     stopPolling()
+    pollFailureCount.current = 0
     setStatus('checking')
     setScan(undefined)
     setFolder(undefined)
@@ -243,6 +282,7 @@ export function useScannerBridge() {
 
   return {
     status,
+    notConnectedReason,
     folder,
     scan,
     devices,

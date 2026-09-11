@@ -15,6 +15,7 @@ import { promisify } from 'node:util'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { log } from './log.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -105,7 +106,33 @@ $imageFile = $item.Transfer($wiaFormatJPEG)
 
 if (Test-Path $OutputPath) { Remove-Item $OutputPath }
 $imageFile.SaveFile($OutputPath)
+
+# Release the WIA handles as soon as we're done with them rather than
+# waiting for this whole PowerShell process to exit and be garbage
+# collected — shrinks the window where the device still looks "busy" to
+# the very next attempt (ours or the printer's own software's).
+$imageFile = $null
+$item = $null
+$device = $null
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+
 Write-Output 'OK'
+`
+
+// A quick, best-effort check for whether Epson's own scanning software is
+// currently running — the most common real-world reason a scan fails with
+// "device is busy" even after our own retries: another program already has
+// the WIA device open. Never treated as fatal by itself; only used to make
+// the final error message actually actionable instead of generic.
+const CHECK_EPSON_RUNNING_SCRIPT = `
+$ErrorActionPreference = 'Stop'
+try {
+    $proc = Get-Process | Where-Object { $_.ProcessName -match 'epson|escan' } | Select-Object -First 1
+    if ($proc) { Write-Output $proc.ProcessName } else { Write-Output '' }
+} catch {
+    Write-Output ''
+}
 `
 
 function writeTempScript(name, content) {
@@ -121,6 +148,18 @@ function runPowerShell(args, timeout) {
   })
 }
 
+// Classifies a *thrown* enumeration failure for diagnostic logging only —
+// distinct from a clean empty list (genuinely no WIA scanner registered),
+// which never reaches this. Doesn't change what /devices returns; a client
+// sending scanner-bridge.log after an incident is what this is for.
+function classifyWiaError(err) {
+  const msg = err?.message ?? ''
+  if (/ETIMEDOUT|timed out/i.test(msg)) return 'PowerShell timed out enumerating devices'
+  if (/is not recognized|ExecutionPolicy|cannot be loaded/i.test(msg)) return 'PowerShell itself could not run (execution policy / missing PowerShell)'
+  if (/COM class factory|WIA\.DeviceManager|Retrieving the COM/i.test(msg)) return 'WIA service unavailable (Windows Image Acquisition may be disabled)'
+  return `unrecognized failure: ${msg}`
+}
+
 export async function listWiaDevices() {
   if (!isWindows()) return []
   try {
@@ -131,7 +170,7 @@ export async function listWiaDevices() {
     const parsed = JSON.parse(trimmed)
     return Array.isArray(parsed) ? parsed : [parsed]
   } catch (err) {
-    console.error('[scanner-bridge] WIA device list failed:', err.message)
+    log(`[scanner-bridge] WIA device list failed (${classifyWiaError(err)})`)
     return []
   }
 }
@@ -145,8 +184,25 @@ export async function listWiaDevices() {
 const BUSY_RETRY_ATTEMPTS = 4
 const BUSY_RETRY_DELAY_MS = 3000
 
-function isDeviceBusyError(err) {
-  return /device is busy/i.test(err?.message ?? '')
+// Broader than the literal "device is busy" string — real drivers report
+// the same underlying "try again shortly" condition in several other ways
+// (an RPC call to the driver service timing out, a transient COM call
+// getting cancelled mid-flight). Treating these as retryable too, instead
+// of failing on the first one, catches transient failures that used to
+// surface as a hard error despite being no different from "busy."
+function isTransientWiaError(err) {
+  const msg = err?.message ?? ''
+  return /device is busy|RPC server is unavailable|call was canceled|call was cancelled|operation timed out/i.test(msg)
+}
+
+async function detectEpsonRunning() {
+  try {
+    const scriptPath = writeTempScript('srbilling-check-epson.ps1', CHECK_EPSON_RUNNING_SCRIPT)
+    const { stdout } = await runPowerShell(['-File', scriptPath], 5000)
+    return stdout.trim().length > 0
+  } catch {
+    return false
+  }
 }
 
 export async function scanWiaDevice(deviceId) {
@@ -168,16 +224,21 @@ export async function scanWiaDevice(deviceId) {
       } catch {
         // No partial file to clean up — fine.
       }
-      if (!isDeviceBusyError(err) || attempt === BUSY_RETRY_ATTEMPTS) break
-      console.log(`[scanner-bridge] Scanner busy, retrying (${attempt}/${BUSY_RETRY_ATTEMPTS})…`)
+      if (!isTransientWiaError(err) || attempt === BUSY_RETRY_ATTEMPTS) break
+      log(`[scanner-bridge] Scanner busy/transient error, retrying (${attempt}/${BUSY_RETRY_ATTEMPTS})…`)
       await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_DELAY_MS))
     }
   }
 
-  if (isDeviceBusyError(lastErr)) {
+  if (isTransientWiaError(lastErr)) {
+    const epsonRunning = await detectEpsonRunning()
+    log(`[scanner-bridge] Scan failed after retries (transient): ${lastErr.message}${epsonRunning ? ' — Epson scanning software appears to be running' : ''}`)
     throw new Error(
-      'Scanner is busy — close any other scanning program (like Epson Scan 2 or Windows Fax and Scan) and try again in a few seconds.',
+      epsonRunning
+        ? 'Scanner is busy — Epson Scan 2 (or similar) is open and using it. Close that program, then try again.'
+        : 'Scanner is busy — close any other scanning program and try again in a few seconds.',
     )
   }
+  log(`[scanner-bridge] Scan failed: ${lastErr?.message}`)
   throw lastErr
 }
