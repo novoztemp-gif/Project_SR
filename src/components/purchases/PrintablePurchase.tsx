@@ -5,6 +5,16 @@ import type { PurchaseBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
+// Purchase-voucher-only: the physical printout substitutes each digit with a
+// letter (0=A, 1=B, 2=C, ...) so qty/rate/amount aren't plainly readable off
+// the paper copy, while the app itself keeps showing real numbers on screen.
+// Only digits are swapped — currency symbol, commas, and the decimal point
+// are left as-is, same as the reference format this was modeled on.
+const DIGIT_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+function toLetterDigits(value: string) {
+  return value.replace(/[0-9]/g, (digit) => DIGIT_LETTERS[Number(digit)])
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
     day: '2-digit',
@@ -75,13 +85,16 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
                 )}
               </td>
               <td className="py-2 text-right font-mono tabular-nums">
-                {item.quantity} {item.unit}
+                <span className="print:hidden">{item.quantity} {item.unit}</span>
+                <span className="hidden print:inline">{toLetterDigits(String(item.quantity))} {item.unit}</span>
               </td>
               <td className="py-2 text-right font-mono tabular-nums">
-                {INR.format(item.unitPrice)}
+                <span className="print:hidden">{INR.format(item.unitPrice)}</span>
+                <span className="hidden print:inline">{toLetterDigits(INR.format(item.unitPrice))}</span>
               </td>
               <td className="py-2 text-right font-mono tabular-nums">
-                {INR.format(item.subtotal)}
+                <span className="print:hidden">{INR.format(item.subtotal)}</span>
+                <span className="hidden print:inline">{toLetterDigits(INR.format(item.subtotal))}</span>
               </td>
             </tr>
           ))}
@@ -92,11 +105,17 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         <div className="w-48 space-y-1">
           <div className="flex justify-between text-sm text-gray-900">
             <span className="text-gray-600">Subtotal</span>
-            <span className="font-mono font-semibold tabular-nums">{INR.format(bill.subtotal)}</span>
+            <span className="font-mono font-semibold tabular-nums">
+              <span className="print:hidden">{INR.format(bill.subtotal)}</span>
+              <span className="hidden print:inline">{toLetterDigits(INR.format(bill.subtotal))}</span>
+            </span>
           </div>
           <div className="flex justify-between border-t border-gray-300 pt-1 font-semibold text-gray-900">
             <span>Total</span>
-            <span className="font-mono tabular-nums">{INR.format(bill.total)}</span>
+            <span className="font-mono tabular-nums">
+              <span className="print:hidden">{INR.format(bill.total)}</span>
+              <span className="hidden print:inline">{toLetterDigits(INR.format(bill.total))}</span>
+            </span>
           </div>
         </div>
       </div>
