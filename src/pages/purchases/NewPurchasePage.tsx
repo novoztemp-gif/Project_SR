@@ -251,10 +251,7 @@ export function NewPurchasePage() {
                 <Label>Section</Label>
                 <Select
                   value={watchedSection}
-                  onValueChange={(value) => {
-                    form.setValue('section', value as Section, { shouldValidate: true })
-                    form.setValue('items', [EMPTY_ITEM])
-                  }}
+                  onValueChange={(value) => form.setValue('section', value as Section, { shouldValidate: true })}
                 >
                   <SelectTrigger>
                     <SelectValue />
