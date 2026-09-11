@@ -10,7 +10,8 @@ const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' 
 // the paper copy, while the app itself keeps showing real numbers on screen.
 // Only digits are swapped — currency symbol, commas, and the decimal point
 // are left as-is, same as the reference format this was modeled on.
-const DIGIT_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+// index = digit (0-9): 0=A, 1=C, 2=D, 3=E, 4=F, 5=G, 6=H, 7=I, 8=J, 9=K
+const DIGIT_LETTERS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
 function toLetterDigits(value: string) {
   return value.replace(/[0-9]/g, (digit) => DIGIT_LETTERS[Number(digit)])
 }
