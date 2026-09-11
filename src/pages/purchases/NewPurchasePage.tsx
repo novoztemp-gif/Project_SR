@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { FileText, Plus, Ruler, ScanLine, X } from 'lucide-react'
+import { ChevronDown, FileText, Plus, Ruler, ScanLine, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -11,8 +11,17 @@ import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
 import { PurchaseScanDialog } from '@/components/purchases/PurchaseScanDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
@@ -22,6 +31,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { usePurchaseStore } from '@/store/purchaseStore'
 import type { Section } from '@/types'
+import { cn } from '@/lib/utils'
 
 const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg']
 const NEW_PRODUCT_VALUE = '__new__'
@@ -97,6 +107,8 @@ export function NewPurchasePage() {
   const [scannerOpen, setScannerOpen] = React.useState(false)
   const [scannerImageDataUrl, setScannerImageDataUrl] = React.useState<string>()
   const [measurementsIndex, setMeasurementsIndex] = React.useState<number | null>(null)
+  const [openProductIndex, setOpenProductIndex] = React.useState<number | null>(null)
+  const [productQuery, setProductQuery] = React.useState('')
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(formSchema),
@@ -142,6 +154,16 @@ export function NewPurchasePage() {
     }], { shouldValidate: true })
     navigate(location.pathname, { replace: true, state: null })
   }, [allowedSections, form, location.pathname, location.state, navigate, products])
+
+  // Seeds the search box with whatever name is already on this line
+  // (typically the AI-extracted or scanned product name) so the list opens
+  // already filtered to likely matches, instead of dumping the entire
+  // catalog for the user to scroll through — cmdk filters CommandItems
+  // against this live query automatically as it's typed or pre-set.
+  function openProductPicker(index: number, currentName: string) {
+    setProductQuery(currentName)
+    setOpenProductIndex(index)
+  }
 
   function selectProduct(index: number, value: string) {
     if (value === NEW_PRODUCT_VALUE) {
@@ -349,22 +371,69 @@ export function NewPurchasePage() {
                   <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[1.4fr_1fr_0.7fr_0.8fr_0.8fr_auto]">
                     <div className="space-y-2">
                       <Label>Product</Label>
-                      <Select value={item?.productId || NEW_PRODUCT_VALUE} onValueChange={(value) => selectProduct(index, value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={NEW_PRODUCT_VALUE}>+ New product</SelectItem>
-                          {accessibleProducts.map((product) => {
-                            const sectionLabel = SECTIONS.find((section) => section.key === product.section)?.label ?? product.section
-                            return (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name} ({sectionLabel})
-                            </SelectItem>
-                            )
-                          })}
-                        </SelectContent>
-                      </Select>
+                      <Popover
+                        open={openProductIndex === index}
+                        onOpenChange={(open) => {
+                          if (open) openProductPicker(index, item?.productName ?? '')
+                          else setOpenProductIndex(null)
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            role="combobox"
+                            className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm focus:border-brand-mid focus:outline-none focus:ring-1 focus:ring-brand-mid/30"
+                          >
+                            <span className={cn('flex-1 truncate text-left', !item?.productName && 'text-muted-foreground')}>
+                              {item?.productName || '+ New product'}
+                            </span>
+                            <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Search product…"
+                              value={productQuery}
+                              onValueChange={setProductQuery}
+                            />
+                            <CommandList>
+                              <CommandEmpty>No products found.</CommandEmpty>
+                              <CommandGroup>
+                                <CommandItem
+                                  value={NEW_PRODUCT_VALUE}
+                                  keywords={['new product']}
+                                  onSelect={() => {
+                                    selectProduct(index, NEW_PRODUCT_VALUE)
+                                    setOpenProductIndex(null)
+                                  }}
+                                >
+                                  + New product
+                                </CommandItem>
+                              </CommandGroup>
+                              <CommandGroup heading="Products">
+                                {accessibleProducts.map((product) => {
+                                  const sectionLabel = SECTIONS.find((section) => section.key === product.section)?.label ?? product.section
+                                  return (
+                                    <CommandItem
+                                      key={product.id}
+                                      value={product.id}
+                                      keywords={[product.name, sectionLabel]}
+                                      onSelect={() => {
+                                        selectProduct(index, product.id)
+                                        setOpenProductIndex(null)
+                                      }}
+                                    >
+                                      <span className="flex-1 truncate">{product.name}</span>
+                                      <span className="ml-2 shrink-0 text-xs text-muted-foreground">{sectionLabel}</span>
+                                    </CommandItem>
+                                  )
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       {isNewProduct && (
                         <Input placeholder="New product name" {...form.register(`items.${index}.productName`)} />
                       )}
