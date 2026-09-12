@@ -371,6 +371,7 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
       {/* Single row: Product | Size/Dimension | Model | Qty | (Sq.Ft) | Rate | Amount | Delete */}
       <div className="grid grid-cols-[minmax(320px,2fr)_11rem_7rem_5.5rem_7rem_7rem_auto] items-start gap-2">
         <div className="min-w-0 space-y-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Product</span>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <button
