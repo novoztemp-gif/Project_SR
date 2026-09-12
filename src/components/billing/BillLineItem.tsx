@@ -130,22 +130,22 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
 
   return (
     <div className="border-b border-border last:border-0 py-3 space-y-2">
-      {/* Row 1: Name | Size / Dimension | Model */}
-      <div className="grid grid-cols-[minmax(420px,1fr)_10rem_6rem] items-start gap-2">
-        <div className="w-full min-w-[420px]">
+      {/* Single row: Product | Size/Dimension | Model | Qty | (Sq.Ft) | Rate | Amount | Delete */}
+      <div className="grid grid-cols-[minmax(320px,2fr)_11rem_7rem_5.5rem_7rem_7rem_auto] items-start gap-2">
+        <div className="min-w-0 space-y-1">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 role="combobox"
                 className={cn(
-                  'w-full min-h-[44px] min-w-[420px] flex items-center rounded-md border border-input bg-background px-3 py-2 text-base text-left ring-offset-background transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'w-full min-h-[44px] flex items-center rounded-md border border-input bg-background px-3 py-2 text-base text-left ring-offset-background transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   selectedProduct?.name || scannedProductName ? 'text-foreground' : 'text-muted-foreground',
                   itemErrors?.productId && 'border-destructive'
                 )}
               >
                 <span className="flex-1 truncate">
-                  {selectedProduct?.name ?? scannedProductName ?? 'Search for product'}
+                  {selectedProduct?.name || scannedProductName || 'Search for product'}
                 </span>
               </button>
             </PopoverTrigger>
@@ -181,7 +181,7 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
             </PopoverContent>
           </Popover>
           {isUnmatchedScan ? (
-            <div className="mt-1 flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5">
+            <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5">
               <span className="text-xs text-amber-700 dark:text-amber-400">Not in inventory</span>
               <Button
                 type="button"
@@ -195,42 +195,45 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
               </Button>
             </div>
           ) : itemErrors?.productId ? (
-            <p className="text-xs text-destructive mt-0.5">{String(itemErrors.productId.message)}</p>
+            <p className="text-xs text-destructive">{String(itemErrors.productId.message)}</p>
           ) : null}
         </div>
 
-        <div className="flex w-40 items-center gap-1">
-          <Input
-            aria-label="Size / Dimension"
-            placeholder={sizePlaceholder}
-            className="min-w-0 flex-1"
-            {...register(`items.${index}.glassSize`)}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 shrink-0"
-            aria-label="Select measurement"
-            onClick={() => setMeasurementsOpen(true)}
-          >
-            <Ruler className="h-4 w-4" />
-          </Button>
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Size / Dimension</span>
+          <div className="flex items-center gap-1">
+            <Input
+              aria-label="Size / Dimension"
+              placeholder={sizePlaceholder}
+              className="min-w-0 flex-1"
+              {...register(`items.${index}.glassSize`)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              aria-label="Select measurement"
+              onClick={() => setMeasurementsOpen(true)}
+            >
+              <Ruler className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <Input
-          placeholder="Model"
-          className="w-24"
-          {...register(`items.${index}.model`)}
-        />
-      </div>
 
-      {/* Row 2: Qty | optional Sq.Ft | Rate | Amount | Delete */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5">
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Model</span>
+          <Input
+            placeholder="Model"
+            {...register(`items.${index}.model`)}
+          />
+        </div>
+
+        <div className="space-y-1">
           <span className="text-xs text-muted-foreground whitespace-nowrap">{qtyLabel}</span>
           <Input
             type="number"
-            className="w-16 text-right font-mono tabular-nums"
+            className="text-right font-mono tabular-nums"
             min={1}
             // Guard against a self-contradictory min > max: at 0 or negative
             // stock (data drift, concurrent sales, etc.) `max=stock` would
@@ -243,40 +246,44 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
             max={selectedProduct && selectedProduct.stock >= 1 ? selectedProduct.stock : undefined}
             {...register(`items.${index}.quantity`)}
           />
-        </div>
-        {usesSqFt && (
-          <div className="flex items-center gap-1.5">
-            {selectedProduct && (
+          {usesSqFt && (
+            <div className="flex items-center gap-1.5 pt-1">
               <span className="text-xs text-muted-foreground whitespace-nowrap">Sq.Ft</span>
-            )}
-            <Input
-              type="number"
-              className="w-20 text-right font-mono tabular-nums"
-              step="0.01"
-              min={0}
-              placeholder="0"
-              {...register(`items.${index}.sqFt`)}
-            />
-          </div>
-        )}
-        <div className="flex items-center gap-1.5">
+              <Input
+                type="number"
+                className="text-right font-mono tabular-nums"
+                step="0.01"
+                min={0}
+                placeholder="0"
+                {...register(`items.${index}.sqFt`)}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Rate</span>
           <Input
             type="number"
-            className="w-24 text-right font-mono tabular-nums"
+            className="text-right font-mono tabular-nums"
             step="0.01"
             min={0}
             {...register(`items.${index}.unitPrice`)}
           />
         </div>
-        <div className="flex-1 text-right font-mono tabular-nums text-sm font-medium">
-          {INR.format(subtotal)}
+
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Amount</span>
+          <div className="flex h-10 items-center justify-end font-mono tabular-nums text-sm font-medium">
+            {INR.format(subtotal)}
+          </div>
         </div>
+
         <Button
           type="button"
           size="icon"
           variant="ghost"
-          className={cn('shrink-0', isOnly && 'invisible')}
+          className={cn('mt-6 shrink-0', isOnly && 'invisible')}
           onClick={onRemove}
         >
           <Trash2 className="h-4 w-4" />

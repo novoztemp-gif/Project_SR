@@ -251,12 +251,9 @@ export function NewBillPage() {
             <span>{todayLabel}</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-            {/* Left column */}
-            <div className="space-y-6">
-
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-stretch">
               {/* Customer card */}
-              <Card className="bg-brand-raised">
+              <Card className="h-full bg-brand-raised">
                 <CardHeader>
                   <CardTitle className="text-base">Customer</CardTitle>
                 </CardHeader>
@@ -305,11 +302,8 @@ export function NewBillPage() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Right column — sticky totals */}
-            <div>
-              <Card className="bg-brand-raised lg:sticky lg:top-6">
+              <Card className="h-full bg-brand-raised lg:sticky lg:top-6">
                 <CardHeader>
                   <CardTitle className="text-base">Totals</CardTitle>
                 </CardHeader>
@@ -375,7 +369,6 @@ export function NewBillPage() {
                   </p>
                 </CardContent>
               </Card>
-            </div>
           </div>
 
           {/* Items — full width, below Customer/Totals */}
