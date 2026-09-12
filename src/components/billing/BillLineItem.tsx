@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { Plus, Ruler, Trash2 } from 'lucide-react'
 
@@ -24,6 +24,7 @@ import {
   POLISH_NAME_OPTIONS,
   POLISH_SIDE_OPTIONS,
   SECTIONS,
+  type ArchOption,
 } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
@@ -120,6 +121,86 @@ function FabricationOptionPill({
         )}
       </SelectContent>
     </Select>
+  )
+}
+
+function ArchTopIcon() {
+  return (
+    <svg viewBox="0 0 32 40" className="h-8 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 38 V17 A13 13 0 0 1 29 17 V38" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function FlatSquareIcon() {
+  return (
+    <svg viewBox="0 0 32 40" className="h-8 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="2" width="26" height="36" rx="1" />
+    </svg>
+  )
+}
+
+const ARCH_ICONS: Record<string, ReactNode> = {
+  'arch-top': <ArchTopIcon />,
+  'flat-square': <FlatSquareIcon />,
+}
+
+// A pill trigger that opens a small grid of visual icon tiles instead of a
+// plain text list — used where the shape/look of the option matters (e.g.
+// Arch), unlike FabricationOptionPill's plain text options.
+function ArchOptionPicker({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value?: string
+  options: ArchOption[]
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find((option) => option.value === value)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-8 w-auto min-w-[7rem] items-center justify-center gap-1.5 rounded-full border border-brand-mid/40 bg-brand-mid/10 px-3 text-xs font-medium text-foreground transition-colors hover:bg-brand-mid/20"
+        >
+          {selected?.label ?? label}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" align="start">
+        {options.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No options yet</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {options.map((option) => {
+              const isSelected = option.value === value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={cn(
+                    'flex flex-col items-center gap-2 rounded-lg border p-3 text-foreground transition-colors hover:border-brand-mid',
+                    isSelected ? 'border-brand-mid ring-2 ring-brand-mid/50' : 'border-border'
+                  )}
+                  onClick={() => {
+                    onChange(option.value)
+                    setOpen(false)
+                  }}
+                >
+                  {ARCH_ICONS[option.value]}
+                  <span className="text-xs">{option.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -347,7 +428,7 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
 
       {showFabricationOptions && (
         <div className="flex flex-wrap gap-2">
-          <FabricationOptionPill
+          <ArchOptionPicker
             label="Arch"
             value={arch}
             options={ARCH_OPTIONS}

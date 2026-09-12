@@ -118,7 +118,15 @@ export const MEASUREMENT_PRESETS: Record<string, MeasurementPreset[]> = {
 // lists are still being defined one field at a time — each starts empty and
 // gets filled in as the real allowed values are provided; the UI itself
 // doesn't need to change when they are.
-export const ARCH_OPTIONS: string[] = []
+export interface ArchOption {
+  value: string
+  label: string
+}
+
+export const ARCH_OPTIONS: ArchOption[] = [
+  { value: 'arch-top', label: 'Arch Top' },
+  { value: 'flat-square', label: 'Flat / Square' },
+]
 export const POLISH_SIDE_OPTIONS: string[] = []
 export const POLISH_NAME_OPTIONS: string[] = []
 export const CORNER_TYPE_OPTIONS: string[] = []
