@@ -14,6 +14,12 @@ export interface ParsedBill {
   customerName: string
   customerPhone?: string
   customerAddress?: string
+  deliveryDate?: string
+  transport?: string
+  transportTime?: string
+  transportationAmount?: number
+  discount?: number
+  paidAmount?: number
   items: ParsedBillItem[]
 }
 
@@ -31,17 +37,42 @@ const EXTRACTION_INSTRUCTIONS = [
   '- sqFt: square-foot area if the item is priced by area, else 0.',
   'Never put the line total into rate. If a column is missing, use 0 for numbers and an',
   'empty string for text. Do not invent items or values.',
+  'Also extract these document-level fields if shown anywhere on the page (leave as an',
+  'empty string / 0 if not present — do not guess):',
+  '- deliveryDate: the delivery date, formatted strictly as YYYY-MM-DD.',
+  '- transport: the vehicle number, carrier, or transport name.',
+  '- transportTime: the delivery/transport time as printed (e.g. "2 PM").',
+  '- transportationAmount: a separate transportation/freight/delivery charge amount, if shown.',
+  '- discount: a discount amount shown on the document.',
+  '- paidAmount: an amount already paid / advance received, if shown.',
 ].join(' ')
 
 // JSON Schema for structured output — forces valid, parseable JSON back.
 const BILL_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['customerName', 'customerPhone', 'customerAddress', 'items'],
+  required: [
+    'customerName',
+    'customerPhone',
+    'customerAddress',
+    'deliveryDate',
+    'transport',
+    'transportTime',
+    'transportationAmount',
+    'discount',
+    'paidAmount',
+    'items',
+  ],
   properties: {
     customerName: { type: 'string' },
     customerPhone: { type: 'string' },
     customerAddress: { type: 'string' },
+    deliveryDate: { type: 'string' },
+    transport: { type: 'string' },
+    transportTime: { type: 'string' },
+    transportationAmount: { type: 'number' },
+    discount: { type: 'number' },
+    paidAmount: { type: 'number' },
     items: {
       type: 'array',
       items: {
@@ -69,6 +100,12 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
     customerName: parsed.customerName ?? '',
     customerPhone: parsed.customerPhone || undefined,
     customerAddress: parsed.customerAddress || undefined,
+    deliveryDate: /^\d{4}-\d{2}-\d{2}$/.test(String(parsed.deliveryDate)) ? String(parsed.deliveryDate) : undefined,
+    transport: parsed.transport || undefined,
+    transportTime: parsed.transportTime || undefined,
+    transportationAmount: Number(parsed.transportationAmount) || undefined,
+    discount: Number(parsed.discount) || undefined,
+    paidAmount: Number(parsed.paidAmount) || undefined,
     items: rawItems.map((it) => {
       const qty = Number(it?.qty) || 0
       const sqFt = Number(it?.sqFt) || 0

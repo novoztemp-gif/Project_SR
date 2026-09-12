@@ -8,6 +8,7 @@ export interface ParsedPurchaseItem {
 
 export interface ParsedPurchase {
   vendorName: string
+  transportationAmount?: number
   items: ParsedPurchaseItem[]
 }
 

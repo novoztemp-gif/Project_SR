@@ -192,6 +192,7 @@ export function NewPurchasePage() {
   function handlePurchaseExtract(parsed: ParsedPurchase, scannedImageDataUrl: string) {
     form.setValue('vendorName', parsed.vendorName, { shouldValidate: true })
     form.setValue('imageUrl', scannedImageDataUrl, { shouldValidate: true })
+    if (parsed.transportationAmount) form.setValue('transportationAmount', parsed.transportationAmount, { shouldValidate: true })
 
     const currentItems = form.getValues('items') ?? []
     const firstItem = currentItems[0]

@@ -162,6 +162,12 @@ export function NewBillPage() {
     form.setValue('customerName', parsed.customerName, { shouldValidate: true })
     form.setValue('customerPhone', parsed.customerPhone ?? '', { shouldValidate: true })
     form.setValue('customerAddress', parsed.customerAddress ?? '', { shouldValidate: true })
+    if (parsed.deliveryDate) form.setValue('deliveryDate', parsed.deliveryDate, { shouldValidate: true })
+    if (parsed.transport) form.setValue('transport', parsed.transport, { shouldValidate: true })
+    if (parsed.transportTime) form.setValue('transportTime', parsed.transportTime, { shouldValidate: true })
+    if (parsed.transportationAmount) form.setValue('transportationAmount', parsed.transportationAmount, { shouldValidate: true })
+    if (parsed.discount) form.setValue('discount', parsed.discount, { shouldValidate: true })
+    if (parsed.paidAmount) form.setValue('paidAmount', parsed.paidAmount, { shouldValidate: true })
 
     const currentItems = form.getValues('items') ?? []
     const firstItem = currentItems[0]

@@ -11,6 +11,12 @@ export interface ParsedBill {
   customerName: string
   customerPhone?: string
   customerAddress?: string
+  deliveryDate?: string
+  transport?: string
+  transportTime?: string
+  transportationAmount?: number
+  discount?: number
+  paidAmount?: number
   items: ParsedBillItem[]
 }
 

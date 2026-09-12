@@ -15,6 +15,7 @@ export interface ParsedPurchaseItem {
 
 export interface ParsedPurchase {
   vendorName: string
+  transportationAmount?: number
   items: ParsedPurchaseItem[]
 }
 
@@ -34,14 +35,17 @@ const EXTRACTION_INSTRUCTIONS = [
   '  (usually qty × rate). Read this value carefully; it is the most reliable number.',
   'Never put the line total into rate. If a column is missing, use 0 for numbers and an',
   'empty string for text. Do not invent items or values.',
+  'Also extract, if shown anywhere on the document (leave 0 if not present — do not guess):',
+  '- transportationAmount: a separate transportation/freight/delivery charge amount.',
 ].join(' ')
 
 const PURCHASE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['vendorName', 'items'],
+  required: ['vendorName', 'transportationAmount', 'items'],
   properties: {
     vendorName: { type: 'string' },
+    transportationAmount: { type: 'number' },
     items: {
       type: 'array',
       items: {
@@ -66,6 +70,7 @@ export async function extractPurchaseFromDataUrl(dataUrl: string): Promise<Parse
   const rawItems: any[] = Array.isArray(parsed.items) ? parsed.items : []
   return {
     vendorName: parsed.vendorName ?? '',
+    transportationAmount: Number(parsed.transportationAmount) || undefined,
     items: rawItems.map((it) => {
       const qty = Number(it?.qty) || 0
       const rate = Number(it?.rate) || 0
