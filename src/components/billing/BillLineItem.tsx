@@ -242,12 +242,12 @@ function IconOptionPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-8 w-auto min-w-[7rem] items-center justify-center gap-1.5 rounded-full border border-brand-mid/40 bg-brand-mid/10 px-3 text-xs font-medium text-foreground transition-colors hover:bg-brand-mid/20"
+          className="flex h-8 w-auto items-center justify-center gap-1.5 rounded-full border border-brand-mid/40 bg-brand-mid/10 px-3 text-xs font-medium text-foreground transition-colors hover:bg-brand-mid/20"
         >
-          {selected?.label ?? label}
+          {selected ? icons[selected.value] : label}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent className="w-56 p-3" align="start">
         {options.length === 0 ? (
           <p className="text-xs text-muted-foreground">No options yet</p>
         ) : (
@@ -259,7 +259,7 @@ function IconOptionPicker({
                   key={option.value}
                   type="button"
                   className={cn(
-                    'flex flex-col items-center gap-2 rounded-lg border p-3 text-foreground transition-colors hover:border-brand-mid',
+                    'flex items-center justify-center rounded-lg border p-3 text-foreground transition-colors hover:border-brand-mid',
                     isSelected ? 'border-brand-mid ring-2 ring-brand-mid/50' : 'border-border'
                   )}
                   onClick={() => {
@@ -268,7 +268,6 @@ function IconOptionPicker({
                   }}
                 >
                   {icons[option.value]}
-                  <span className="text-center text-xs leading-tight">{option.label}</span>
                 </button>
               )
             })}
