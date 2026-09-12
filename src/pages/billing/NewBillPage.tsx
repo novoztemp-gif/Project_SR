@@ -32,6 +32,12 @@ const itemSchema = z.object({
   model:       z.string().optional(),
   sqFt:        z.coerce.number().min(0).default(0),
   unitPrice:   z.coerce.number().min(0),
+  arch:        z.string().optional(),
+  polishSide:  z.string().optional(),
+  polishName:  z.string().optional(),
+  cornerType:  z.string().optional(),
+  hole:        z.string().optional(),
+  artWork:     z.string().optional(),
 })
 
 const billSchema = z.object({
@@ -59,6 +65,7 @@ const todayLabel = new Date().toLocaleDateString('en-IN', {
 const EMPTY_ITEM = {
   productId: '', productName: '', quantity: 1, unit: '',
   glassSize: '', model: '', sqFt: 0, unitPrice: 0,
+  arch: '', polishSide: '', polishName: '', cornerType: '', hole: '', artWork: '',
 }
 
 function isSqFtUnit(unit?: string) {
@@ -127,6 +134,12 @@ export function NewBillPage() {
           glassSize:   item.glassSize  || undefined,
           model:       item.model      || undefined,
           sqFt:        item.sqFt > 0   ? item.sqFt : undefined,
+          arch:        item.arch       || undefined,
+          polishSide:  item.polishSide || undefined,
+          polishName:  item.polishName || undefined,
+          cornerType:  item.cornerType || undefined,
+          hole:        item.hole       || undefined,
+          artWork:     item.artWork    || undefined,
         })),
         transportationAmount: values.transportationAmount,
         discount:   values.discount,

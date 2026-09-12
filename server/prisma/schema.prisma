@@ -103,6 +103,15 @@ model SalesItem {
   sqFt        Float?
   unitPrice   Float
   subtotal    Float
+  // Glass/plywood-only fabrication options — set of allowed values per field
+  // is still being defined; columns exist now so the UI can start
+  // collecting them.
+  arch        String?
+  polishSide  String?
+  polishName  String?
+  cornerType  String?
+  hole        String?
+  artWork     String?
   bill        SalesBill @relation(fields: [billId], references: [id], onDelete: Cascade)
 
   @@index([billId])

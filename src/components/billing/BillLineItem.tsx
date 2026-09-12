@@ -15,7 +15,16 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { SECTIONS } from '@/lib/constants'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  ARCH_OPTIONS,
+  ART_WORK_OPTIONS,
+  CORNER_TYPE_OPTIONS,
+  HOLE_OPTIONS,
+  POLISH_NAME_OPTIONS,
+  POLISH_SIDE_OPTIONS,
+  SECTIONS,
+} from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -79,6 +88,41 @@ function getProductType(section?: Section) {
   return meta?.label ?? ''
 }
 
+// Glass/plywood fabrication options row — pill-styled selects shown only for
+// those two sections. Option lists (ARCH_OPTIONS etc.) are still empty
+// placeholders being filled in one field at a time; the pill itself already
+// works and just shows "No options yet" until real values are added.
+function FabricationOptionPill({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value?: string
+  options: string[]
+  onChange: (value: string) => void
+}) {
+  return (
+    <Select value={value || undefined} onValueChange={onChange}>
+      <SelectTrigger className="h-8 w-auto min-w-[7rem] gap-1.5 rounded-full border-brand-mid/40 bg-brand-mid/10 px-3 text-xs font-medium text-foreground hover:bg-brand-mid/20 focus:ring-brand-mid/30">
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.length === 0 ? (
+          <p className="px-3 py-2 text-xs text-muted-foreground">No options yet</p>
+        ) : (
+          options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))
+        )}
+      </SelectContent>
+    </Select>
+  )
+}
+
 export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
   const [open, setOpen] = useState(false)
   const [measurementsOpen, setMeasurementsOpen] = useState(false)
@@ -100,6 +144,13 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
   const subtotal = usesSqFt ? sqFt * unitPrice : quantity * unitPrice
   const qtyLabel = selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
+  const showFabricationOptions = selectedProduct?.section === 'glass' || selectedProduct?.section === 'plywood'
+  const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
+  const polishSide = String(useWatch({ control, name: `items.${index}.polishSide` }) ?? '')
+  const polishName = String(useWatch({ control, name: `items.${index}.polishName` }) ?? '')
+  const cornerType = String(useWatch({ control, name: `items.${index}.cornerType` }) ?? '')
+  const hole       = String(useWatch({ control, name: `items.${index}.hole`       }) ?? '')
+  const artWork    = String(useWatch({ control, name: `items.${index}.artWork`    }) ?? '')
 
   const displayedProducts = products.filter((p) => allowedSections.includes(p.section))
 
@@ -292,6 +343,47 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
 
       {itemErrors?.quantity && (
         <p className="text-xs text-destructive">{String(itemErrors.quantity.message)}</p>
+      )}
+
+      {showFabricationOptions && (
+        <div className="flex flex-wrap gap-2">
+          <FabricationOptionPill
+            label="Arch"
+            value={arch}
+            options={ARCH_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.arch`, value, { shouldValidate: true })}
+          />
+          <FabricationOptionPill
+            label="Polish Side"
+            value={polishSide}
+            options={POLISH_SIDE_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.polishSide`, value, { shouldValidate: true })}
+          />
+          <FabricationOptionPill
+            label="Polish Name"
+            value={polishName}
+            options={POLISH_NAME_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.polishName`, value, { shouldValidate: true })}
+          />
+          <FabricationOptionPill
+            label="Corner Type"
+            value={cornerType}
+            options={CORNER_TYPE_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.cornerType`, value, { shouldValidate: true })}
+          />
+          <FabricationOptionPill
+            label="Hole"
+            value={hole}
+            options={HOLE_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.hole`, value, { shouldValidate: true })}
+          />
+          <FabricationOptionPill
+            label="Art Work"
+            value={artWork}
+            options={ART_WORK_OPTIONS}
+            onChange={(value) => setValue(`items.${index}.artWork`, value, { shouldValidate: true })}
+          />
+        </div>
       )}
 
       {measurementsOpen && (

@@ -123,6 +123,13 @@ export interface SalesItem {
   sqFt?: number
   unitPrice: number    // per-sqft rate (Sq/-) when sqFt present; per-unit otherwise
   subtotal: number     // sqFt > 0 ? sqFt * unitPrice : quantity * unitPrice
+  // Glass/plywood-only fabrication options — allowed values per field still TBD.
+  arch?: string
+  polishSide?: string
+  polishName?: string
+  cornerType?: string
+  hole?: string
+  artWork?: string
 }
 
 export type BillStatus = 'paid' | 'pending' | 'partial'

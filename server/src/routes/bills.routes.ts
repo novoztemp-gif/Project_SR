@@ -35,6 +35,12 @@ const createBillSchema = z.object({
         glassSize: z.string().optional(),
         model: z.string().optional(),
         sqFt: z.number().optional(),
+        arch: z.string().optional(),
+        polishSide: z.string().optional(),
+        polishName: z.string().optional(),
+        cornerType: z.string().optional(),
+        hole: z.string().optional(),
+        artWork: z.string().optional(),
       }),
     )
     .min(1, 'A bill needs at least one item'),
@@ -115,6 +121,12 @@ billsRouter.post(
         sqFt: item.sqFt,
         unitPrice: item.unitPrice,
         subtotal: computeItemSubtotal(item),
+        arch: item.arch,
+        polishSide: item.polishSide,
+        polishName: item.polishName,
+        cornerType: item.cornerType,
+        hole: item.hole,
+        artWork: item.artWork,
       }))
       const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
       const transportationAmount = input.transportationAmount ?? 0
