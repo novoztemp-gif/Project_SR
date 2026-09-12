@@ -27,6 +27,7 @@ function formatDate(iso: string) {
 export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
   const sectionLabel = SECTIONS.find((section) => section.key === bill.section)?.label ?? bill.section
   const godownLabel = GODOWNS_SEED.find((godown) => godown.id === bill.godownId)?.name ?? bill.godownId
+  const grandTotal = bill.total + bill.transportationAmount
 
   return (
     <div className="printable-bill bg-white p-8 text-sm text-gray-800">
@@ -111,11 +112,25 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
               <span className="hidden print:inline">{toLetterDigits(INR.format(bill.subtotal))}</span>
             </span>
           </div>
-          <div className="flex justify-between border-t border-gray-300 pt-1 font-semibold text-gray-900">
+          <div className="flex justify-between border-t border-gray-300 pt-1 text-gray-900">
             <span>Total</span>
             <span className="font-mono tabular-nums">
               <span className="print:hidden">{INR.format(bill.total)}</span>
               <span className="hidden print:inline">{toLetterDigits(INR.format(bill.total))}</span>
+            </span>
+          </div>
+          <div className="flex justify-between text-gray-900">
+            <span className="text-gray-600">Transportation</span>
+            <span className="font-mono tabular-nums">
+              <span className="print:hidden">{INR.format(bill.transportationAmount)}</span>
+              <span className="hidden print:inline">{toLetterDigits(INR.format(bill.transportationAmount))}</span>
+            </span>
+          </div>
+          <div className="flex justify-between border-t border-gray-300 pt-1 font-semibold text-gray-900">
+            <span>Grand Total</span>
+            <span className="font-mono tabular-nums">
+              <span className="print:hidden">{INR.format(grandTotal)}</span>
+              <span className="hidden print:inline">{toLetterDigits(INR.format(grandTotal))}</span>
             </span>
           </div>
         </div>

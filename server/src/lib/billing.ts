@@ -11,8 +11,13 @@ export function computeItemSubtotal(item: {
     : item.quantity * item.unitPrice
 }
 
-export function getBillStatus(total: number, discount: number, paidAmount: number): BillStatus {
-  const finalAmount = Math.max(total - discount, 0)
+export function getBillStatus(
+  total: number,
+  transportationAmount: number,
+  discount: number,
+  paidAmount: number,
+): BillStatus {
+  const finalAmount = Math.max(total + transportationAmount - discount, 0)
   if (paidAmount >= finalAmount) return BillStatus.paid
   if (paidAmount > 0) return BillStatus.partial
   return BillStatus.pending

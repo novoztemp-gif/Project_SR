@@ -54,6 +54,7 @@ const formSchema = z.object({
   godownId: z.string().min(1, 'Select a godown'),
   imageUrl: z.string().optional(),
   items: z.array(itemSchema).min(1),
+  transportationAmount: z.coerce.number().min(0).default(0),
 })
 
 type FormInput = z.input<typeof formSchema>
@@ -119,6 +120,7 @@ export function NewPurchasePage() {
       godownId: GODOWNS_SEED[0]?.id ?? '',
       imageUrl: undefined,
       items: [EMPTY_ITEM],
+      transportationAmount: 0,
     },
   })
 
@@ -126,6 +128,7 @@ export function NewPurchasePage() {
   const watchedSection = useWatch({ control: form.control, name: 'section' }) as Section
   const watchedGodownId = useWatch({ control: form.control, name: 'godownId' })
   const watchedItems = useWatch({ control: form.control, name: 'items' })
+  const watchedTransportation = useWatch({ control: form.control, name: 'transportationAmount' })
   const imageUrl = useWatch({ control: form.control, name: 'imageUrl' })
 
   const accessibleProducts = products.filter((product) => allowedSections.includes(product.section))
@@ -133,6 +136,8 @@ export function NewPurchasePage() {
     (sum, item) => sum + Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0),
     0
   )
+  const transportationAmount = Number(watchedTransportation) || 0
+  const grandTotal = total + transportationAmount
 
   React.useEffect(() => {
     const state = location.state as { restockProductId?: string } | null
@@ -230,6 +235,7 @@ export function NewPurchasePage() {
           ...item,
           subtotal: item.quantity * item.unitPrice,
         })),
+        transportationAmount: values.transportationAmount,
         createdBy: currentUser.id,
       })
 
@@ -368,7 +374,7 @@ export function NewPurchasePage() {
                 const isNewProduct = !item?.productId
 
                 return (
-                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[1.4fr_1fr_0.7fr_0.8fr_0.8fr_auto]">
+                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2.2fr_1fr_0.7fr_0.8fr_0.8fr_auto]">
                     <div className="space-y-2">
                       <Label>Product</Label>
                       <Popover
@@ -390,7 +396,7 @@ export function NewPurchasePage() {
                             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-80 p-0" align="start">
+                        <PopoverContent className="w-96 p-0" align="start">
                           <Command>
                             <CommandInput
                               placeholder="Search product…"
@@ -517,9 +523,26 @@ export function NewPurchasePage() {
             <CardTitle className="text-base">Total</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Running total</span>
-              <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(total)}</span>
+              <span className="font-mono text-lg font-medium tabular-nums">{INR.format(total)}</span>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="transportationAmount">Transportation (₹)</Label>
+              <Input
+                id="transportationAmount"
+                type="number"
+                min={0}
+                step="0.01"
+                className="font-mono tabular-nums text-right"
+                {...form.register('transportationAmount')}
+              />
+            </div>
+
+            <div className="flex items-center justify-between border-b border-border pb-3 pt-1">
+              <span className="font-medium">Grand total</span>
+              <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(grandTotal)}</span>
             </div>
             <Button type="submit" className="w-full" size="lg">
               Save purchase

@@ -43,6 +43,7 @@ const billSchema = z.object({
   transport:       z.string().optional(),
   transportTime:   z.string().optional(),
   items:           z.array(itemSchema).min(1),
+  transportationAmount: z.coerce.number().min(0).default(0),
   discount:        z.coerce.number().min(0).default(0),
   paidAmount:      z.coerce.number().min(0).default(0),
 })
@@ -80,14 +81,15 @@ export function NewBillPage() {
       bookingDate: todayIso, deliveryDate: '',
       transport: '', transportTime: '',
       items: [EMPTY_ITEM],
-      discount: 0, paidAmount: 0,
+      transportationAmount: 0, discount: 0, paidAmount: 0,
     },
   })
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' })
-  const watchedItems    = useWatch({ control: form.control, name: 'items'      })
-  const watchedDiscount = useWatch({ control: form.control, name: 'discount'   })
-  const watchedPaid     = useWatch({ control: form.control, name: 'paidAmount' })
+  const watchedItems         = useWatch({ control: form.control, name: 'items'                })
+  const watchedTransport     = useWatch({ control: form.control, name: 'transportationAmount'  })
+  const watchedDiscount      = useWatch({ control: form.control, name: 'discount'   })
+  const watchedPaid          = useWatch({ control: form.control, name: 'paidAmount' })
 
   const total = (watchedItems ?? []).reduce((sum, item) => {
     const sqFt  = Number(item.sqFt)      || 0
@@ -96,9 +98,10 @@ export function NewBillPage() {
     return sum + (isSqFtUnit(item.unit) ? sqFt * rate : qty * rate)
   }, 0)
 
+  const transportationAmount = Number(watchedTransport) || 0
   const discount      = Number(watchedDiscount) || 0
   const paidAmount    = Number(watchedPaid)      || 0
-  const finalAmount   = total - discount
+  const finalAmount   = total + transportationAmount - discount
   const balanceAmount = finalAmount - paidAmount
 
   async function onSubmit(values: FormValues) {
@@ -125,6 +128,7 @@ export function NewBillPage() {
           model:       item.model      || undefined,
           sqFt:        item.sqFt > 0   ? item.sqFt : undefined,
         })),
+        transportationAmount: values.transportationAmount,
         discount:   values.discount,
         paidAmount: values.paidAmount,
         createdBy:  currentUser.id,
@@ -247,7 +251,7 @@ export function NewBillPage() {
             <span>{todayLabel}</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
             {/* Left column */}
             <div className="space-y-6">
 
@@ -345,20 +349,15 @@ export function NewBillPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="discount">Discount (₹)</Label>
+                    <Label htmlFor="transportationAmount">Transportation (₹)</Label>
                     <Input
-                      id="discount"
+                      id="transportationAmount"
                       type="number"
                       min={0}
                       step="0.01"
                       className="font-mono tabular-nums text-right"
-                      {...form.register('discount')}
+                      {...form.register('transportationAmount')}
                     />
-                  </div>
-
-                  <div className="flex justify-between items-center text-sm border-t border-border pt-2">
-                    <span className="font-medium">Final Amount</span>
-                    <span className="font-mono tabular-nums font-medium">{INR.format(finalAmount)}</span>
                   </div>
 
                   <div className="space-y-2">
@@ -370,6 +369,18 @@ export function NewBillPage() {
                       step="0.01"
                       className="font-mono tabular-nums text-right"
                       {...form.register('paidAmount')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="discount">Discount (₹)</Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="font-mono tabular-nums text-right"
+                      {...form.register('discount')}
                     />
                   </div>
 

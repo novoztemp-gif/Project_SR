@@ -104,6 +104,7 @@ export interface PurchaseBill {
   items: PurchaseItem[]
   subtotal: number
   total: number
+  transportationAmount: number // default 0
   createdBy: string // User.id
   createdAt: string // ISO-8601
   printedAt: string | null
@@ -140,10 +141,11 @@ export interface SalesBill {
   items: SalesItem[]
   subtotal: number
   total: number        // sum of item subtotals (pre-discount)
+  transportationAmount: number // default 0
   discount: number     // default 0
   paidAmount: number   // default 0
   status: BillStatus   // explicit: paid | pending | partial
-  // derived (not stored): finalAmount = total - discount, balanceAmount = finalAmount - paidAmount
+  // derived (not stored): finalAmount = total + transportationAmount - discount, balanceAmount = finalAmount - paidAmount
   createdBy: string    // User.id
   createdAt: string    // ISO-8601
 }
@@ -167,6 +169,7 @@ export interface CreateBillInput {
     model?: string
     sqFt?: number
   }>
+  transportationAmount?: number
   discount?: number
   paidAmount?: number
   createdBy: string

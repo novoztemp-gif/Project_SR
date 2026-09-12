@@ -11,6 +11,7 @@ interface PurchaseDraft {
   godownId: string
   imageUrl?: string
   items: PurchaseBill['items']
+  transportationAmount?: number
   createdBy: string
 }
 
@@ -42,6 +43,7 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
       godownId: draft.godownId,
       imageUrl: draft.imageUrl,
       items: draft.items,
+      transportationAmount: draft.transportationAmount ?? 0,
     })
     set((state) => ({ purchases: [purchase, ...state.purchases] }))
     return purchase.id

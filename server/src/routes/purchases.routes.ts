@@ -36,6 +36,7 @@ const createPurchaseSchema = z.object({
       }),
     )
     .min(1, 'A purchase needs at least one item'),
+  transportationAmount: z.number().nonnegative().optional(),
 })
 
 /**
@@ -107,6 +108,7 @@ purchasesRouter.post(
       subtotal: item.quantity * item.unitPrice,
     }))
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
+    const transportationAmount = input.transportationAmount ?? 0
 
     const purchase = await prisma.$transaction(async (tx) => {
       return tx.purchaseBill.create({
@@ -119,6 +121,7 @@ purchasesRouter.post(
           imageUrl: input.imageUrl,
           subtotal,
           total: subtotal,
+          transportationAmount,
           createdBy: req.user!.id,
           printedAt: null,
           items: { create: items },

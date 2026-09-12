@@ -131,15 +131,15 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
   return (
     <div className="border-b border-border last:border-0 py-3 space-y-2">
       {/* Row 1: Name | Size / Dimension | Model */}
-      <div className="grid grid-cols-[minmax(280px,1fr)_10rem_6rem] items-start gap-2">
-        <div className="w-full min-w-[280px]">
+      <div className="grid grid-cols-[minmax(420px,1fr)_10rem_6rem] items-start gap-2">
+        <div className="w-full min-w-[420px]">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 role="combobox"
                 className={cn(
-                  'w-full min-h-[44px] min-w-[280px] flex items-center rounded-md border border-input bg-background px-3 py-2 text-base text-left ring-offset-background transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'w-full min-h-[44px] min-w-[420px] flex items-center rounded-md border border-input bg-background px-3 py-2 text-base text-left ring-offset-background transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   selectedProduct?.name || scannedProductName ? 'text-foreground' : 'text-muted-foreground',
                   itemErrors?.productId && 'border-destructive'
                 )}
@@ -149,7 +149,7 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-80" align="start">
+            <PopoverContent className="p-0 w-96" align="start">
               <Command>
                 <CommandInput placeholder="Search product…" />
                 <CommandList>

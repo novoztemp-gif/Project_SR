@@ -51,6 +51,7 @@ export const api = {
           transportTime: input.transportTime,
           section: input.section,
           items: input.items,
+          transportationAmount: input.transportationAmount ?? 0,
           discount: input.discount ?? 0,
           paidAmount: input.paidAmount ?? 0,
         })

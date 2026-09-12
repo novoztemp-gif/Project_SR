@@ -13,7 +13,7 @@ function fmtDate(iso: string) {
 }
 
 export function PrintableBill({ bill }: { bill: SalesBill }) {
-  const finalAmount   = bill.total - bill.discount
+  const finalAmount   = bill.total + bill.transportationAmount - bill.discount
   const balanceAmount = finalAmount - bill.paidAmount
 
   const staffName = getUserName(bill.createdBy)
@@ -123,16 +123,16 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
             <span className="tabular-nums text-gray-900">{NUM.format(bill.total)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Discount</span>
-            <span className="tabular-nums text-gray-900">{NUM.format(bill.discount)}</span>
-          </div>
-          <div className="flex justify-between font-semibold border-t border-gray-300 pt-1 text-brand-dark">
-            <span>Final Amount</span>
-            <span className="tabular-nums">{NUM.format(finalAmount)}</span>
+            <span className="text-gray-600">Transportation</span>
+            <span className="tabular-nums text-gray-900">{NUM.format(bill.transportationAmount)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Paid Amount</span>
             <span className="tabular-nums text-gray-900">{NUM.format(bill.paidAmount)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Discount</span>
+            <span className="tabular-nums text-gray-900">{NUM.format(bill.discount)}</span>
           </div>
           <div className="flex justify-between font-semibold border-t border-gray-300 pt-1 text-brand-dark">
             <span>Balance Amount</span>

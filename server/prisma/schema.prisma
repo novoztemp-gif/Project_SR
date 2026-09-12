@@ -78,6 +78,7 @@ model SalesBill {
   section         Section
   subtotal        Float
   total           Float
+  transportationAmount Float  @default(0)
   discount        Float       @default(0)
   paidAmount      Float       @default(0)
   status          BillStatus
@@ -117,6 +118,7 @@ model PurchaseBill {
   imageUrl      String?
   subtotal      Float
   total         Float
+  transportationAmount Float @default(0)
   createdBy     String
   createdAt     DateTime       @default(now())
   printedAt     DateTime?
