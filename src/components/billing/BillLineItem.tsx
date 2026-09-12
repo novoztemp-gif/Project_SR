@@ -186,16 +186,20 @@ function PolishRectIcon({ edges }: { edges: Array<'top' | 'bottom' | 'left' | 'r
 
 // Circle with tick pairs at top, lower-right, and lower-left — matching
 // "Circle with two lines in top, down right and left" exactly.
+// Two close ticks at each of the four cardinal points — top, bottom, left,
+// right — same convention as the rectangle/oval "all side" icons.
 function PolishRoundIcon() {
   return (
     <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.75">
       <circle cx="16" cy="16" r="13" />
       <line x1="13" y1="0" x2="13" y2="8" strokeWidth={2.25} strokeLinecap="round" />
       <line x1="19" y1="0" x2="19" y2="8" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="23" y1="19" x2="29" y2="23" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="27" y1="23" x2="32" y2="27" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="9" y1="19" x2="3" y2="23" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="5" y1="23" x2="0" y2="27" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="13" y1="24" x2="13" y2="32" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="19" y1="24" x2="19" y2="32" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="0" y1="13" x2="8" y2="13" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="0" y1="19" x2="8" y2="19" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="24" y1="13" x2="32" y2="13" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="24" y1="19" x2="32" y2="19" strokeWidth={2.25} strokeLinecap="round" />
     </svg>
   )
 }
