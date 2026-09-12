@@ -255,8 +255,8 @@ export function NewPurchasePage() {
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Vendor and stock destination</CardTitle>
@@ -315,9 +315,45 @@ export function NewPurchasePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="h-fit lg:sticky lg:top-6">
             <CardHeader>
-              <CardTitle className="text-base">Reference photo</CardTitle>
+              <CardTitle className="text-base">Total</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Running total</span>
+                <span className="font-mono text-lg font-medium tabular-nums">{INR.format(total)}</span>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transportationAmount">Transportation (₹)</Label>
+                <Input
+                  id="transportationAmount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="font-mono tabular-nums text-right"
+                  {...form.register('transportationAmount')}
+                />
+              </div>
+
+              <div className="flex items-center justify-between border-b border-border pb-3 pt-1">
+                <span className="font-medium">Grand total</span>
+                <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(grandTotal)}</span>
+              </div>
+              <Button type="submit" className="w-full" size="lg">
+                Save purchase
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Stock remains pending until print.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Reference photo</CardTitle>
             </CardHeader>
             <CardContent>
               {imageUrl ? (
@@ -516,42 +552,6 @@ export function NewPurchasePage() {
               })}
             </CardContent>
           </Card>
-        </div>
-
-        <Card className="h-fit lg:sticky lg:top-6">
-          <CardHeader>
-            <CardTitle className="text-base">Total</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Running total</span>
-              <span className="font-mono text-lg font-medium tabular-nums">{INR.format(total)}</span>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="transportationAmount">Transportation (₹)</Label>
-              <Input
-                id="transportationAmount"
-                type="number"
-                min={0}
-                step="0.01"
-                className="font-mono tabular-nums text-right"
-                {...form.register('transportationAmount')}
-              />
-            </div>
-
-            <div className="flex items-center justify-between border-b border-border pb-3 pt-1">
-              <span className="font-medium">Grand total</span>
-              <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(grandTotal)}</span>
-            </div>
-            <Button type="submit" className="w-full" size="lg">
-              Save purchase
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Stock remains pending until print.
-            </p>
-          </CardContent>
-        </Card>
       </form>
 
       <PurchaseScanDialog

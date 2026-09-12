@@ -305,35 +305,6 @@ export function NewBillPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Items card */}
-              <Card className="bg-brand-raised">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-base">Items</CardTitle>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => append(EMPTY_ITEM)}>
-                    <Plus className="h-4 w-4 mr-1" /> Add item
-                  </Button>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 pt-0">
-                  {fields.map((field, index) => (
-                    <BillLineItem
-                      key={field.id}
-                      index={index}
-                      isOnly={fields.length === 1}
-                      onRemove={() => remove(index)}
-                    />
-                  ))}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="mt-3 w-full"
-                    onClick={() => append(EMPTY_ITEM)}
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Add item
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Right column — sticky totals */}
@@ -406,6 +377,35 @@ export function NewBillPage() {
               </Card>
             </div>
           </div>
+
+          {/* Items — full width, below Customer/Totals */}
+          <Card className="mt-6 bg-brand-raised">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-base">Items</CardTitle>
+              <Button type="button" variant="ghost" size="sm" onClick={() => append(EMPTY_ITEM)}>
+                <Plus className="h-4 w-4 mr-1" /> Add item
+              </Button>
+            </CardHeader>
+            <CardContent className="px-6 pb-6 pt-0">
+              {fields.map((field, index) => (
+                <BillLineItem
+                  key={field.id}
+                  index={index}
+                  isOnly={fields.length === 1}
+                  onRemove={() => remove(index)}
+                />
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => append(EMPTY_ITEM)}
+              >
+                <Plus className="h-4 w-4 mr-1" /> Add item
+              </Button>
+            </CardContent>
+          </Card>
         </form>
       </Form>
     </div>
