@@ -67,7 +67,12 @@ export function safeMoney(value: unknown): number {
 }
 
 export function getBillFinalAmount(bill: SalesBill): number {
-  return Math.max(0, safeMoney(bill.total) - safeMoney(bill.discount))
+  // Must match the backend's authoritative formula (server/src/lib/billing.ts
+  // getBillStatus) and every other place this is computed (PrintableBill,
+  // NewBillPage) — omitting transportationAmount here understated revenue
+  // and could misclassify a fully-paid bill with a transport charge as
+  // partial/pending in every report that builds on this function.
+  return Math.max(0, safeMoney(bill.total) + safeMoney(bill.transportationAmount) - safeMoney(bill.discount))
 }
 
 export function getBillPaidAmount(bill: SalesBill): number {
