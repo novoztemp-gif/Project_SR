@@ -27,7 +27,7 @@ import {
   selectSectionBreakdown,
   selectStatusBreakdown,
 } from '@/lib/reportSelectors'
-import { getUserSections } from '@/lib/userSections'
+import { getUserName, getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useBillingStore } from '@/store/billingStore'
 
@@ -64,6 +64,36 @@ interface StatusChartRow {
   status: 'paid' | 'partial' | 'pending'
   billCount: number
   amount: number
+}
+
+interface UserChartRow {
+  userId: string
+  name: string
+  billCount: number
+  revenue: number
+  collected: number
+  pending: number
+  collectionRate: number
+  fulfilmentRate: number
+}
+
+function UserTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean
+  payload?: Array<{ payload?: UserChartRow }>
+}) {
+  const row = payload?.[0]?.payload
+  if (!active || !row) return null
+
+  return (
+    <div className="rounded-xl border border-border bg-popover px-3 py-2 text-popover-foreground shadow-md">
+      <p className="text-xs font-medium">{row.name}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{row.billCount} bill{row.billCount === 1 ? '' : 's'}</p>
+      <p className="font-mono text-sm tabular-nums">{INR.format(row.revenue)}</p>
+    </div>
+  )
 }
 
 function SectionTooltip({
@@ -131,6 +161,27 @@ export function MonthlyReportPage() {
     }
   })
 
+  // Per-staff comparison — built from whoever actually created a bill this
+  // month, not a fixed roster, so it still covers a since-deactivated
+  // counter's historical activity rather than silently dropping it.
+  const userChartData: UserChartRow[] = Array.from(new Set(monthBills.map((bill) => bill.createdBy)))
+    .map((userId) => {
+      const userBills = monthBills.filter((bill) => bill.createdBy === userId)
+      const userCollection = selectCollectionStats(userBills)
+      const userFulfilment = selectFulfilmentStats(userBills)
+      return {
+        userId,
+        name: getUserName(userId),
+        billCount: userBills.length,
+        revenue: userCollection.total,
+        collected: userCollection.paid,
+        pending: userCollection.pending,
+        collectionRate: userCollection.collectionRate,
+        fulfilmentRate: userFulfilment.fulfilmentRate,
+      }
+    })
+    .sort((a, b) => b.revenue - a.revenue)
+
   useEffect(() => {
     if (!isBillingUser) return
     toast.error('Access denied')
@@ -154,6 +205,23 @@ export function MonthlyReportPage() {
       ],
     )
     toast.success('Monthly report exported')
+  }
+
+  function exportUserCsv() {
+    exportCsv(
+      `monthly-report-by-user-${selectedMonth}.csv`,
+      ['Staff', 'Bills', 'Revenue', 'Collected', 'Pending', 'Collection Rate', 'Fulfilment Rate'],
+      userChartData.map((row) => [
+        row.name,
+        row.billCount,
+        row.revenue,
+        row.collected,
+        row.pending,
+        `${Math.round(row.collectionRate)}%`,
+        `${Math.round(row.fulfilmentRate)}%`,
+      ]),
+    )
+    toast.success('Per-staff report exported')
   }
 
   return (
@@ -291,6 +359,60 @@ export function MonthlyReportPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="rounded-xl border border-border bg-card">
+        <CardContent className="space-y-5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-medium">By Staff — compare performance</h2>
+            <Button type="button" variant="outline" size="sm" onClick={exportUserCsv} disabled={userChartData.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
+          {userChartData.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No bills this month yet.</p>
+          ) : (
+            <>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={userChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={axisMoney} axisLine={false} tickLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} width={48} />
+                    <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} content={<UserTooltip />} />
+                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="#5F9598" isAnimationActive animationDuration={600} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Staff</TableHead>
+                    <TableHead className="text-right">Bills</TableHead>
+                    <TableHead className="text-right">Revenue</TableHead>
+                    <TableHead className="text-right">Collected</TableHead>
+                    <TableHead className="text-right">Pending</TableHead>
+                    <TableHead className="text-right">Collection</TableHead>
+                    <TableHead className="text-right">Fulfilment</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userChartData.map((row) => (
+                    <TableRow key={row.userId}>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{row.billCount}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{INR.format(row.revenue)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{INR.format(row.collected)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{INR.format(row.pending)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{Math.round(row.collectionRate)}%</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{Math.round(row.fulfilmentRate)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
