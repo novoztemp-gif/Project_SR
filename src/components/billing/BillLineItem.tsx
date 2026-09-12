@@ -153,11 +153,16 @@ type TickLine = [number, number, number, number]
 // marks in the actual hand-drawn diagram more closely than a plain
 // perpendicular tick would.
 function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
+  // Straight, perpendicular to the edge they cross — a slant here (tried
+  // previously) made opposite/adjacent edge marks visually line up into
+  // what read as one continuous diagonal stroke across the whole shape,
+  // which is exactly the ambiguity the sketch's marks don't have: each
+  // edge's pair of ticks needs to stay clearly its own, separate mark.
   const lines: TickLine[] = {
-    top: [[14, 0, 19, 9], [21, 0, 26, 9]],
-    bottom: [[14, 23, 19, 32], [21, 23, 26, 32]],
-    left: [[0, 9, 9, 14], [0, 18, 9, 23]],
-    right: [[31, 9, 40, 14], [31, 18, 40, 23]],
+    top: [[16, 0, 16, 9], [22, 0, 22, 9]],
+    bottom: [[16, 23, 16, 32], [22, 23, 22, 32]],
+    left: [[0, 11, 9, 11], [0, 19, 9, 19]],
+    right: [[31, 11, 40, 11], [31, 19, 40, 19]],
   }[edge] as TickLine[]
   return (
     <>
