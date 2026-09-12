@@ -132,9 +132,10 @@ export const ARCH_OPTIONS: IconPickerOption[] = [
 // on whichever edge(s) of the piece get polished. No text labels were on the
 // sketch itself, so these are positional best-guess names (e.g. "1 Side
 // (Top)" for a box marked only on top) — correct any wording that doesn't
-// match the shop's actual terms. The two "all sides" / 4-side entries in
-// particular were the least legible in the sketch and are the most likely
-// to need a fix.
+// match the shop's actual terms. The last rect shape in the sketch (left
+// and right edges again, drawn with a different tick style) reuses
+// 'two-side-lr' rather than adding a guessed second meaning — flag if that
+// was actually meant to be a distinct option.
 export const POLISH_SIDE_OPTIONS: IconPickerOption[] = [
   { value: 'two-side-lr', label: '2 Side (Left & Right)' },
   { value: 'round-all', label: 'Round (All Side)' },
@@ -144,8 +145,7 @@ export const POLISH_SIDE_OPTIONS: IconPickerOption[] = [
   { value: 'oval-both-ends', label: 'Oval (Both Ends)' },
   { value: 'one-side-right', label: '1 Side (Right)' },
   { value: 'one-side-left', label: '1 Side (Left)' },
-  { value: 'two-side-tb', label: '2 Side (Top & Bottom)' },
-  { value: 'four-side', label: '4 Side (All)' },
+  { value: 'top-left-corner', label: '2 Side (Top & Left)' },
 ]
 export const POLISH_NAME_OPTIONS: string[] = []
 export const CORNER_TYPE_OPTIONS: string[] = []
