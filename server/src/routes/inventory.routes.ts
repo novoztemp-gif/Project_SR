@@ -136,9 +136,10 @@ inventoryRouter.post(
   }),
 )
 
-/** PUT /api/inventory/products/:id — update a product definition. */
+/** PUT /api/inventory/products/:id — update a product definition. Admin only. */
 inventoryRouter.put(
   '/products/:id',
+  requireAdmin,
   asyncHandler(async (req, res) => {
     const data = productDefinitionSchema.parse(req.body)
 
@@ -169,14 +170,17 @@ inventoryRouter.put(
   }),
 )
 
-/** DELETE /api/inventory/products/:id */
+/** DELETE /api/inventory/products/:id — Admin only. */
 inventoryRouter.delete(
   '/products/:id',
+  requireAdmin,
   asyncHandler(async (req, res) => {
-    // This had NO section check at all — any authenticated user, including a
-    // counter restricted to e.g. Glass + Plywood, could permanently delete
-    // any product in any section by ID (confirmed: a Glass/Plywood-only
-    // counter account successfully deleted a Plumbing product).
+    // Section check kept as defense-in-depth even though requireAdmin above
+    // already restricts this to admins — this had NO section check at all
+    // before, any authenticated user, including a counter restricted to
+    // e.g. Glass + Plywood, could permanently delete any product in any
+    // section by ID (confirmed: a Glass/Plywood-only counter account
+    // successfully deleted a Plumbing product).
     const existing = await prisma.product.findUnique({ where: { id: req.params.id } })
     if (!existing) throw new ApiError(404, 'Product not found')
     assertSectionAccess(req.user!, existing.section)

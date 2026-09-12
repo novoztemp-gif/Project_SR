@@ -86,6 +86,7 @@ function productRows(products: Product[]) {
 export function ProductsPage() {
   const navigate = useNavigate()
   const currentUser = useAuthStore((state) => state.currentUser)!
+  const isAdmin = currentUser.role === 'admin'
   const products = useInventoryStore((state) => state.products)
   const addProductDefinition = useInventoryStore((state) => state.addProductDefinition)
   const updateProductDefinition = useInventoryStore((state) => state.updateProductDefinition)
@@ -267,10 +268,12 @@ export function ProductsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => openEditDialog(product)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
+                  {isAdmin && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => openEditDialog(product)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
@@ -280,10 +283,12 @@ export function ProductsPage() {
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Restock
                   </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => requestDelete(product)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
+                  {isAdmin && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => requestDelete(product)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
