@@ -8,7 +8,6 @@ interface PurchaseDraft {
   vendorName: string
   date: string
   section: Section
-  godownId: string
   imageUrl?: string
   items: PurchaseBill['items']
   transportationAmount?: number
@@ -40,7 +39,6 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
       vendorName: draft.vendorName,
       date: draft.date,
       section: draft.section,
-      godownId: draft.godownId,
       imageUrl: draft.imageUrl,
       items: draft.items,
       transportationAmount: draft.transportationAmount ?? 0,

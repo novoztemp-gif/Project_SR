@@ -36,6 +36,17 @@ function getGodownLabel(godownId: string) {
   return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? godownId
 }
 
+// Items can each target a different godown now — a single purchase.godownId
+// is only ever a legacy/first-item fallback, so summarize honestly: the
+// shared godown when every item agrees, otherwise say so explicitly rather
+// than silently showing just one of several.
+function getPurchaseGodownLabel(purchase: PurchaseBill) {
+  const ids = Array.from(new Set(purchase.items.map((item) => item.godownId).filter((id): id is string => Boolean(id))))
+  if (ids.length === 0) return getGodownLabel(purchase.godownId)
+  if (ids.length === 1) return getGodownLabel(ids[0])
+  return 'Multiple godowns'
+}
+
 function sectionBadgeStyle(sectionLabel: string) {
   const color = SECTION_COLORS[sectionLabel] ?? '#5F9598'
   return {
@@ -66,7 +77,7 @@ function PurchasePreviewPanel({
   onView: () => void
 }) {
   const sectionLabel = getSectionLabel(purchase.section)
-  const godownLabel = getGodownLabel(purchase.godownId)
+  const godownLabel = getPurchaseGodownLabel(purchase)
   const isApplied = Boolean(purchase.printedAt)
 
   return (
@@ -186,7 +197,7 @@ export function PurchaseListPage() {
         purchase.vendorName,
         csvDate(purchase.date),
         getSectionLabel(purchase.section),
-        getGodownLabel(purchase.godownId),
+        getPurchaseGodownLabel(purchase),
         purchase.items.map((item) => `${item.productName} x ${item.quantity} ${item.unit}`).join('; '),
         purchase.total,
         purchase.printedAt ? 'Applied' : 'Pending',
@@ -225,7 +236,7 @@ export function PurchaseListPage() {
           <TableBody>
             {sortedPurchases.map((purchase) => {
               const sectionLabel = getSectionLabel(purchase.section)
-              const godownLabel = getGodownLabel(purchase.godownId)
+              const godownLabel = getPurchaseGodownLabel(purchase)
               const isSelected = purchase.id === selectedId
 
               return (

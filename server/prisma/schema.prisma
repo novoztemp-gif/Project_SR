@@ -137,6 +137,7 @@ model PurchaseItem {
   unit          String
   unitPrice     Float
   subtotal      Float
+  godownId      String?
   purchase      PurchaseBill @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
   @@index([purchaseId])

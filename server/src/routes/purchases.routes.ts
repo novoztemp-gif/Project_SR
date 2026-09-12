@@ -22,7 +22,6 @@ const createPurchaseSchema = z.object({
   vendorName: z.string().min(1),
   date: z.string().min(1),
   section: SectionEnum,
-  godownId: z.string().min(1),
   imageUrl: z.string().optional(),
   items: z
     .array(
@@ -33,6 +32,7 @@ const createPurchaseSchema = z.object({
         quantity: z.number().positive(),
         unit: z.string().min(1),
         unitPrice: z.number().nonnegative(),
+        godownId: z.string().min(1, 'Select a godown for each item'),
       }),
     )
     .min(1, 'A purchase needs at least one item'),
@@ -106,9 +106,15 @@ purchasesRouter.post(
       unit: item.unit,
       unitPrice: item.unitPrice,
       subtotal: item.quantity * item.unitPrice,
+      godownId: item.godownId,
     }))
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
     const transportationAmount = input.transportationAmount ?? 0
+    // PurchaseBill.godownId predates per-item godowns and is kept only as a
+    // display/legacy fallback (e.g. anywhere still reading the bill-level
+    // field rather than each item's own) — the first item's choice stands in
+    // for it since a purchase always has at least one item.
+    const primaryGodownId = items[0].godownId
 
     const purchase = await prisma.$transaction(async (tx) => {
       return tx.purchaseBill.create({
@@ -117,7 +123,7 @@ purchasesRouter.post(
           vendorName: input.vendorName,
           date,
           section: input.section,
-          godownId: input.godownId,
+          godownId: primaryGodownId,
           imageUrl: input.imageUrl,
           subtotal,
           total: subtotal,
@@ -186,7 +192,10 @@ purchasesRouter.post(
               hsnCode: '',
               taxRate: 18,
               section: purchase.section,
-              godownId: purchase.godownId,
+              // Each item now carries its own chosen godown — fall back to
+              // the bill-level one only for pre-existing purchases saved
+              // before per-item godowns existed.
+              godownId: item.godownId ?? purchase.godownId,
               stock: item.quantity,
               costPrice: item.unitPrice,
               salePrice: item.unitPrice,

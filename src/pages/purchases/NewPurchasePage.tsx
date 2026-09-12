@@ -45,13 +45,13 @@ const itemSchema = z.object({
   unit: z.string().min(1, 'Unit is required'),
   unitPrice: z.coerce.number().min(0, 'Must be 0 or more'),
   subtotal: z.number().default(0),
+  godownId: z.string().min(1, 'Select a godown'),
 })
 
 const formSchema = z.object({
   vendorName: z.string().min(1, 'Vendor name is required'),
   date: z.string().min(1),
   section: z.custom<Section>((value) => typeof value === 'string' && SECTIONS.some((section) => section.key === value)),
-  godownId: z.string().min(1, 'Select a godown'),
   imageUrl: z.string().optional(),
   items: z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
@@ -68,6 +68,7 @@ const EMPTY_ITEM = {
   unit: 'pcs',
   unitPrice: 0,
   subtotal: 0,
+  godownId: GODOWNS_SEED[0]?.id ?? '',
 }
 
 function todayInputValue() {
@@ -117,7 +118,6 @@ export function NewPurchasePage() {
       vendorName: '',
       date: todayInputValue(),
       section: allowedSections[0],
-      godownId: GODOWNS_SEED[0]?.id ?? '',
       imageUrl: undefined,
       items: [EMPTY_ITEM],
       transportationAmount: 0,
@@ -126,7 +126,6 @@ export function NewPurchasePage() {
 
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'items' })
   const watchedSection = useWatch({ control: form.control, name: 'section' }) as Section
-  const watchedGodownId = useWatch({ control: form.control, name: 'godownId' })
   const watchedItems = useWatch({ control: form.control, name: 'items' })
   const watchedTransportation = useWatch({ control: form.control, name: 'transportationAmount' })
   const imageUrl = useWatch({ control: form.control, name: 'imageUrl' })
@@ -147,7 +146,6 @@ export function NewPurchasePage() {
     if (!product || !allowedSections.includes(product.section)) return
 
     form.setValue('section', product.section, { shouldValidate: true })
-    form.setValue('godownId', product.godownId, { shouldValidate: true })
     form.setValue('items', [{
       productId: product.id,
       productName: product.name,
@@ -156,6 +154,7 @@ export function NewPurchasePage() {
       unit: product.unit,
       unitPrice: product.costPrice,
       subtotal: 0,
+      godownId: product.godownId,
     }], { shouldValidate: true })
     navigate(location.pathname, { replace: true, state: null })
   }, [allowedSections, form, location.pathname, location.state, navigate, products])
@@ -182,11 +181,13 @@ export function NewPurchasePage() {
     const product = products.find((item) => item.id === value)
     if (!product) return
     form.setValue('section', product.section, { shouldValidate: true })
-    form.setValue('godownId', product.godownId, { shouldValidate: true })
     form.setValue(`items.${index}.productId`, product.id, { shouldValidate: true })
     form.setValue(`items.${index}.productName`, product.name, { shouldValidate: true })
     form.setValue(`items.${index}.unit`, product.unit, { shouldValidate: true })
     form.setValue(`items.${index}.unitPrice`, product.costPrice, { shouldValidate: true })
+    // Reflect where this product actually already lives — the per-item
+    // godown picker still lets the user override it afterward if needed.
+    form.setValue(`items.${index}.godownId`, product.godownId, { shouldValidate: true })
   }
 
   function handlePurchaseExtract(parsed: ParsedPurchase, scannedImageDataUrl: string) {
@@ -214,6 +215,10 @@ export function NewPurchasePage() {
         unit: product?.unit ?? 'pcs',
         unitPrice: product?.costPrice ?? item.rate,
         subtotal: 0,
+        // A scanned invoice has no notion of which of our own godowns to
+        // use — reflect the matched product's actual godown, or fall back
+        // to the default; the user can still change it per row afterward.
+        godownId: product?.godownId ?? GODOWNS_SEED[0]?.id ?? '',
       }
     })
 
@@ -230,7 +235,6 @@ export function NewPurchasePage() {
         vendorName: values.vendorName,
         date: new Date(values.date).toISOString(),
         section: values.section,
-        godownId: values.godownId,
         imageUrl: values.imageUrl,
         items: values.items.map((item) => ({
           ...item,
@@ -289,25 +293,6 @@ export function NewPurchasePage() {
                     {SECTIONS.filter((section) => allowedSections.includes(section.key)).map((section) => (
                       <SelectItem key={section.key} value={section.key}>
                         {section.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Godown</Label>
-                <Select
-                  value={watchedGodownId}
-                  onValueChange={(value) => form.setValue('godownId', value, { shouldValidate: true })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GODOWNS_SEED.map((godown) => (
-                      <SelectItem key={godown.id} value={godown.id}>
-                        {godown.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -411,7 +396,7 @@ export function NewPurchasePage() {
                 const isNewProduct = !item?.productId
 
                 return (
-                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2.2fr_1fr_0.7fr_0.8fr_0.8fr_auto]">
+                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2fr_0.9fr_0.6fr_0.6fr_0.8fr_0.9fr_auto]">
                     <div className="space-y-2">
                       <Label>Product</Label>
                       <Popover
@@ -536,6 +521,25 @@ export function NewPurchasePage() {
                     <div className="space-y-2">
                       <Label>Unit price</Label>
                       <Input type="number" min={0} step="0.01" className="font-mono tabular-nums" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Godown</Label>
+                      <Select
+                        value={item?.godownId || GODOWNS_SEED[0]?.id}
+                        onValueChange={(value) => form.setValue(`items.${index}.godownId`, value, { shouldValidate: true })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GODOWNS_SEED.map((godown) => (
+                            <SelectItem key={godown.id} value={godown.id}>
+                              {godown.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <Button

@@ -91,6 +91,7 @@ export interface PurchaseItem {
   unit: string
   unitPrice: number // per unit (purchase price)
   subtotal: number  // quantity * unitPrice
+  godownId?: string // which godown this line's stock goes into
 }
 
 export interface PurchaseBill {
@@ -99,7 +100,7 @@ export interface PurchaseBill {
   vendorName: string
   date: string      // ISO-8601
   section: Section
-  godownId: string
+  godownId: string // legacy/display fallback — each item now carries its own godownId
   imageUrl?: string
   items: PurchaseItem[]
   subtotal: number

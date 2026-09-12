@@ -24,9 +24,12 @@ function formatDate(iso: string) {
   })
 }
 
+function godownLabelFor(godownId?: string) {
+  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? '—'
+}
+
 export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
   const sectionLabel = SECTIONS.find((section) => section.key === bill.section)?.label ?? bill.section
-  const godownLabel = GODOWNS_SEED.find((godown) => godown.id === bill.godownId)?.name ?? bill.godownId
   const grandTotal = bill.total + bill.transportationAmount
 
   return (
@@ -59,10 +62,9 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         </div>
         <div className="text-right">
           <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
-            Section / Godown
+            Section
           </p>
           <p className="text-gray-900">{sectionLabel}</p>
-          <p className="text-gray-600">{godownLabel}</p>
         </div>
       </div>
 
@@ -70,6 +72,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         <thead>
           <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
             <th className="py-2 text-left font-medium text-gray-600">Item</th>
+            <th className="py-2 text-left font-medium text-gray-600">Godown</th>
             <th className="py-2 text-right font-medium text-gray-600">Qty</th>
             <th className="py-2 text-right font-medium text-gray-600">Unit price</th>
             <th className="py-2 text-right font-medium text-gray-600">Subtotal</th>
@@ -86,6 +89,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
                   </Badge>
                 )}
               </td>
+              <td className="py-2 text-gray-600">{godownLabelFor(item.godownId ?? bill.godownId)}</td>
               <td className="py-2 text-right font-mono tabular-nums">
                 <span className="print:hidden">{item.quantity} {item.unit}</span>
                 <span className="hidden print:inline">{toLetterDigits(String(item.quantity))} {item.unit}</span>
