@@ -184,27 +184,49 @@ function PolishRectIcon({ edges }: { edges: Array<'top' | 'bottom' | 'left' | 'r
   )
 }
 
+// Circle with tick pairs at top, lower-right, and lower-left — matching
+// "Circle with two lines in top, down right and left" exactly.
 function PolishRoundIcon() {
   return (
     <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.75">
       <circle cx="16" cy="16" r="13" />
-      <line x1="9" y1="2" x2="12" y2="9" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="16" y1="0" x2="16" y2="8" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="23" y1="2" x2="20" y2="9" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="13" y1="0" x2="13" y2="8" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="19" y1="0" x2="19" y2="8" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="23" y1="19" x2="29" y2="23" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="27" y1="23" x2="32" y2="27" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="9" y1="19" x2="3" y2="23" strokeWidth={2.25} strokeLinecap="round" />
+      <line x1="5" y1="23" x2="0" y2="27" strokeWidth={2.25} strokeLinecap="round" />
     </svg>
   )
 }
 
-function PolishOvalIcon({ marked }: { marked?: boolean }) {
+function PolishOvalIcon({ marks = [] }: { marks?: Array<'top' | 'bottom' | 'left' | 'right'> }) {
+  const has = (edge: 'top' | 'bottom' | 'left' | 'right') => marks.includes(edge)
   return (
     <svg viewBox="0 0 48 24" className="h-6 w-10" fill="none" stroke="currentColor" strokeWidth="1.75">
       <rect x="2" y="2" width="44" height="20" rx="10" />
-      {marked && (
+      {has('left') && (
         <>
           <line x1="2" y1="8" x2="9" y2="10" strokeWidth={2.25} strokeLinecap="round" />
           <line x1="2" y1="16" x2="9" y2="14" strokeWidth={2.25} strokeLinecap="round" />
+        </>
+      )}
+      {has('right') && (
+        <>
           <line x1="46" y1="8" x2="39" y2="10" strokeWidth={2.25} strokeLinecap="round" />
           <line x1="46" y1="16" x2="39" y2="14" strokeWidth={2.25} strokeLinecap="round" />
+        </>
+      )}
+      {has('top') && (
+        <>
+          <line x1="20" y1="0" x2="20" y2="7" strokeWidth={2.25} strokeLinecap="round" />
+          <line x1="28" y1="0" x2="28" y2="7" strokeWidth={2.25} strokeLinecap="round" />
+        </>
+      )}
+      {has('bottom') && (
+        <>
+          <line x1="20" y1="17" x2="20" y2="24" strokeWidth={2.25} strokeLinecap="round" />
+          <line x1="28" y1="17" x2="28" y2="24" strokeWidth={2.25} strokeLinecap="round" />
         </>
       )}
     </svg>
@@ -212,15 +234,16 @@ function PolishOvalIcon({ marked }: { marked?: boolean }) {
 }
 
 const POLISH_SIDE_ICONS: Record<string, ReactNode> = {
-  'two-side-lr': <PolishRectIcon edges={['left', 'right']} />,
-  'round-all': <PolishRoundIcon />,
+  'four-side': <PolishRectIcon edges={['top', 'bottom', 'left', 'right']} />,
   'one-side-bottom': <PolishRectIcon edges={['bottom']} />,
-  'oval-plain': <PolishOvalIcon />,
   'one-side-top': <PolishRectIcon edges={['top']} />,
-  'oval-both-ends': <PolishOvalIcon marked />,
   'one-side-right': <PolishRectIcon edges={['right']} />,
   'one-side-left': <PolishRectIcon edges={['left']} />,
-  'top-left-corner': <PolishRectIcon edges={['top', 'left']} />,
+  'two-side-tb': <PolishRectIcon edges={['top', 'bottom']} />,
+  'two-side-lr': <PolishRectIcon edges={['left', 'right']} />,
+  'round-all': <PolishRoundIcon />,
+  'oval-plain': <PolishOvalIcon />,
+  'oval-all': <PolishOvalIcon marks={['top', 'bottom', 'left', 'right']} />,
 }
 
 // A pill trigger that opens a small grid of visual icon tiles instead of a

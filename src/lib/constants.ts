@@ -128,24 +128,23 @@ export const ARCH_OPTIONS: IconPickerOption[] = [
   { value: 'flat-square', label: 'Flat / Square' },
 ]
 
-// Read from the hand-drawn edge-polish diagram — each icon shows tick marks
-// on whichever edge(s) of the piece get polished. No text labels were on the
-// sketch itself, so these are positional best-guess names (e.g. "1 Side
-// (Top)" for a box marked only on top) — correct any wording that doesn't
-// match the shop's actual terms. The last rect shape in the sketch (left
-// and right edges again, drawn with a different tick style) reuses
-// 'two-side-lr' rather than adding a guessed second meaning — flag if that
-// was actually meant to be a distinct option.
+// Confirmed explicitly, in order — each edge/position holds a pair of close
+// tick marks:
+// 1. rect, all 4 sides   2. rect, bottom only   3. rect, top only
+// 4. rect, right only    5. rect, left only     6. rect, top & bottom
+// 7. rect, left & right  8. circle, top/lower-right/lower-left
+// 9. oval, plain (no marks)   10. oval, top+bottom+left+right
 export const POLISH_SIDE_OPTIONS: IconPickerOption[] = [
-  { value: 'two-side-lr', label: '2 Side (Left & Right)' },
-  { value: 'round-all', label: 'Round (All Side)' },
+  { value: 'four-side', label: '4 Side (All)' },
   { value: 'one-side-bottom', label: '1 Side (Bottom)' },
-  { value: 'oval-plain', label: 'Oval (Plain)' },
   { value: 'one-side-top', label: '1 Side (Top)' },
-  { value: 'oval-both-ends', label: 'Oval (Both Ends)' },
   { value: 'one-side-right', label: '1 Side (Right)' },
   { value: 'one-side-left', label: '1 Side (Left)' },
-  { value: 'top-left-corner', label: '2 Side (Top & Left)' },
+  { value: 'two-side-tb', label: '2 Side (Top & Bottom)' },
+  { value: 'two-side-lr', label: '2 Side (Left & Right)' },
+  { value: 'round-all', label: 'Round (All Side)' },
+  { value: 'oval-plain', label: 'Oval (Plain)' },
+  { value: 'oval-all', label: 'Oval (All Side)' },
 ]
 export const POLISH_NAME_OPTIONS: string[] = []
 export const CORNER_TYPE_OPTIONS: string[] = []
