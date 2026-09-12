@@ -118,16 +118,35 @@ export const MEASUREMENT_PRESETS: Record<string, MeasurementPreset[]> = {
 // lists are still being defined one field at a time — each starts empty and
 // gets filled in as the real allowed values are provided; the UI itself
 // doesn't need to change when they are.
-export interface ArchOption {
+export interface IconPickerOption {
   value: string
   label: string
 }
 
-export const ARCH_OPTIONS: ArchOption[] = [
+export const ARCH_OPTIONS: IconPickerOption[] = [
   { value: 'arch-top', label: 'Arch Top' },
   { value: 'flat-square', label: 'Flat / Square' },
 ]
-export const POLISH_SIDE_OPTIONS: string[] = []
+
+// Read from the hand-drawn edge-polish diagram — each icon shows tick marks
+// on whichever edge(s) of the piece get polished. No text labels were on the
+// sketch itself, so these are positional best-guess names (e.g. "1 Side
+// (Top)" for a box marked only on top) — correct any wording that doesn't
+// match the shop's actual terms. The two "all sides" / 4-side entries in
+// particular were the least legible in the sketch and are the most likely
+// to need a fix.
+export const POLISH_SIDE_OPTIONS: IconPickerOption[] = [
+  { value: 'two-side-lr', label: '2 Side (Left & Right)' },
+  { value: 'round-all', label: 'Round (All Side)' },
+  { value: 'one-side-bottom', label: '1 Side (Bottom)' },
+  { value: 'oval-plain', label: 'Oval (Plain)' },
+  { value: 'one-side-top', label: '1 Side (Top)' },
+  { value: 'oval-both-ends', label: 'Oval (Both Ends)' },
+  { value: 'one-side-right', label: '1 Side (Right)' },
+  { value: 'one-side-left', label: '1 Side (Left)' },
+  { value: 'two-side-tb', label: '2 Side (Top & Bottom)' },
+  { value: 'four-side', label: '4 Side (All)' },
+]
 export const POLISH_NAME_OPTIONS: string[] = []
 export const CORNER_TYPE_OPTIONS: string[] = []
 export const HOLE_OPTIONS: string[] = []

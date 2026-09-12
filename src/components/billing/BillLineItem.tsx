@@ -24,7 +24,7 @@ import {
   POLISH_NAME_OPTIONS,
   POLISH_SIDE_OPTIONS,
   SECTIONS,
-  type ArchOption,
+  type IconPickerOption,
 } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
@@ -145,18 +145,91 @@ const ARCH_ICONS: Record<string, ReactNode> = {
   'flat-square': <FlatSquareIcon />,
 }
 
+// Short double-tick mark crossing one edge of a rectangle — the
+// hand-drawn sketch's way of showing "this edge is polished."
+type TickLine = [number, number, number, number]
+
+function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
+  const lines: TickLine[] = {
+    top: [[17, 0, 17, 8], [23, 0, 23, 8]],
+    bottom: [[17, 24, 17, 32], [23, 24, 23, 32]],
+    left: [[0, 12, 8, 12], [0, 20, 8, 20]],
+    right: [[32, 12, 40, 12], [32, 20, 40, 20]],
+  }[edge] as TickLine[]
+  return (
+    <>
+      {lines.map(([x1, y1, x2, y2], i) => (
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
+      ))}
+    </>
+  )
+}
+
+function PolishRectIcon({ edges }: { edges: Array<'top' | 'bottom' | 'left' | 'right'> }) {
+  return (
+    <svg viewBox="0 0 40 32" className="h-7 w-9" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="4" width="36" height="24" rx="1" />
+      {edges.map((edge) => (
+        <EdgeTicks key={edge} edge={edge} />
+      ))}
+    </svg>
+  )
+}
+
+function PolishRoundIcon() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="16" cy="16" r="13" />
+      <line x1="10" y1="1" x2="10" y2="9" />
+      <line x1="16" y1="0" x2="16" y2="8" />
+      <line x1="22" y1="1" x2="22" y2="9" />
+    </svg>
+  )
+}
+
+function PolishOvalIcon({ marked }: { marked?: boolean }) {
+  return (
+    <svg viewBox="0 0 48 24" className="h-6 w-10" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="2" width="44" height="20" rx="10" />
+      {marked && (
+        <>
+          <line x1="3" y1="9" x2="9" y2="9" />
+          <line x1="3" y1="15" x2="9" y2="15" />
+          <line x1="39" y1="9" x2="45" y2="9" />
+          <line x1="39" y1="15" x2="45" y2="15" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+const POLISH_SIDE_ICONS: Record<string, ReactNode> = {
+  'two-side-lr': <PolishRectIcon edges={['left', 'right']} />,
+  'round-all': <PolishRoundIcon />,
+  'one-side-bottom': <PolishRectIcon edges={['bottom']} />,
+  'oval-plain': <PolishOvalIcon />,
+  'one-side-top': <PolishRectIcon edges={['top']} />,
+  'oval-both-ends': <PolishOvalIcon marked />,
+  'one-side-right': <PolishRectIcon edges={['right']} />,
+  'one-side-left': <PolishRectIcon edges={['left']} />,
+  'two-side-tb': <PolishRectIcon edges={['top', 'bottom']} />,
+  'four-side': <PolishRectIcon edges={['top', 'bottom', 'left', 'right']} />,
+}
+
 // A pill trigger that opens a small grid of visual icon tiles instead of a
-// plain text list — used where the shape/look of the option matters (e.g.
-// Arch), unlike FabricationOptionPill's plain text options.
-function ArchOptionPicker({
+// plain text list — used where the shape/look of the option matters (Arch,
+// Polish Side), unlike FabricationOptionPill's plain text options.
+function IconOptionPicker({
   label,
   value,
   options,
+  icons,
   onChange,
 }: {
   label: string
   value?: string
-  options: ArchOption[]
+  options: IconPickerOption[]
+  icons: Record<string, ReactNode>
   onChange: (value: string) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -172,7 +245,7 @@ function ArchOptionPicker({
           {selected?.label ?? label}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3" align="start">
+      <PopoverContent className="w-64 p-3" align="start">
         {options.length === 0 ? (
           <p className="text-xs text-muted-foreground">No options yet</p>
         ) : (
@@ -192,8 +265,8 @@ function ArchOptionPicker({
                     setOpen(false)
                   }}
                 >
-                  {ARCH_ICONS[option.value]}
-                  <span className="text-xs">{option.label}</span>
+                  {icons[option.value]}
+                  <span className="text-center text-xs leading-tight">{option.label}</span>
                 </button>
               )
             })}
@@ -428,16 +501,18 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
 
       {showFabricationOptions && (
         <div className="flex flex-wrap gap-2">
-          <ArchOptionPicker
+          <IconOptionPicker
             label="Arch"
             value={arch}
             options={ARCH_OPTIONS}
+            icons={ARCH_ICONS}
             onChange={(value) => setValue(`items.${index}.arch`, value, { shouldValidate: true })}
           />
-          <FabricationOptionPill
+          <IconOptionPicker
             label="Polish Side"
             value={polishSide}
             options={POLISH_SIDE_OPTIONS}
+            icons={POLISH_SIDE_ICONS}
             onChange={(value) => setValue(`items.${index}.polishSide`, value, { shouldValidate: true })}
           />
           <FabricationOptionPill
