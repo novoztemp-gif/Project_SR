@@ -146,10 +146,26 @@ export const POLISH_SIDE_OPTIONS: IconPickerOption[] = [
   { value: 'oval-plain', label: 'Oval (Plain)' },
   { value: 'oval-all', label: 'Oval (All Side)' },
 ]
-export const POLISH_NAME_OPTIONS: string[] = []
-export const CORNER_TYPE_OPTIONS: string[] = []
-export const HOLE_OPTIONS: string[] = []
-export const ART_WORK_OPTIONS: string[] = []
+export const POLISH_NAME_OPTIONS: string[] = [
+  'C Polish',
+  '3/8" Beveling',
+  '1/4" Beveling',
+  '1/2" Beveling',
+  '1" Beveling',
+  '1 1/4" Beveling',
+  '4 side Grainting',
+  'Half Round',
+]
+export const CORNER_TYPE_OPTIONS: string[] = [
+  '1/4" Corner',
+  '1/2" Corner',
+  '3/4" Corner',
+  '1" Corner',
+  '1 1/4" Corner',
+  '1 1/2" Corner',
+]
+export const HOLE_OPTIONS: string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+export const ART_WORK_OPTIONS: string[] = ['Yes', 'No']
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
 
