@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Download, FilePlus, Printer, ReceiptText } from 'lucide-react'
+import { Download, FilePlus, Receipt, ReceiptText, Scissors } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -49,12 +49,14 @@ function statusBadgeStyle(status: SalesBill['status']) {
 function BillPreviewPanel({
   bill,
   onClose,
-  onPrint,
+  onPrintCutter,
+  onPrintCash,
   onView,
 }: {
   bill: SalesBill
   onClose: () => void
-  onPrint: () => void
+  onPrintCutter: () => void
+  onPrintCash: () => void
   onView: () => void
 }) {
   const sectionLabel = SECTIONS.find((s) => s.key === bill.section)?.label ?? bill.section
@@ -133,12 +135,18 @@ function BillPreviewPanel({
           </div>
         </div>
         <ReceiptEdge direction="bottom" color="#ffffff" stroke="#5F9598" className="receipt-edge" />
-        <div className="bg-white px-4 py-3 flex gap-2">
-          <Button type="button" variant="outline" size="sm" className="flex-1" onClick={onPrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-          <Button type="button" size="sm" className="flex-1" onClick={onView}>
+        <div className="bg-white px-4 py-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" className="flex-1" onClick={onPrintCutter}>
+              <Scissors className="h-4 w-4 mr-2" />
+              Cutter Bill
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="flex-1" onClick={onPrintCash}>
+              <Receipt className="h-4 w-4 mr-2" />
+              Cash Bill
+            </Button>
+          </div>
+          <Button type="button" size="sm" onClick={onView}>
             View full bill →
           </Button>
         </div>
@@ -187,9 +195,8 @@ export function GlassPlywoodBillListPage() {
     navigate(`/billing/${selectedBill.id}`)
   }
 
-  function printSelectedBill() {
-    if (!selectedBill) return
-    navigate(`/billing/${selectedBill.id}`, { state: { print: true } })
+  function printBill(billId: string, printType: 'cutter' | 'cash') {
+    navigate(`/billing/${billId}`, { state: { print: true, printType } })
   }
 
   const table = (
@@ -202,6 +209,7 @@ export function GlassPlywoodBillListPage() {
             <TableHead>Customer</TableHead>
             <TableHead>Section</TableHead>
             <TableHead className="text-right">Total</TableHead>
+            <TableHead className="text-center">Print</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -229,6 +237,38 @@ export function GlassPlywoodBillListPage() {
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-sm">
                   {INR.format(bill.total)}
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      title="Print Cutter Bill"
+                      aria-label="Print Cutter Bill"
+                      className="h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        printBill(bill.id, 'cutter')
+                      }}
+                    >
+                      <Scissors className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      title="Print Cash Bill"
+                      aria-label="Print Cash Bill"
+                      className="h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        printBill(bill.id, 'cash')
+                      }}
+                    >
+                      <Receipt className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             )
@@ -276,7 +316,8 @@ export function GlassPlywoodBillListPage() {
             <BillPreviewPanel
               bill={selectedBill}
               onClose={() => setSelectedBill(null)}
-              onPrint={printSelectedBill}
+              onPrintCutter={() => printBill(selectedBill.id, 'cutter')}
+              onPrintCash={() => printBill(selectedBill.id, 'cash')}
               onView={viewSelectedBill}
             />
           </div>

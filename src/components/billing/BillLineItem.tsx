@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
+import { ARCH_ICONS, POLISH_SIDE_ICONS } from '@/components/billing/fabricationIcons'
 import {
   Command,
   CommandEmpty,
@@ -126,132 +127,6 @@ function FabricationOptionPill({
       </SelectContent>
     </Select>
   )
-}
-
-function ArchTopIcon() {
-  return (
-    <svg viewBox="0 0 32 40" className="h-8 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 38 V17 A13 13 0 0 1 29 17 V38" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function FlatSquareIcon() {
-  return (
-    <svg viewBox="0 0 32 40" className="h-8 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="2" width="26" height="36" rx="1" />
-    </svg>
-  )
-}
-
-const ARCH_ICONS: Record<string, ReactNode> = {
-  'arch-top': <ArchTopIcon />,
-  'flat-square': <FlatSquareIcon />,
-}
-
-// Short double-tick mark crossing one edge of a rectangle — the
-// hand-drawn sketch's way of showing "this edge is polished."
-type TickLine = [number, number, number, number]
-
-// Slightly slanted, bold double-bar hatch — matches the felt-tip "hash"
-// marks in the actual hand-drawn diagram more closely than a plain
-// perpendicular tick would.
-function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
-  // Straight, perpendicular to the edge they cross — a slant here (tried
-  // previously) made opposite/adjacent edge marks visually line up into
-  // what read as one continuous diagonal stroke across the whole shape,
-  // which is exactly the ambiguity the sketch's marks don't have: each
-  // edge's pair of ticks needs to stay clearly its own, separate mark.
-  const lines: TickLine[] = {
-    top: [[16, 0, 16, 9], [22, 0, 22, 9]],
-    bottom: [[16, 23, 16, 32], [22, 23, 22, 32]],
-    left: [[0, 11, 9, 11], [0, 19, 9, 19]],
-    right: [[31, 11, 40, 11], [31, 19, 40, 19]],
-  }[edge] as TickLine[]
-  return (
-    <>
-      {lines.map(([x1, y1, x2, y2], i) => (
-        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={2.25} strokeLinecap="round" />
-      ))}
-    </>
-  )
-}
-
-function PolishRectIcon({ edges }: { edges: Array<'top' | 'bottom' | 'left' | 'right'> }) {
-  return (
-    <svg viewBox="0 0 40 32" className="h-7 w-9" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <rect x="2" y="4" width="36" height="24" rx="1" />
-      {edges.map((edge) => (
-        <EdgeTicks key={edge} edge={edge} />
-      ))}
-    </svg>
-  )
-}
-
-// Circle with tick pairs at top, lower-right, and lower-left — matching
-// "Circle with two lines in top, down right and left" exactly.
-// Two close ticks at each of the four cardinal points — top, bottom, left,
-// right — same convention as the rectangle/oval "all side" icons.
-function PolishRoundIcon() {
-  return (
-    <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <circle cx="16" cy="16" r="13" />
-      <line x1="13" y1="0" x2="13" y2="8" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="19" y1="0" x2="19" y2="8" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="13" y1="24" x2="13" y2="32" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="19" y1="24" x2="19" y2="32" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="0" y1="13" x2="8" y2="13" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="0" y1="19" x2="8" y2="19" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="24" y1="13" x2="32" y2="13" strokeWidth={2.25} strokeLinecap="round" />
-      <line x1="24" y1="19" x2="32" y2="19" strokeWidth={2.25} strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function PolishOvalIcon({ marks = [] }: { marks?: Array<'top' | 'bottom' | 'left' | 'right'> }) {
-  const has = (edge: 'top' | 'bottom' | 'left' | 'right') => marks.includes(edge)
-  return (
-    <svg viewBox="0 0 48 24" className="h-6 w-10" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <rect x="2" y="2" width="44" height="20" rx="10" />
-      {has('left') && (
-        <>
-          <line x1="2" y1="8" x2="9" y2="10" strokeWidth={2.25} strokeLinecap="round" />
-          <line x1="2" y1="16" x2="9" y2="14" strokeWidth={2.25} strokeLinecap="round" />
-        </>
-      )}
-      {has('right') && (
-        <>
-          <line x1="46" y1="8" x2="39" y2="10" strokeWidth={2.25} strokeLinecap="round" />
-          <line x1="46" y1="16" x2="39" y2="14" strokeWidth={2.25} strokeLinecap="round" />
-        </>
-      )}
-      {has('top') && (
-        <>
-          <line x1="20" y1="0" x2="20" y2="7" strokeWidth={2.25} strokeLinecap="round" />
-          <line x1="28" y1="0" x2="28" y2="7" strokeWidth={2.25} strokeLinecap="round" />
-        </>
-      )}
-      {has('bottom') && (
-        <>
-          <line x1="20" y1="17" x2="20" y2="24" strokeWidth={2.25} strokeLinecap="round" />
-          <line x1="28" y1="17" x2="28" y2="24" strokeWidth={2.25} strokeLinecap="round" />
-        </>
-      )}
-    </svg>
-  )
-}
-
-const POLISH_SIDE_ICONS: Record<string, ReactNode> = {
-  'four-side': <PolishRectIcon edges={['top', 'bottom', 'left', 'right']} />,
-  'one-side-bottom': <PolishRectIcon edges={['bottom']} />,
-  'one-side-top': <PolishRectIcon edges={['top']} />,
-  'one-side-right': <PolishRectIcon edges={['right']} />,
-  'one-side-left': <PolishRectIcon edges={['left']} />,
-  'two-side-tb': <PolishRectIcon edges={['top', 'bottom']} />,
-  'two-side-lr': <PolishRectIcon edges={['left', 'right']} />,
-  'round-all': <PolishRoundIcon />,
-  'oval-plain': <PolishOvalIcon />,
-  'oval-all': <PolishOvalIcon marks={['top', 'bottom', 'left', 'right']} />,
 }
 
 // A pill trigger that opens a small grid of visual icon tiles instead of a

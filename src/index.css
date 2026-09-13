@@ -265,19 +265,43 @@
   }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,
-  .report-printable, .report-printable * {
+  .report-printable, .report-printable *,
+  .printable-gp, .printable-gp * {
     visibility: visible;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
   .printable-bill,
-  .report-printable {
+  .report-printable,
+  .printable-gp {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+  }
+  .printable-bill,
+  .report-printable {
     background: white !important;
     color: black !important;
+  }
+  /* Glass & Plywood Cutter/Cash printouts use their own fixed colored
+     layout (zebra-striped rows, a red highlight row, a dark header band) —
+     unlike .printable-bill/.report-printable above, colors here are part
+     of the pinned reference format and must survive printing as-is. */
+  .printable-gp {
+    background: white !important;
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 8mm !important;
+    font-size: 11px;
+  }
+  .printable-gp table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .printable-gp th,
+  .printable-gp td {
+    overflow-wrap: anywhere;
   }
   /* The bill normally uses the custom Geist/Geist Mono web fonts (loaded
      from Google Fonts). The on-screen Print Preview renders fine — it's
