@@ -38,6 +38,10 @@ interface BillLineItemProps {
   index: number
   onRemove: () => void
   isOnly: boolean
+  /** Restricts the product picker to these sections on top of the user's own
+   * access — used to split Glass/Plywood into their own dedicated billing
+   * flow, separate from every other section. Omit for no extra restriction. */
+  sectionFilter?: Section[]
 }
 
 function getSizePlaceholder(section?: Section) {
@@ -310,7 +314,7 @@ function IconOptionPicker({
   )
 }
 
-export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
+export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLineItemProps) {
   const [open, setOpen] = useState(false)
   const [measurementsOpen, setMeasurementsOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -339,7 +343,9 @@ export function BillLineItem({ index, onRemove, isOnly }: BillLineItemProps) {
   const hole       = String(useWatch({ control, name: `items.${index}.hole`       }) ?? '')
   const artWork    = String(useWatch({ control, name: `items.${index}.artWork`    }) ?? '')
 
-  const displayedProducts = products.filter((p) => allowedSections.includes(p.section))
+  const displayedProducts = products.filter(
+    (p) => allowedSections.includes(p.section) && (!sectionFilter || sectionFilter.includes(p.section))
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const itemErrors = (errors.items as any)?.[index]

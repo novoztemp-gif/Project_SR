@@ -48,6 +48,20 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ALL,
     showInSidebar: false,   // dynamic segment — no fixed URL to link to
   },
+  {
+    path: '/billing/glass-plywood',
+    label: 'Glass & Plywood Bills',
+    iconName: 'Layers',
+    roles: ALL,
+    showInSidebar: true,
+  },
+  {
+    path: '/billing/glass-plywood/new',
+    label: 'New Glass & Plywood Bill',
+    iconName: 'FilePlus2',
+    roles: ALL,
+    showInSidebar: true,
+  },
 
   // ── Purchase ───────────────────────────────────────────────────────────────
   {

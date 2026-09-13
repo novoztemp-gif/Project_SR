@@ -54,6 +54,7 @@ export const api = {
           transportationAmount: input.transportationAmount ?? 0,
           discount: input.discount ?? 0,
           paidAmount: input.paidAmount ?? 0,
+          billType: input.billType ?? 'general',
         })
         useBillingStore.getState().addBillToCache(bill)
         // Stock changed — refresh the inventory cache.

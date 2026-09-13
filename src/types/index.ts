@@ -154,6 +154,8 @@ export interface SalesBill {
   paidAmount: number   // default 0
   status: BillStatus   // explicit: paid | pending | partial
   // derived (not stored): finalAmount = total + transportationAmount - discount, balanceAmount = finalAmount - paidAmount
+  billType: 'general' | 'glass_plywood' // default 'general'
+  gpVoucherNumber?: string // e.g. "GP-2026-0001" — set only when billType is 'glass_plywood'
   createdBy: string    // User.id
   createdAt: string    // ISO-8601
 }
@@ -180,5 +182,6 @@ export interface CreateBillInput {
   transportationAmount?: number
   discount?: number
   paidAmount?: number
+  billType?: 'general' | 'glass_plywood'
   createdBy: string
 }

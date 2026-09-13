@@ -10,6 +10,8 @@ import { AppShell } from '@/components/layout/AppShell'
 import { CounterManagementPage } from '@/pages/admin/CounterManagementPage'
 import { BillDetailPage } from '@/pages/billing/BillDetailPage'
 import { BillHistoryPage } from '@/pages/billing/BillHistoryPage'
+import { GlassPlywoodBillListPage } from '@/pages/billing/GlassPlywoodBillListPage'
+import { GlassPlywoodBillingPage } from '@/pages/billing/GlassPlywoodBillingPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { InventoryPage } from '@/pages/inventory/InventoryPage'
 import { GodownsPage } from '@/pages/inventory/GodownsPage'
@@ -74,9 +76,11 @@ export default function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard"          element={<DashboardPage />} />
               <Route path="/billing"            element={<BillHistoryPage />} />
+              <Route path="/billing/glass-plywood" element={<GlassPlywoodBillListPage />} />
 
               <Route element={<ProtectedRoute allowedRoles={['billing_', 'admin']} />}>
                 <Route path="/billing/new" element={<NewBillPage />} />
+                <Route path="/billing/glass-plywood/new" element={<GlassPlywoodBillingPage />} />
               </Route>
               <Route path="/billing/:id"        element={<BillDetailPage />} />
               <Route path="/purchase"           element={<Navigate to="/purchases" replace />} />

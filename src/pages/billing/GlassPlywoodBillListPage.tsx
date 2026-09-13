@@ -88,7 +88,7 @@ function BillPreviewPanel({
           <p className="text-center font-mono text-xs">SR PLYWOOD & GLASSES · MELPURAM</p>
 
           <div className="mt-4">
-            <p className="text-2xl font-bold font-mono text-gray-900">{bill.billNumber}</p>
+            <p className="text-2xl font-bold font-mono text-gray-900">{bill.gpVoucherNumber ?? bill.billNumber}</p>
             <p className="text-xs text-gray-600">{formatDate(bill.date)}</p>
           </div>
 
@@ -147,13 +147,11 @@ function BillPreviewPanel({
   )
 }
 
-export function BillHistoryPage() {
+export function GlassPlywoodBillListPage() {
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.currentUser)!
   const allowedSections = getUserSections(currentUser.id)
-  // Glass & Plywood bills live in their own dedicated list/flow now — keep
-  // them out of the general Bills list so the two stay cleanly separated.
-  const bills = api.bills.list({ sections: allowedSections }).filter((bill) => bill.billType !== 'glass_plywood')
+  const bills = api.bills.list({ sections: allowedSections }).filter((bill) => bill.billType === 'glass_plywood')
   const sorted = [...bills].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const [selectedBill, setSelectedBill] = useState<SalesBill | null>(null)
 
@@ -161,14 +159,14 @@ export function BillHistoryPage() {
 
   function exportBills() {
     exportCsv(
-      'bills.csv',
-      ['Bill#', 'Customer', 'Address', 'Items', 'Sq/-', 'Amount', 'Date', 'Delivery', 'Staff', 'Status'],
+      'glass-plywood-bills.csv',
+      ['Voucher#', 'Customer', 'Address', 'Items', 'Sq/-', 'Amount', 'Date', 'Delivery', 'Staff', 'Status'],
       sorted.map((bill) => {
         const sqFt = bill.items.reduce((sum, item) => sum + (Number(item.sqFt) || 0), 0)
         const amount = bill.total + bill.transportationAmount - bill.discount
 
         return [
-          bill.billNumber,
+          bill.gpVoucherNumber ?? bill.billNumber,
           bill.customerName || bill.customerPhone,
           bill.customerAddress ?? '',
           bill.items.length,
@@ -181,7 +179,7 @@ export function BillHistoryPage() {
         ]
       })
     )
-    toast.success('Bills exported')
+    toast.success('Glass & Plywood bills exported')
   }
 
   function viewSelectedBill() {
@@ -199,7 +197,7 @@ export function BillHistoryPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Bill #</TableHead>
+            <TableHead>Voucher #</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Section</TableHead>
@@ -216,7 +214,7 @@ export function BillHistoryPage() {
                 onClick={() => setSelectedBill(bill)}
               >
                 <TableCell className="font-mono text-sm">
-                  {bill.billNumber}
+                  {bill.gpVoucherNumber ?? bill.billNumber}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
                   {formatDate(bill.date)}
@@ -244,7 +242,7 @@ export function BillHistoryPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="page-heading">Bills</h1>
+          <h1 className="page-heading">Glass &amp; Plywood Bills</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {sorted.length} bill{sorted.length !== 1 ? 's' : ''} in your sections
           </p>
@@ -256,9 +254,9 @@ export function BillHistoryPage() {
           </Button>
           {canCreate && (
             <Button asChild size="sm">
-              <Link to="/billing/new">
+              <Link to="/billing/glass-plywood/new">
                 <FilePlus className="h-4 w-4 mr-2" />
-                New bill
+                New Glass &amp; Plywood bill
               </Link>
             </Button>
           )}
@@ -268,8 +266,8 @@ export function BillHistoryPage() {
       {sorted.length === 0 ? (
         <EmptyState
           icon={ReceiptText}
-          title="No bills found"
-          message="Bills in your accessible sections will appear here after they are saved."
+          title="No Glass & Plywood bills found"
+          message="Glass and Plywood bills in your accessible sections will appear here after they are saved."
         />
       ) : (
         selectedBill ? (

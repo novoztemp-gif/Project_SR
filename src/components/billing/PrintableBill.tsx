@@ -45,7 +45,7 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
         <div className="space-y-1 min-w-0">
           <div className="flex gap-1">
             <span className="text-[#1D546D] shrink-0">Bill No :</span>
-            <span className="font-medium text-gray-900">{bill.billNumber}</span>
+            <span className="font-medium text-gray-900">{bill.gpVoucherNumber ?? bill.billNumber}</span>
           </div>
           <div className="flex gap-1">
             <span className="text-gray-600 shrink-0">Name    :</span>

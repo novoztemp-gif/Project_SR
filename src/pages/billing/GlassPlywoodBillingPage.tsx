@@ -16,7 +16,6 @@ import { BillScanDialog } from '@/components/billing/BillScanDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
 import { api, InsufficientStockError } from '@/lib/api'
 import type { ParsedBill } from '@/lib/billScan'
-import { SECTIONS } from '@/lib/constants'
 import { findBestProductMatch } from '@/lib/productMatch'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
@@ -24,10 +23,10 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import type { Section } from '@/types'
 
 const PHONE_RE = /^[+]?[\d\s-]{7,15}$/
-// Glass and Plywood have their own dedicated billing flow (separate print
-// format, own invoice numbering) — excluded here so they can only be billed
-// through that page, not this one.
-const NON_GP_SECTIONS: Section[] = SECTIONS.map((s) => s.key).filter((key) => key !== 'glass' && key !== 'plywood')
+// The mirror image of NewBillPage's exclusion — this page is Glass/Plywood
+// ONLY, since those two have their own dedicated billing flow (separate
+// print format, own invoice numbering) split out from every other section.
+const GP_SECTIONS: Section[] = ['glass', 'plywood']
 
 const itemSchema = z.object({
   productId:   z.string().min(1, 'Select a product'),
@@ -78,11 +77,11 @@ function isSqFtUnit(unit?: string) {
   return unit?.trim().toLowerCase() === 'sq.ft'
 }
 
-export function NewBillPage() {
+export function GlassPlywoodBillingPage() {
   const navigate    = useNavigate()
   const currentUser = useAuthStore((s) => s.currentUser)!
   const allProducts = useInventoryStore((s) => s.products)
-  const products    = allProducts.filter((p) => NON_GP_SECTIONS.includes(p.section))
+  const products    = allProducts.filter((p) => GP_SECTIONS.includes(p.section))
   const year        = new Date().getFullYear()
   const [scanOpen, setScanOpen] = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
@@ -120,7 +119,7 @@ export function NewBillPage() {
 
   async function onSubmit(values: FormValues) {
     const firstProduct = products.find((p) => p.id === values.items[0]?.productId)
-    const section = firstProduct?.section ?? getUserSections(currentUser.id)[0]
+    const section = firstProduct?.section ?? getUserSections(currentUser.id).find((s) => GP_SECTIONS.includes(s)) ?? 'glass'
 
     try {
       const bill = await api.bills.create({
@@ -151,9 +150,10 @@ export function NewBillPage() {
         transportationAmount: values.transportationAmount,
         discount:   values.discount,
         paidAmount: values.paidAmount,
+        billType:   'glass_plywood',
         createdBy:  currentUser.id,
       })
-      toast.success(`Bill ${bill.billNumber} saved`)
+      toast.success(`Bill ${bill.gpVoucherNumber ?? bill.billNumber} saved`)
       navigate(`/billing/${bill.id}`)
     } catch (err) {
       if (err instanceof InsufficientStockError) {
@@ -236,7 +236,7 @@ export function NewBillPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="page-heading">New bill</h1>
+            <h1 className="page-heading">New Glass &amp; Plywood bill</h1>
             <Button type="button" variant="outline" size="sm" onClick={() => setScanOpen(true)}>
               <ScanLine className="h-4 w-4 mr-2" />
               Scan the Bill
@@ -247,7 +247,7 @@ export function NewBillPage() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Items billed here reduce stock from your section.
+            Glass and Plywood items only — items billed here reduce stock from your section.
           </p>
         </div>
       </div>
@@ -273,7 +273,7 @@ export function NewBillPage() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           {/* Bill meta strip */}
           <div className="mb-6 flex justify-between items-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <span>INV-{year}-DRAFT</span>
+            <span>GP-{year}-DRAFT</span>
             <span>{todayLabel}</span>
           </div>
 
@@ -412,7 +412,7 @@ export function NewBillPage() {
                   index={index}
                   isOnly={fields.length === 1}
                   onRemove={() => remove(index)}
-                  sectionFilter={NON_GP_SECTIONS}
+                  sectionFilter={GP_SECTIONS}
                 />
               ))}
               <Button

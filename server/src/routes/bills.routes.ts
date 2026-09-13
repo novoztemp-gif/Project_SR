@@ -47,6 +47,7 @@ const createBillSchema = z.object({
   transportationAmount: z.number().nonnegative().optional(),
   discount: z.number().nonnegative().optional(),
   paidAmount: z.number().nonnegative().optional(),
+  billType: z.enum(['general', 'glass_plywood']).default('general'),
 })
 
 const extractSchema = z.object({
@@ -78,6 +79,10 @@ billsRouter.post(
   asyncHandler(async (req, res) => {
     const input = createBillSchema.parse(req.body)
     assertSectionAccess(req.user!, input.section)
+
+    if (input.billType === 'glass_plywood' && input.section !== 'glass' && input.section !== 'plywood') {
+      throw new ApiError(400, 'A Glass & Plywood bill must be in the Glass or Plywood section')
+    }
 
     if (input.customerPhone && !PHONE_RE.test(input.customerPhone)) {
       throw new ApiError(400, 'Invalid customer phone number')
@@ -145,9 +150,31 @@ billsRouter.post(
       const agg = await tx.salesBill.aggregate({ _max: { billNumber: true } })
       const billNumber = (agg._max.billNumber ?? 0) + 1
 
+      // Glass & Plywood bills get their own independent voucher sequence
+      // (e.g. "GP-2026-0001") alongside the ordinary billNumber above —
+      // billNumber keeps incrementing exactly as it always has for every
+      // bill, general or glass_plywood, so nothing about the existing
+      // numbering changes; this is purely additive.
+      let gpVoucherNumber: string | undefined
+      if (input.billType === 'glass_plywood') {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('gp_bill_number'))`
+        const gpBills = await tx.salesBill.findMany({
+          where: { gpVoucherNumber: { not: null } },
+          select: { gpVoucherNumber: true },
+        })
+        const year = new Date().getFullYear()
+        const maxSeq = gpBills.reduce((max, { gpVoucherNumber: voucher }) => {
+          const seq = Number(voucher?.match(/(\d+)$/)?.[1] ?? 0)
+          return seq > max ? seq : max
+        }, 0)
+        gpVoucherNumber = `GP-${year}-${String(maxSeq + 1).padStart(4, '0')}`
+      }
+
       const created = await tx.salesBill.create({
         data: {
           billNumber,
+          billType: input.billType,
+          gpVoucherNumber,
           customerName: input.customerName,
           customerAddress: input.customerAddress,
           customerPhone: input.customerPhone,

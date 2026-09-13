@@ -82,6 +82,16 @@ model SalesBill {
   discount        Float       @default(0)
   paidAmount      Float       @default(0)
   status          BillStatus
+  // "general" | "glass_plywood" — glass/plywood bills are created through a
+  // separate flow (their own product picker, own numbering, own print
+  // format eventually) but stay in this same table so revenue reporting
+  // keeps working across both without any changes.
+  billType        String      @default("general")
+  // Independent invoice sequence for glass_plywood bills only (e.g.
+  // "GP-2026-0001") — billNumber above is left untouched/unaffected for
+  // every bill, general or glass_plywood, so the existing numbering never
+  // has to change.
+  gpVoucherNumber String?     @unique
   createdBy       String
   createdAt       DateTime    @default(now())
   items           SalesItem[]
@@ -89,6 +99,7 @@ model SalesBill {
   @@index([section])
   @@index([createdBy])
   @@index([date])
+  @@index([billType])
 }
 
 model SalesItem {
