@@ -22,20 +22,20 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
 
   return (
     <div className="printable-gp bg-white text-[#1a1a1a]">
-      <div className="flex items-start justify-between border-b-2 border-[#16232e] pb-2 mb-3">
-        <h1 className="text-base font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b-2 border-[#16232e] pb-2 mb-3">
+        <h1 className="text-sm font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
         <p className="text-xs whitespace-nowrap">
           <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
         </p>
       </div>
 
-      <div className="flex justify-between gap-8 text-xs mb-3">
+      <div className="flex flex-wrap justify-between gap-x-8 gap-y-2 text-xs mb-3">
         <div className="space-y-0.5">
           <p><span className="font-semibold">Customer:</span> {bill.customerName || '-'}</p>
           <p><span className="font-semibold">Place:</span> {bill.customerAddress || '-'}</p>
           <p className="flex items-center gap-1">
             <span className="font-semibold whitespace-nowrap">Operator:</span>
-            <span className="inline-block border-b border-gray-500 w-36">&nbsp;</span>
+            <span className="inline-block border-b border-gray-500 w-28">&nbsp;</span>
           </p>
         </div>
         <div className="text-right space-y-0.5 whitespace-nowrap">
@@ -48,16 +48,16 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
       <table className="w-full text-[10.5px] border-collapse">
         <thead>
           <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} w-8`}>Check</th>
-            <th className={`${HEADER_CELL} w-7`}>No.</th>
-            <th className={`${HEADER_CELL} text-left`}>Glass Name / Product</th>
-            <th className={`${HEADER_CELL} w-16`}>Size</th>
-            <th className={`${HEADER_CELL} w-8`}>Qty</th>
-            <th className={`${HEADER_CELL} w-14`}>Arch</th>
-            <th className={`${HEADER_CELL} w-16`}>Corner Type</th>
-            <th className={`${HEADER_CELL} w-32`}>Polish Side &amp; Polish Name</th>
-            <th className={`${HEADER_CELL} w-8`}>Hole</th>
-            <th className={`${HEADER_CELL} w-12`}>Art Work</th>
+            <th className={`${HEADER_CELL} w-[6%]`}>Check</th>
+            <th className={`${HEADER_CELL} w-[4%]`}>No.</th>
+            <th className={`${HEADER_CELL} w-[24%] text-left`}>Glass Name / Product</th>
+            <th className={`${HEADER_CELL} w-[11%]`}>Size</th>
+            <th className={`${HEADER_CELL} w-[6%]`}>Qty</th>
+            <th className={`${HEADER_CELL} w-[10%]`}>Arch</th>
+            <th className={`${HEADER_CELL} w-[11%]`}>Corner Type</th>
+            <th className={`${HEADER_CELL} w-[18%]`}>Polish Side &amp; Polish Name</th>
+            <th className={`${HEADER_CELL} w-[5%]`}>Hole</th>
+            <th className={`${HEADER_CELL} w-[5%]`}>Art Work</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +117,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </span>
           ))}
         </div>
-        <div className="mt-3 pt-2 border-t border-gray-300 flex justify-between">
+        <div className="mt-3 pt-2 border-t border-gray-300 flex flex-wrap justify-between gap-x-4 gap-y-1">
           <p>
             <span className="font-semibold">Batch Summary:</span> {bill.items.length} Items (Total Qty: {totalQty} Sheets)
           </p>
@@ -125,9 +125,9 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
         </div>
       </div>
 
-      <div className="mt-10 flex justify-between text-xs">
-        <div className="w-48 border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
-        <div className="w-48 border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
+      <div className="mt-10 flex flex-wrap justify-between gap-x-4 gap-y-3 text-xs">
+        <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
+        <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
       </div>
     </div>
   )

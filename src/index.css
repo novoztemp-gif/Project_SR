@@ -303,6 +303,20 @@
   .printable-gp td {
     overflow-wrap: anywhere;
   }
+  /* A5 is roughly half the width of A4 — column widths are percentage-based
+     (not fixed px) in both Glass/Plywood print components specifically so
+     the table always fits the page it's given instead of overflowing off
+     the right edge on the narrower A5. A long item list should only ever
+     spill onto a second page, never get clipped sideways, so: repeat the
+     header row on that second page, and never split a single item's row
+     across the page break. */
+  .printable-gp thead {
+    display: table-header-group;
+  }
+  .printable-gp tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
   /* The bill normally uses the custom Geist/Geist Mono web fonts (loaded
      from Google Fonts). The on-screen Print Preview renders fine — it's
      live DOM rendering with the font already loaded/cached — but the

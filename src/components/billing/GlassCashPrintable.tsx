@@ -70,12 +70,12 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
       <table className="w-full text-[10.5px] border-collapse mb-3">
         <thead>
           <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} w-7`}>No.</th>
-            <th className={`${HEADER_CELL} text-left`}>Product &amp; Fabrication Details</th>
-            <th className={`${HEADER_CELL} w-16`}>Size</th>
-            <th className={`${HEADER_CELL} w-8`}>Qty</th>
-            <th className={`${HEADER_CELL} w-12`}>Sq.ft</th>
-            <th className={`${HEADER_CELL} w-20`}>Total (₹)</th>
+            <th className={`${HEADER_CELL} w-[5%]`}>No.</th>
+            <th className={`${HEADER_CELL} w-[43%] text-left`}>Product &amp; Fabrication Details</th>
+            <th className={`${HEADER_CELL} w-[12%]`}>Size</th>
+            <th className={`${HEADER_CELL} w-[7%]`}>Qty</th>
+            <th className={`${HEADER_CELL} w-[10%]`}>Sq.ft</th>
+            <th className={`${HEADER_CELL} w-[23%]`}>Total (₹)</th>
           </tr>
         </thead>
         <tbody>
