@@ -21,7 +21,7 @@ import { SECTION_COLORS } from '@/lib/constants'
 import { type Counter, useCounterStore } from '@/store/counterStore'
 import type { SectionType } from '@/types'
 
-const PROCESSES: SectionType[] = ['Glass', 'Plywood', 'Plumbing', 'Painting', 'Electrical']
+const PROCESSES: SectionType[] = ['Glass', 'Plywood', 'Plumbing', 'Painting', 'Electrical', 'Hardware']
 
 interface CounterForm {
   label: string
