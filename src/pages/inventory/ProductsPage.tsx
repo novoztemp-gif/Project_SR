@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ProductFormDialog, type ProductFormValues } from '@/components/inventory/ProductFormDialog'
+import { SetSellingPriceDialog } from '@/components/inventory/SetSellingPriceDialog'
 import { exportCsv } from '@/lib/exportCsv'
 import { GODOWNS_SEED, SECTION_COLORS, SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
@@ -77,7 +78,7 @@ function productRows(products: Product[], includeCostPrice: boolean) {
     product.sku,
     product.unit,
     ...(includeCostPrice ? [product.costPrice] : []),
-    product.salePrice,
+    product.salePrice ?? 'Not set',
     product.stock,
     product.lowStockThreshold,
     product.spec ?? '',
@@ -102,6 +103,7 @@ export function ProductsPage() {
   const [formOpen, setFormOpen] = React.useState(false)
   const [formKey, setFormKey] = React.useState(0)
   const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null)
+  const [priceTarget, setPriceTarget] = React.useState<Product | null>(null)
 
   const filteredProducts = products
     .filter((product) => allowedSections.includes(product.section))
@@ -250,10 +252,37 @@ export function ProductsPage() {
                       {product.stock} <span className="text-xs text-muted-foreground">{product.unit}</span>
                     </p>
                   </div>
-                  <div className="rounded-md border border-border p-3">
-                    <p className="text-xs text-muted-foreground">Selling price</p>
-                    <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
-                  </div>
+                  {product.salePrice != null ? (
+                    isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => setPriceTarget(product)}
+                        className="rounded-md border border-border p-3 text-left transition-colors hover:border-brand-mid"
+                      >
+                        <p className="text-xs text-muted-foreground">Selling price</p>
+                        <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
+                      </button>
+                    ) : (
+                      <div className="rounded-md border border-border p-3">
+                        <p className="text-xs text-muted-foreground">Selling price</p>
+                        <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
+                      </div>
+                    )
+                  ) : isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => setPriceTarget(product)}
+                      className="flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border p-3 text-brand-mid transition-colors hover:border-brand-mid hover:bg-brand-mid/10"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="text-xs font-medium">Add selling price</span>
+                    </button>
+                  ) : (
+                    <div className="rounded-md border border-border p-3">
+                      <p className="text-xs text-muted-foreground">Selling price</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Not set</p>
+                    </div>
+                  )}
                 </div>
 
                 {isAdmin && (
@@ -319,6 +348,11 @@ export function ProductsPage() {
         allowedSections={allowedSections}
         onOpenChange={setFormOpen}
         onSubmit={handleSubmit}
+      />
+
+      <SetSellingPriceDialog
+        product={priceTarget}
+        onOpenChange={(open) => { if (!open) setPriceTarget(null) }}
       />
 
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>

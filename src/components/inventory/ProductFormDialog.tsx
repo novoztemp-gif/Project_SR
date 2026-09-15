@@ -21,10 +21,18 @@ export interface ProductFormValues {
   sku: string
   unit: string
   costPrice: number
-  salePrice: number
+  /** null = leave/reset the selling price unset. */
+  salePrice: number | null
   section: Section
   godownId: string
   lowStockThreshold: number
+}
+
+/** Local form state mirrors ProductFormValues except salePrice, kept as a
+ * raw string so the field can sit genuinely blank (not "0") while editing —
+ * '' means "not set", parsed to null on submit. */
+interface FormState extends Omit<ProductFormValues, 'salePrice'> {
+  salePrice: string
 }
 
 interface ProductFormDialogProps {
@@ -42,14 +50,14 @@ function sectionLabel(section: Section) {
   return SECTIONS.find((item) => item.key === section)?.label ?? section
 }
 
-function getInitialValues(product: Product | null | undefined, allowedSections: Section[]): ProductFormValues {
+function getInitialValues(product: Product | null | undefined, allowedSections: Section[]): FormState {
   return {
     name: product?.name ?? '',
     spec: product?.spec ?? '',
     sku: product?.sku ?? '',
     unit: product?.unit ?? 'pcs',
     costPrice: product?.costPrice ?? 0,
-    salePrice: product?.salePrice ?? 0,
+    salePrice: product?.salePrice != null ? String(product.salePrice) : '',
     section: product?.section ?? allowedSections[0] ?? 'glass',
     godownId: product?.godownId ?? GODOWNS_SEED[0]?.id ?? '',
     lowStockThreshold: product?.lowStockThreshold ?? 5,
@@ -64,14 +72,15 @@ export function ProductFormDialog({
   onOpenChange,
   onSubmit,
 }: ProductFormDialogProps) {
-  const [values, setValues] = React.useState<ProductFormValues>(() => getInitialValues(product, allowedSections))
+  const [values, setValues] = React.useState<FormState>(() => getInitialValues(product, allowedSections))
 
-  function update<K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) {
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setValues((current) => ({ ...current, [key]: value }))
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const trimmedSalePrice = values.salePrice.trim()
     onSubmit({
       ...values,
       name: values.name.trim(),
@@ -79,7 +88,7 @@ export function ProductFormDialog({
       sku: values.sku.trim(),
       unit: values.unit.trim(),
       costPrice: Number(values.costPrice) || 0,
-      salePrice: Number(values.salePrice) || 0,
+      salePrice: trimmedSalePrice === '' ? null : Number(trimmedSalePrice) || 0,
       lowStockThreshold: Number(values.lowStockThreshold) || 0,
     })
   }
@@ -147,10 +156,13 @@ export function ProductFormDialog({
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="Not set"
                 value={values.salePrice}
-                onChange={(event) => update('salePrice', Number(event.target.value))}
+                onChange={(event) => update('salePrice', event.target.value)}
               />
-              <p className="text-xs text-muted-foreground">What we charge the customer.</p>
+              <p className="text-xs text-muted-foreground">
+                What we charge the customer. Leave blank to use the scanned/cost price at bill time.
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -85,3 +85,24 @@ export function findBestProductMatch(name: string, products: Product[]): Product
   }
   return best?.product
 }
+
+/**
+ * Unit price for a bill line matched to an inventory product, from a
+ * scanned/extracted bill: prefer the product's own explicitly-set selling
+ * price; if none was ever set, prefer whatever price the scan actually
+ * extracted for this line; only fall back to cost price when neither is
+ * available (e.g. the scan couldn't read a price at all).
+ */
+export function resolveScannedUnitPrice(product: Product | undefined, extractedRate: number): number {
+  if (!product) return extractedRate
+  if (product.salePrice != null) return product.salePrice
+  return extractedRate || product.costPrice
+}
+
+/**
+ * Unit price for a bill line where a product was picked manually (no scan
+ * involved) — the product's selling price if it has one, else cost price.
+ */
+export function resolveManualUnitPrice(product: Product): number {
+  return product.salePrice ?? product.costPrice
+}

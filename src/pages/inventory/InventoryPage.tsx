@@ -29,7 +29,7 @@ function productRows(products: Product[]) {
     sectionLabel(product.section),
     product.sku,
     product.unit,
-    product.salePrice,
+    product.salePrice ?? 'Not set',
     product.stock,
     product.lowStockThreshold,
     product.spec ?? '',

@@ -44,7 +44,12 @@ model Product {
   godownId          String
   stock             Float    @default(0)
   costPrice         Float    @default(0)
-  salePrice         Float
+  // Null = no selling price has been explicitly set yet. Billing falls back
+  // to a scanned/extracted price, then to costPrice, when this is null —
+  // it must never be silently defaulted to costPrice at write time (that
+  // was the original bug: new stock launched priced to sell for exactly
+  // what we paid for it, indistinguishable from a deliberate price).
+  salePrice         Float?
   lowStockThreshold Float    @default(5)
   updatedAt         DateTime @updatedAt
   godown            Godown   @relation(fields: [godownId], references: [id])

@@ -1,0 +1,102 @@
+import * as React from 'react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useInventoryStore } from '@/store/inventoryStore'
+import type { Product } from '@/types'
+
+interface SetSellingPriceDialogProps {
+  product: Product | null
+  onOpenChange: (open: boolean) => void
+}
+
+/**
+ * Fast, single-purpose "set the selling price" action for one product —
+ * distinct from the full Edit dialog. Until this is used, a product's
+ * salePrice stays null (unset), and billing falls back to a scanned price
+ * or cost price instead.
+ */
+export function SetSellingPriceDialog({ product, onOpenChange }: SetSellingPriceDialogProps) {
+  const updateProductDefinition = useInventoryStore((s) => s.updateProductDefinition)
+  const [price, setPrice] = React.useState('')
+  const [submitting, setSubmitting] = React.useState(false)
+
+  React.useEffect(() => {
+    if (product) setPrice(product.salePrice != null ? String(product.salePrice) : '')
+  }, [product])
+
+  async function handleSave() {
+    if (!product) return
+    const trimmed = price.trim()
+    const parsed = trimmed === '' ? null : Number(trimmed) || 0
+
+    try {
+      setSubmitting(true)
+      await updateProductDefinition(product.id, {
+        name: product.name,
+        spec: product.spec ?? '',
+        sku: product.sku,
+        unit: product.unit,
+        costPrice: product.costPrice,
+        salePrice: parsed,
+        section: product.section,
+        godownId: product.godownId,
+        lowStockThreshold: product.lowStockThreshold,
+      })
+      toast.success(parsed === null ? 'Selling price cleared' : 'Selling price saved')
+      onOpenChange(false)
+    } catch {
+      toast.error('Could not save the selling price')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={!!product} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Selling price</DialogTitle>
+          <DialogDescription>{product?.name}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <Label htmlFor="sellingPrice">Amount (₹)</Label>
+          <Input
+            id="sellingPrice"
+            type="number"
+            min={0}
+            step="0.01"
+            autoFocus
+            placeholder="Not set"
+            className="font-mono tabular-nums"
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Used on every bill for this product. Leave blank to fall back to a scanned/cost price at bill time.
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={submitting}>
+            {submitting ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

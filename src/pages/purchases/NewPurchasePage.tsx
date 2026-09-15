@@ -157,7 +157,7 @@ export function NewPurchasePage() {
       quantity: 1,
       unit: product.unit,
       unitPrice: product.costPrice,
-      salePrice: product.salePrice,
+      salePrice: product.salePrice ?? 0,
       subtotal: 0,
       godownId: product.godownId,
     }], { shouldValidate: true })
@@ -191,7 +191,7 @@ export function NewPurchasePage() {
     form.setValue(`items.${index}.productName`, product.name, { shouldValidate: true })
     form.setValue(`items.${index}.unit`, product.unit, { shouldValidate: true })
     form.setValue(`items.${index}.unitPrice`, product.costPrice, { shouldValidate: true })
-    form.setValue(`items.${index}.salePrice`, product.salePrice, { shouldValidate: true })
+    form.setValue(`items.${index}.salePrice`, product.salePrice ?? 0, { shouldValidate: true })
     // Reflect where this product actually already lives — the per-item
     // godown picker still lets the user override it afterward if needed.
     form.setValue(`items.${index}.godownId`, product.godownId, { shouldValidate: true })

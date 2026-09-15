@@ -65,7 +65,8 @@ export interface Product {
   godownId: string
   stock: number
   costPrice: number // per unit
-  salePrice: number // per unit (MRP / listed price)
+  /** null = no selling price has been explicitly set yet. */
+  salePrice: number | null // per unit (MRP / listed price)
   lowStockThreshold: number
   updatedAt: string // ISO-8601
 }

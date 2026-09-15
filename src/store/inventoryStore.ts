@@ -9,7 +9,8 @@ export interface ProductDefinitionInput {
   sku: string
   unit: string
   costPrice?: number
-  salePrice: number
+  /** null = leave/reset the selling price unset. */
+  salePrice: number | null
   section: Section
   godownId: string
   lowStockThreshold: number

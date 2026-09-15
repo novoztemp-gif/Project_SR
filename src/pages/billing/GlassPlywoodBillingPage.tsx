@@ -16,7 +16,7 @@ import { BillScanDialog } from '@/components/billing/BillScanDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
 import { api, InsufficientStockError } from '@/lib/api'
 import type { ParsedBill } from '@/lib/billScan'
-import { findBestProductMatch } from '@/lib/productMatch'
+import { findBestProductMatch, resolveScannedUnitPrice } from '@/lib/productMatch'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -175,7 +175,7 @@ export function GlassPlywoodBillingPage() {
     // even for a non-sq.ft product since the total only uses it when the
     // item's unit is sq.ft (see `total` above).
     form.setValue(`items.${index}.sqFt`, item.sqFt, { shouldValidate: true })
-    form.setValue(`items.${index}.unitPrice`, product?.salePrice ?? item.rate, { shouldValidate: true })
+    form.setValue(`items.${index}.unitPrice`, resolveScannedUnitPrice(product, item.rate), { shouldValidate: true })
   }
 
   function handleBillExtract(parsed: ParsedBill) {
@@ -210,7 +210,7 @@ export function GlassPlywoodBillingPage() {
         glassSize: '',
         model: '',
         sqFt: item.sqFt,
-        unitPrice: product?.salePrice ?? item.rate,
+        unitPrice: resolveScannedUnitPrice(product, item.rate),
       }
     })
 

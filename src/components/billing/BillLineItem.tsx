@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
 import { ARCH_ICONS, POLISH_SIDE_ICONS } from '@/components/billing/fabricationIcons'
+import { resolveManualUnitPrice } from '@/lib/productMatch'
 import {
   Command,
   CommandEmpty,
@@ -229,7 +230,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
     setValue(`items.${index}.productId`,   product.id,         { shouldValidate: true })
     setValue(`items.${index}.productName`, product.name)
     setValue(`items.${index}.unit`,        product.unit)
-    setValue(`items.${index}.unitPrice`,   product.salePrice)
+    setValue(`items.${index}.unitPrice`,   resolveManualUnitPrice(product))
     setValue(`items.${index}.quantity`,    1)
     setValue(`items.${index}.sqFt`,        0,                  { shouldValidate: true })
     setOpen(false)
@@ -243,7 +244,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
     setValue(`items.${index}.productId`,   product.id,        { shouldValidate: true })
     setValue(`items.${index}.productName`, product.name)
     setValue(`items.${index}.unit`,        product.unit)
-    setValue(`items.${index}.unitPrice`,   product.salePrice, { shouldValidate: true })
+    setValue(`items.${index}.unitPrice`,   resolveManualUnitPrice(product), { shouldValidate: true })
     setValue(`items.${index}.sqFt`,        0)
   }
 

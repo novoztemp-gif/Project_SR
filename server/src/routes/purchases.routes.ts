@@ -203,11 +203,16 @@ purchasesRouter.post(
               godownId: item.godownId ?? purchase.godownId,
               stock: item.quantity,
               costPrice: item.unitPrice,
-              // Fall back to unitPrice only when no selling price was
-              // entered (older purchases, or a blank field) — otherwise a
-              // brand-new product silently launched at zero margin, priced
-              // to sell for exactly what we paid the vendor.
-              salePrice: item.salePrice ?? item.unitPrice,
+              // Left null when no selling price was entered on the
+              // purchase — must NOT default to unitPrice/costPrice here,
+              // that's the original bug (a brand-new product silently
+              // launched priced to sell for exactly what we paid the
+              // vendor, indistinguishable from a deliberately-set price).
+              // Billing resolves the fallback dynamically at bill time.
+              // `||` (not `??`): the purchase form always submits a
+              // coerced number, so "left blank" arrives here as 0, not
+              // null/undefined — treat that the same as not entered.
+              salePrice: item.salePrice || null,
               lowStockThreshold: 5,
             },
           })

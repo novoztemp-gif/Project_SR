@@ -94,7 +94,9 @@ const productDefinitionSchema = z.object({
   sku: z.string().min(1),
   unit: z.string().min(1),
   costPrice: z.number().nonnegative().optional(),
-  salePrice: z.number().nonnegative(),
+  // Null/omitted = not yet set — must not be defaulted to costPrice or 0
+  // here; billing decides the fallback dynamically at bill time.
+  salePrice: z.number().nonnegative().nullable().optional(),
   section: SectionEnum,
   godownId: z.string().min(1),
   lowStockThreshold: z.number().nonnegative(),
@@ -129,7 +131,7 @@ inventoryRouter.post(
         godownId: data.godownId,
         stock: data.openingStock,
         costPrice: data.costPrice ?? 0,
-        salePrice: data.salePrice,
+        salePrice: data.salePrice ?? null,
         lowStockThreshold: data.lowStockThreshold,
       },
     })
@@ -162,7 +164,7 @@ inventoryRouter.put(
         sku: data.sku,
         unit: data.unit,
         ...(data.costPrice !== undefined ? { costPrice: data.costPrice } : {}),
-        salePrice: data.salePrice,
+        salePrice: data.salePrice ?? null,
         section: data.section,
         godownId: data.godownId,
         lowStockThreshold: data.lowStockThreshold,
