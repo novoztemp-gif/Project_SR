@@ -3,11 +3,18 @@
 // The API key lives ONLY on the server (env.OPENAI_API_KEY) — never the browser.
 import { callVisionExtraction, round2 } from './visionExtract.js'
 
+// Kept in sync by hand with UNITS in src/lib/constants.ts — the frontend's
+// Unit dropdown only offers these values, so a scanned unit that isn't one
+// of them can never be used as-is.
+const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg'] as const
+
 export interface ParsedBillItem {
   name: string
   qty: number
   sqFt: number
   rate: number
+  sizeDimension: string
+  unit: string
 }
 
 export interface ParsedBill {
@@ -35,6 +42,12 @@ const EXTRACTION_INSTRUCTIONS = [
   '- amount: the LINE TOTAL for that row — the rightmost "Amount"/"Total" column',
   '  (usually qty × rate). Read this value carefully; it is the most reliable number.',
   '- sqFt: square-foot area if the item is priced by area, else 0.',
+  '- sizeDimension: any size/dimension printed for this item — thickness, WxH,',
+  `  length, diameter, etc. (e.g. "10mm", "6x4 ft", "1/2 inch"). Empty string if none.`,
+  `- unit: pick exactly ONE of: ${UNITS.join(', ')} — whichever best matches the`,
+  '  item (a count of pieces is "pcs", a length/rod is "length", sheets of glass',
+  '  or ply are "sheet", loose material sold by weight is "kg", etc.). Default to',
+  '  "pcs" if genuinely unclear — always return one of this exact list, nothing else.',
   'Never put the line total into rate. If a column is missing, use 0 for numbers and an',
   'empty string for text. Do not invent items or values.',
   'Also extract these document-level fields if shown anywhere on the page (leave as an',
@@ -78,13 +91,15 @@ const BILL_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['name', 'qty', 'sqFt', 'rate', 'amount'],
+        required: ['name', 'qty', 'sqFt', 'rate', 'amount', 'sizeDimension', 'unit'],
         properties: {
           name: { type: 'string' },
           qty: { type: 'number' },
           sqFt: { type: 'number' },
           rate: { type: 'number' },
           amount: { type: 'number' },
+          sizeDimension: { type: 'string' },
+          unit: { type: 'string', enum: [...UNITS] },
         },
       },
     },
@@ -123,7 +138,16 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
         unitRate = round2(amount)
       }
 
-      return { name: String(it?.name ?? ''), qty, sqFt, rate: unitRate }
+      const unit = UNITS.includes(it?.unit) ? String(it.unit) : 'pcs'
+
+      return {
+        name: String(it?.name ?? ''),
+        qty,
+        sqFt,
+        rate: unitRate,
+        sizeDimension: String(it?.sizeDimension ?? ''),
+        unit,
+      }
     }),
   }
 }

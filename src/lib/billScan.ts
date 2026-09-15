@@ -5,6 +5,8 @@ export interface ParsedBillItem {
   qty: number
   sqFt: number
   rate: number
+  sizeDimension: string
+  unit: string
 }
 
 export interface ParsedBill {

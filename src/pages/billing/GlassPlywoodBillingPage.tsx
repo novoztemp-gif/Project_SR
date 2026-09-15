@@ -170,7 +170,11 @@ export function GlassPlywoodBillingPage() {
     form.setValue(`items.${index}.productId`, product?.id ?? '', { shouldValidate: true })
     form.setValue(`items.${index}.productName`, product?.name ?? item.name, { shouldValidate: true })
     form.setValue(`items.${index}.quantity`, item.qty, { shouldValidate: true })
-    form.setValue(`items.${index}.unit`, product?.unit ?? 'pcs', { shouldValidate: true })
+    // Matched product: keep its own established unit rather than whatever
+    // the scan guessed. Brand-new item: use the scanned unit — already
+    // constrained server-side to one of the app's allowed unit values.
+    form.setValue(`items.${index}.unit`, product?.unit ?? (item.unit || 'pcs'), { shouldValidate: true })
+    form.setValue(`items.${index}.glassSize`, item.sizeDimension || '', { shouldValidate: true })
     // Trust the scanned sq.ft value whenever the bill had one — it's harmless
     // even for a non-sq.ft product since the total only uses it when the
     // item's unit is sq.ft (see `total` above).
@@ -206,8 +210,8 @@ export function GlassPlywoodBillingPage() {
         productId: product?.id ?? '',
         productName: product?.name ?? item.name,
         quantity: item.qty,
-        unit: product?.unit ?? 'pcs',
-        glassSize: '',
+        unit: product?.unit ?? (item.unit || 'pcs'),
+        glassSize: item.sizeDimension || '',
         model: '',
         sqFt: item.sqFt,
         unitPrice: resolveScannedUnitPrice(product, item.rate),

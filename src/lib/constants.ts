@@ -17,6 +17,12 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'hardware',   label: 'Hardware',   colorVar: '--section-hardware' },
 ]
 
+// The fixed set of unit values usable across products/purchases/bills — also
+// mirrored (as a plain literal list, kept in sync by hand) in the backend's
+// purchase/bill extraction schemas so a scanned unit can only ever come back
+// as one of these.
+export const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg']
+
 export const SECTION_COLORS: Record<string, string> = {
   Glass: '#4FC3F7',
   Plywood: '#FFB74D',

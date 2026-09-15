@@ -4,6 +4,8 @@ export interface ParsedPurchaseItem {
   name: string
   qty: number
   rate: number
+  sizeDimension: string
+  unit: string
 }
 
 export interface ParsedPurchase {

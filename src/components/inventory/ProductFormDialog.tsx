@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
+import { GODOWNS_SEED, SECTIONS, UNITS } from '@/lib/constants'
 import type { Product, Section } from '@/types'
 
 export interface ProductFormValues {
@@ -43,8 +43,6 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (values: ProductFormValues) => void
 }
-
-const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg']
 
 function sectionLabel(section: Section) {
   return SECTIONS.find((item) => item.key === section)?.label ?? section

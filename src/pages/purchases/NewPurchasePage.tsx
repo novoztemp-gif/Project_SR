@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
+import { GODOWNS_SEED, SECTIONS, UNITS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { findBestProductMatch } from '@/lib/productMatch'
 import type { ParsedPurchase } from '@/lib/purchaseScan'
@@ -33,7 +33,6 @@ import { usePurchaseStore } from '@/store/purchaseStore'
 import type { Section } from '@/types'
 import { cn } from '@/lib/utils'
 
-const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg']
 const NEW_PRODUCT_VALUE = '__new__'
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -217,9 +216,12 @@ export function NewPurchasePage() {
       return {
         productId: product?.id ?? '',
         productName: product?.name ?? item.name,
-        sizeDimension: '',
+        sizeDimension: item.sizeDimension || '',
         quantity: item.qty || 1,
-        unit: product?.unit ?? 'pcs',
+        // Matched product: keep using its own established unit rather than
+        // whatever the scan guessed. Brand-new item: use the scanned unit —
+        // already constrained server-side to one of UNITS.
+        unit: product?.unit ?? (item.unit || 'pcs'),
         unitPrice: product?.costPrice ?? item.rate,
         // Matched product: default to its current selling price. Brand-new
         // (unmatched) item: default to the scanned rate as a starting
