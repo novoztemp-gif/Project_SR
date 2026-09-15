@@ -71,13 +71,13 @@ function isLowStock(product: Product) {
   return product.stock <= product.lowStockThreshold
 }
 
-function productRows(products: Product[], includeCostPrice: boolean) {
+function productRows(products: Product[]) {
   return products.map((product) => [
     product.name,
     sectionLabel(product.section),
     product.sku,
     product.unit,
-    ...(includeCostPrice ? [product.costPrice] : []),
+    product.costPrice,
     product.salePrice ?? 'Not set',
     product.stock,
     product.lowStockThreshold,
@@ -174,8 +174,8 @@ export function ProductsPage() {
   function exportProducts() {
     exportCsv(
       'products.csv',
-      ['Name', 'Type', 'SKU', 'Unit', ...(isAdmin ? ['Cost Price'] : []), 'Selling Price', 'Stock', 'Min Stock', 'Spec'],
-      productRows(filteredProducts, isAdmin)
+      ['Name', 'Type', 'SKU', 'Unit', 'Purchase Price', 'Selling Price', 'Stock', 'Min Stock', 'Spec'],
+      productRows(filteredProducts)
     )
     toast.success('Products exported')
   }
@@ -245,13 +245,19 @@ export function ProductsPage() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-md border border-border p-3">
                     <p className="text-xs text-muted-foreground">Stock</p>
-                    <p className={cn('mt-1 font-mono text-lg font-medium tabular-nums', lowStock && 'text-[#EF5350]')}>
+                    <p className={cn('mt-1 font-mono text-base font-medium tabular-nums', lowStock && 'text-[#EF5350]')}>
                       {product.stock} <span className="text-xs text-muted-foreground">{product.unit}</span>
                     </p>
                   </div>
+
+                  <div className="rounded-md border border-border p-3">
+                    <p className="text-xs text-muted-foreground">Purchase price</p>
+                    <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.costPrice)}</p>
+                  </div>
+
                   {product.salePrice != null ? (
                     isAdmin ? (
                       <button
@@ -260,12 +266,12 @@ export function ProductsPage() {
                         className="rounded-md border border-border p-3 text-left transition-colors hover:border-brand-mid"
                       >
                         <p className="text-xs text-muted-foreground">Selling price</p>
-                        <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
+                        <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.salePrice)}</p>
                       </button>
                     ) : (
                       <div className="rounded-md border border-border p-3">
                         <p className="text-xs text-muted-foreground">Selling price</p>
-                        <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
+                        <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.salePrice)}</p>
                       </div>
                     )
                   ) : isAdmin ? (
@@ -275,7 +281,7 @@ export function ProductsPage() {
                       className="flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border p-3 text-brand-mid transition-colors hover:border-brand-mid hover:bg-brand-mid/10"
                     >
                       <Plus className="h-4 w-4" />
-                      <span className="text-xs font-medium">Add selling price</span>
+                      <span className="text-xs font-medium">Add price</span>
                     </button>
                   ) : (
                     <div className="rounded-md border border-border p-3">
@@ -284,12 +290,6 @@ export function ProductsPage() {
                     </div>
                   )}
                 </div>
-
-                {isAdmin && (
-                  <p className="text-xs text-muted-foreground">
-                    Cost price: <span className="font-mono tabular-nums text-foreground">{INR.format(product.costPrice)}</span>
-                  </p>
-                )}
 
                 <div>
                   <div className="mb-1 flex justify-between text-xs text-muted-foreground">
