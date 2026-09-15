@@ -44,6 +44,9 @@ const itemSchema = z.object({
   quantity: z.coerce.number().min(1, 'Min 1'),
   unit: z.string().min(1, 'Unit is required'),
   unitPrice: z.coerce.number().min(0, 'Must be 0 or more'),
+  // Only meaningful for a brand-new product (see isNewProduct below) — what
+  // it should be sold for, as opposed to unitPrice (what we paid for it).
+  salePrice: z.coerce.number().min(0, 'Must be 0 or more'),
   subtotal: z.number().default(0),
   godownId: z.string().min(1, 'Select a godown'),
 })
@@ -67,6 +70,7 @@ const EMPTY_ITEM = {
   quantity: 1,
   unit: 'pcs',
   unitPrice: 0,
+  salePrice: 0,
   subtotal: 0,
   godownId: GODOWNS_SEED[0]?.id ?? '',
 }
@@ -153,6 +157,7 @@ export function NewPurchasePage() {
       quantity: 1,
       unit: product.unit,
       unitPrice: product.costPrice,
+      salePrice: product.salePrice,
       subtotal: 0,
       godownId: product.godownId,
     }], { shouldValidate: true })
@@ -175,6 +180,7 @@ export function NewPurchasePage() {
       form.setValue(`items.${index}.productName`, '', { shouldValidate: true })
       form.setValue(`items.${index}.unit`, 'pcs')
       form.setValue(`items.${index}.unitPrice`, 0)
+      form.setValue(`items.${index}.salePrice`, 0)
       return
     }
 
@@ -185,6 +191,7 @@ export function NewPurchasePage() {
     form.setValue(`items.${index}.productName`, product.name, { shouldValidate: true })
     form.setValue(`items.${index}.unit`, product.unit, { shouldValidate: true })
     form.setValue(`items.${index}.unitPrice`, product.costPrice, { shouldValidate: true })
+    form.setValue(`items.${index}.salePrice`, product.salePrice, { shouldValidate: true })
     // Reflect where this product actually already lives — the per-item
     // godown picker still lets the user override it afterward if needed.
     form.setValue(`items.${index}.godownId`, product.godownId, { shouldValidate: true })
@@ -214,6 +221,10 @@ export function NewPurchasePage() {
         quantity: item.qty || 1,
         unit: product?.unit ?? 'pcs',
         unitPrice: product?.costPrice ?? item.rate,
+        // Matched product: default to its current selling price. Brand-new
+        // (unmatched) item: default to the scanned rate as a starting
+        // point — it's editable, but this beats leaving it at 0.
+        salePrice: product?.salePrice ?? item.rate,
         subtotal: 0,
         // A scanned invoice has no notion of which of our own godowns to
         // use — reflect the matched product's actual godown, or fall back
@@ -396,7 +407,7 @@ export function NewPurchasePage() {
                 const isNewProduct = !item?.productId
 
                 return (
-                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2fr_0.9fr_0.6fr_0.6fr_0.8fr_0.9fr_auto]">
+                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2fr_0.9fr_0.6fr_0.6fr_0.8fr_0.8fr_0.9fr_auto]">
                     <div className="space-y-2">
                       <Label>Product</Label>
                       <Popover
@@ -521,6 +532,27 @@ export function NewPurchasePage() {
                     <div className="space-y-2">
                       <Label>Unit price</Label>
                       <Input type="number" min={0} step="0.01" className="font-mono tabular-nums" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Selling price</Label>
+                      {isNewProduct ? (
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="font-mono tabular-nums"
+                          {...form.register(`items.${index}.salePrice`, { valueAsNumber: true })}
+                        />
+                      ) : (
+                        <Input
+                          readOnly
+                          type="number"
+                          className="font-mono tabular-nums text-muted-foreground"
+                          value={products.find((product) => product.id === item?.productId)?.salePrice ?? 0}
+                          title="Existing product — change its selling price from the Products page"
+                        />
+                      )}
                     </div>
 
                     <div className="space-y-2">

@@ -70,12 +70,13 @@ function isLowStock(product: Product) {
   return product.stock <= product.lowStockThreshold
 }
 
-function productRows(products: Product[]) {
+function productRows(products: Product[], includeCostPrice: boolean) {
   return products.map((product) => [
     product.name,
     sectionLabel(product.section),
     product.sku,
     product.unit,
+    ...(includeCostPrice ? [product.costPrice] : []),
     product.salePrice,
     product.stock,
     product.lowStockThreshold,
@@ -171,8 +172,8 @@ export function ProductsPage() {
   function exportProducts() {
     exportCsv(
       'products.csv',
-      ['Name', 'Type', 'SKU', 'Unit', 'Price', 'Stock', 'Min Stock', 'Spec'],
-      productRows(filteredProducts)
+      ['Name', 'Type', 'SKU', 'Unit', ...(isAdmin ? ['Cost Price'] : []), 'Selling Price', 'Stock', 'Min Stock', 'Spec'],
+      productRows(filteredProducts, isAdmin)
     )
     toast.success('Products exported')
   }
@@ -250,10 +251,16 @@ export function ProductsPage() {
                     </p>
                   </div>
                   <div className="rounded-md border border-border p-3">
-                    <p className="text-xs text-muted-foreground">Price</p>
+                    <p className="text-xs text-muted-foreground">Selling price</p>
                     <p className="mt-1 font-mono text-lg font-medium tabular-nums">{INR.format(product.salePrice)}</p>
                   </div>
                 </div>
+
+                {isAdmin && (
+                  <p className="text-xs text-muted-foreground">
+                    Cost price: <span className="font-mono tabular-nums text-foreground">{INR.format(product.costPrice)}</span>
+                  </p>
+                )}
 
                 <div>
                   <div className="mb-1 flex justify-between text-xs text-muted-foreground">

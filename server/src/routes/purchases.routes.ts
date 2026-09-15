@@ -32,6 +32,10 @@ const createPurchaseSchema = z.object({
         quantity: z.number().positive(),
         unit: z.string().min(1),
         unitPrice: z.number().nonnegative(),
+        // What this item should sell for once committed to inventory —
+        // distinct from unitPrice (the vendor/purchase price). Optional so
+        // existing callers that don't set it fall back to unitPrice.
+        salePrice: z.number().nonnegative().optional(),
         godownId: z.string().min(1, 'Select a godown for each item'),
       }),
     )
@@ -105,6 +109,7 @@ purchasesRouter.post(
       quantity: item.quantity,
       unit: item.unit,
       unitPrice: item.unitPrice,
+      salePrice: item.salePrice,
       subtotal: item.quantity * item.unitPrice,
       godownId: item.godownId,
     }))
@@ -198,7 +203,11 @@ purchasesRouter.post(
               godownId: item.godownId ?? purchase.godownId,
               stock: item.quantity,
               costPrice: item.unitPrice,
-              salePrice: item.unitPrice,
+              // Fall back to unitPrice only when no selling price was
+              // entered (older purchases, or a blank field) — otherwise a
+              // brand-new product silently launched at zero margin, priced
+              // to sell for exactly what we paid the vendor.
+              salePrice: item.salePrice ?? item.unitPrice,
               lowStockThreshold: 5,
             },
           })

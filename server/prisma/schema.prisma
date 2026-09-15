@@ -156,6 +156,11 @@ model PurchaseItem {
   quantity      Float
   unit          String
   unitPrice     Float
+  // What this item should be sold for once it's committed to inventory —
+  // distinct from unitPrice (what we paid the vendor). Nullable so a new
+  // product created from an item with no salePrice set falls back to
+  // unitPrice (old behavior) instead of silently getting priced at 0.
+  salePrice     Float?
   subtotal      Float
   godownId      String?
   purchase      PurchaseBill @relation(fields: [purchaseId], references: [id], onDelete: Cascade)

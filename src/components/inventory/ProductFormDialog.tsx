@@ -20,6 +20,7 @@ export interface ProductFormValues {
   spec: string
   sku: string
   unit: string
+  costPrice: number
   salePrice: number
   section: Section
   godownId: string
@@ -47,6 +48,7 @@ function getInitialValues(product: Product | null | undefined, allowedSections: 
     spec: product?.spec ?? '',
     sku: product?.sku ?? '',
     unit: product?.unit ?? 'pcs',
+    costPrice: product?.costPrice ?? 0,
     salePrice: product?.salePrice ?? 0,
     section: product?.section ?? allowedSections[0] ?? 'glass',
     godownId: product?.godownId ?? GODOWNS_SEED[0]?.id ?? '',
@@ -76,6 +78,7 @@ export function ProductFormDialog({
       spec: values.spec.trim(),
       sku: values.sku.trim(),
       unit: values.unit.trim(),
+      costPrice: Number(values.costPrice) || 0,
       salePrice: Number(values.salePrice) || 0,
       lowStockThreshold: Number(values.lowStockThreshold) || 0,
     })
@@ -125,7 +128,20 @@ export function ProductFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="productPrice">Price</Label>
+              <Label htmlFor="productCostPrice">Cost price</Label>
+              <Input
+                id="productCostPrice"
+                type="number"
+                min={0}
+                step="0.01"
+                value={values.costPrice}
+                onChange={(event) => update('costPrice', Number(event.target.value))}
+              />
+              <p className="text-xs text-muted-foreground">What we pay for it.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="productPrice">Selling price</Label>
               <Input
                 id="productPrice"
                 type="number"
@@ -134,6 +150,7 @@ export function ProductFormDialog({
                 value={values.salePrice}
                 onChange={(event) => update('salePrice', Number(event.target.value))}
               />
+              <p className="text-xs text-muted-foreground">What we charge the customer.</p>
             </div>
 
             <div className="space-y-2">

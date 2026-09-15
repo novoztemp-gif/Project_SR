@@ -90,6 +90,7 @@ export interface PurchaseItem {
   quantity: number
   unit: string
   unitPrice: number // per unit (purchase price)
+  salePrice?: number // per unit — what a brand-new product created from this item should sell for
   subtotal: number  // quantity * unitPrice
   godownId?: string // which godown this line's stock goes into
 }

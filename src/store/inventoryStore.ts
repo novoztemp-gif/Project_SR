@@ -8,6 +8,7 @@ export interface ProductDefinitionInput {
   spec?: string
   sku: string
   unit: string
+  costPrice?: number
   salePrice: number
   section: Section
   godownId: string
