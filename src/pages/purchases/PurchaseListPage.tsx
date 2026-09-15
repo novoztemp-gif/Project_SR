@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { GODOWNS_SEED, SECTION_COLORS, SECTIONS } from '@/lib/constants'
+import { SECTION_COLORS, SECTIONS } from '@/lib/constants'
 import { exportCsv } from '@/lib/exportCsv'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
+import { useInventoryStore } from '@/store/inventoryStore'
 import { usePurchaseStore } from '@/store/purchaseStore'
-import type { PurchaseBill } from '@/types'
+import type { Godown, PurchaseBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -32,18 +33,18 @@ function getSectionLabel(sectionKey: PurchaseBill['section']) {
   return SECTIONS.find((section) => section.key === sectionKey)?.label ?? sectionKey
 }
 
-function getGodownLabel(godownId: string) {
-  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? godownId
+function getGodownLabel(godownId: string, godowns: Godown[]) {
+  return godowns.find((godown) => godown.id === godownId)?.name ?? godownId
 }
 
 // Items can each target a different godown now — a single purchase.godownId
 // is only ever a legacy/first-item fallback, so summarize honestly: the
 // shared godown when every item agrees, otherwise say so explicitly rather
 // than silently showing just one of several.
-function getPurchaseGodownLabel(purchase: PurchaseBill) {
+function getPurchaseGodownLabel(purchase: PurchaseBill, godowns: Godown[]) {
   const ids = Array.from(new Set(purchase.items.map((item) => item.godownId).filter((id): id is string => Boolean(id))))
-  if (ids.length === 0) return getGodownLabel(purchase.godownId)
-  if (ids.length === 1) return getGodownLabel(ids[0])
+  if (ids.length === 0) return getGodownLabel(purchase.godownId, godowns)
+  if (ids.length === 1) return getGodownLabel(ids[0], godowns)
   return 'Multiple godowns'
 }
 
@@ -76,8 +77,9 @@ function PurchasePreviewPanel({
   onPrint: () => void
   onView: () => void
 }) {
+  const godowns = useInventoryStore((s) => s.godowns)
   const sectionLabel = getSectionLabel(purchase.section)
-  const godownLabel = getPurchaseGodownLabel(purchase)
+  const godownLabel = getPurchaseGodownLabel(purchase, godowns)
   const isApplied = Boolean(purchase.printedAt)
 
   return (
@@ -160,6 +162,7 @@ export function PurchaseListPage() {
   const navigate = useNavigate()
   const currentUser = useAuthStore((state) => state.currentUser)!
   const purchases = usePurchaseStore((state) => state.purchases)
+  const godowns = useInventoryStore((state) => state.godowns)
   const accessibleSections = getUserSections(currentUser.id)
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
@@ -197,7 +200,7 @@ export function PurchaseListPage() {
         purchase.vendorName,
         csvDate(purchase.date),
         getSectionLabel(purchase.section),
-        getPurchaseGodownLabel(purchase),
+        getPurchaseGodownLabel(purchase, godowns),
         purchase.items.map((item) => `${item.productName} x ${item.quantity} ${item.unit}`).join('; '),
         purchase.total,
         purchase.printedAt ? 'Applied' : 'Pending',
@@ -236,7 +239,7 @@ export function PurchaseListPage() {
           <TableBody>
             {sortedPurchases.map((purchase) => {
               const sectionLabel = getSectionLabel(purchase.section)
-              const godownLabel = getPurchaseGodownLabel(purchase)
+              const godownLabel = getPurchaseGodownLabel(purchase, godowns)
               const isSelected = purchase.id === selectedId
 
               return (

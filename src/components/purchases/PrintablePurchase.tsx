@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { COMPANY } from '@/lib/brand'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
-import type { PurchaseBill } from '@/types'
+import { SECTIONS } from '@/lib/constants'
+import { useInventoryStore } from '@/store/inventoryStore'
+import type { Godown, PurchaseBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -24,11 +25,12 @@ function formatDate(iso: string) {
   })
 }
 
-function godownLabelFor(godownId?: string) {
-  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? '—'
+function godownLabelFor(godownId: string | undefined, godowns: Godown[]) {
+  return godowns.find((godown) => godown.id === godownId)?.name ?? '—'
 }
 
 export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
+  const godowns = useInventoryStore((s) => s.godowns)
   const sectionLabel = SECTIONS.find((section) => section.key === bill.section)?.label ?? bill.section
   const grandTotal = bill.total + bill.transportationAmount
 
@@ -89,7 +91,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
                   </Badge>
                 )}
               </td>
-              <td className="py-2 text-gray-600">{godownLabelFor(item.godownId ?? bill.godownId)}</td>
+              <td className="py-2 text-gray-600">{godownLabelFor(item.godownId ?? bill.godownId, godowns)}</td>
               <td className="py-2 text-right font-mono tabular-nums">
                 <span className="print:hidden">{item.quantity} {item.unit}</span>
                 <span className="hidden print:inline">{toLetterDigits(String(item.quantity))} {item.unit}</span>

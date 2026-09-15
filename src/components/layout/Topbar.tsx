@@ -19,12 +19,12 @@ import {
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { TopbarSearch } from '@/components/layout/TopbarSearch'
 import { SidebarInner } from '@/components/layout/Sidebar'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
+import { SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { cn } from '@/lib/utils'
-import type { Product } from '@/types'
+import type { Godown, Product } from '@/types'
 
 interface TopbarProps {
   title?: string
@@ -35,13 +35,14 @@ function sectionLabel(product: Product) {
   return SECTIONS.find((section) => section.key === product.section)?.label ?? product.section
 }
 
-function godownName(godownId: string) {
-  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? godownId
+function godownName(godownId: string, godowns: Godown[]) {
+  return godowns.find((godown) => godown.id === godownId)?.name ?? godownId
 }
 
 export function Topbar({ title, className }: TopbarProps) {
   const { currentUser, logout } = useAuthStore()
   const products = useInventoryStore((state) => state.products)
+  const godowns = useInventoryStore((state) => state.godowns)
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = React.useState(false)
 
@@ -131,7 +132,7 @@ export function Topbar({ title, className }: TopbarProps) {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{product.name}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {sectionLabel(product)} · {godownName(product.godownId)}
+                        {sectionLabel(product)} · {godownName(product.godownId, godowns)}
                       </p>
                       <p className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
                         {product.stock} {product.unit} / min {product.lowStockThreshold}

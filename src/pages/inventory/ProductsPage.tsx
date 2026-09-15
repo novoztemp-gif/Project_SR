@@ -20,12 +20,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ProductFormDialog, type ProductFormValues } from '@/components/inventory/ProductFormDialog'
 import { SetSellingPriceDialog } from '@/components/inventory/SetSellingPriceDialog'
 import { exportCsv } from '@/lib/exportCsv'
-import { GODOWNS_SEED, SECTION_COLORS, SECTIONS } from '@/lib/constants'
+import { SECTION_COLORS, SECTIONS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
-import type { Product, Section } from '@/types'
+import type { Godown, Product, Section } from '@/types'
 import { cn } from '@/lib/utils'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
@@ -35,8 +35,8 @@ function sectionLabel(section: Section) {
   return SECTIONS.find((item) => item.key === section)?.label ?? section
 }
 
-function godownName(godownId: string) {
-  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? godownId
+function godownName(godownId: string, godowns: Godown[]) {
+  return godowns.find((godown) => godown.id === godownId)?.name ?? godownId
 }
 
 function sectionBadgeStyle(section: Section) {
@@ -90,6 +90,7 @@ export function ProductsPage() {
   const currentUser = useAuthStore((state) => state.currentUser)!
   const isAdmin = currentUser.role === 'admin'
   const products = useInventoryStore((state) => state.products)
+  const godowns = useInventoryStore((state) => state.godowns)
   const addProductDefinition = useInventoryStore((state) => state.addProductDefinition)
   const updateProductDefinition = useInventoryStore((state) => state.updateProductDefinition)
   const deleteProduct = useInventoryStore((state) => state.deleteProduct)
@@ -232,7 +233,7 @@ export function ProductsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <Badge variant="outline" style={sectionBadgeStyle(product.section)}>{sectionLabel(product.section)}</Badge>
                   <span className="max-w-[55%] truncate text-right text-xs text-muted-foreground">
-                    {product.spec || godownName(product.godownId)}
+                    {product.spec || godownName(product.godownId, godowns)}
                   </span>
                 </div>
                 <div>

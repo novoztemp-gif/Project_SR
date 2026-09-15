@@ -3,6 +3,11 @@ import { create } from 'zustand'
 import { http } from '@/lib/apiClient'
 import type { Godown, Product, Section, TransferLogEntry } from '@/types'
 
+export interface GodownInput {
+  name: string
+  location: string
+}
+
 export interface ProductDefinitionInput {
   name: string
   spec?: string
@@ -50,6 +55,9 @@ interface InventoryState {
     toGodownId: string,
     qty: number,
   ) => Promise<void>
+  addGodown: (input: GodownInput) => Promise<Godown>
+  updateGodown: (godownId: string, input: GodownInput) => Promise<void>
+  deleteGodown: (godownId: string) => Promise<void>
 }
 
 export const useInventoryStore = create<InventoryState>()((set, get) => ({
@@ -145,5 +153,23 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     // The product's godown changed — refresh products and prepend the log entry.
     await get().refreshProducts()
     set((state) => ({ transferLog: [entry, ...state.transferLog] }))
+  },
+
+  addGodown: async (input) => {
+    const godown = await http.post<Godown>('/inventory/godowns', input)
+    set((state) => ({ godowns: [...state.godowns, godown] }))
+    return godown
+  },
+
+  updateGodown: async (godownId, input) => {
+    const godown = await http.put<Godown>(`/inventory/godowns/${godownId}`, input)
+    set((state) => ({
+      godowns: state.godowns.map((g) => (g.id === godownId ? godown : g)),
+    }))
+  },
+
+  deleteGodown: async (godownId) => {
+    await http.del(`/inventory/godowns/${godownId}`)
+    set((state) => ({ godowns: state.godowns.filter((g) => g.id !== godownId) }))
   },
 }))

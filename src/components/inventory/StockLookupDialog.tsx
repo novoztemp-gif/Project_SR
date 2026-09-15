@@ -10,8 +10,9 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { api } from '@/lib/api'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
+import { SECTIONS } from '@/lib/constants'
 import { useAuthStore } from '@/store/authStore'
+import { useInventoryStore } from '@/store/inventoryStore'
 import { getUserSections } from '@/lib/userSections'
 import type { Product } from '@/types'
 
@@ -23,6 +24,7 @@ interface StockLookupDialogProps {
 
 export function StockLookupDialog({ open, onOpenChange, onSelect }: StockLookupDialogProps) {
   const currentUser = useAuthStore((s) => s.currentUser)
+  const godowns = useInventoryStore((s) => s.godowns)
   const [query, setQuery] = React.useState('')
 
   const allowedSections = currentUser ? getUserSections(currentUser.id) : []
@@ -36,7 +38,7 @@ export function StockLookupDialog({ open, onOpenChange, onSelect }: StockLookupD
     }))
     .filter((g) => g.products.length > 0)
 
-  const godownName = Object.fromEntries(GODOWNS_SEED.map((g) => [g.id, g.name]))
+  const godownName = Object.fromEntries(godowns.map((g) => [g.id, g.name]))
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) setQuery('')

@@ -8,16 +8,12 @@ import { GodownDetailSheet } from '@/components/inventory/GodownDetailSheet'
 import { GodownGrid } from '@/components/inventory/GodownGrid'
 import { StockLookupDialog } from '@/components/inventory/StockLookupDialog'
 import { api } from '@/lib/api'
-import { GODOWNS_SEED, SECTIONS } from '@/lib/constants'
+import { SECTIONS } from '@/lib/constants'
 import { exportCsv } from '@/lib/exportCsv'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { Godown, Product, Section } from '@/types'
-
-function godownById(id: string): Godown {
-  return GODOWNS_SEED.find((g) => g.id === id)!
-}
 
 function sectionLabel(section: Section) {
   return SECTIONS.find((item) => item.key === section)?.label ?? section
@@ -39,6 +35,7 @@ function productRows(products: Product[]) {
 export function InventoryPage() {
   const currentUser = useAuthStore((s) => s.currentUser)
   const products = useInventoryStore((s) => s.products)
+  const godowns = useInventoryStore((s) => s.godowns)
   const allowedSections = currentUser ? getUserSections(currentUser.id) : []
 
   const accessibleSections = SECTIONS.filter(
@@ -156,7 +153,8 @@ export function InventoryPage() {
         onOpenChange={setLookupOpen}
         onSelect={(product) => {
           setLookupOpen(false)
-          setOpenGodown({ godown: godownById(product.godownId), section: product.section })
+          const godown = godowns.find((g) => g.id === product.godownId)
+          if (godown) setOpenGodown({ godown, section: product.section })
         }}
       />
     </div>

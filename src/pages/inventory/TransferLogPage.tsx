@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/EmptyState'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { GODOWNS_SEED } from '@/lib/constants'
 import { exportCsv } from '@/lib/exportCsv'
 import { useInventoryStore } from '@/store/inventoryStore'
+import type { Godown } from '@/types'
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-IN', {
@@ -18,12 +18,13 @@ function formatDateTime(iso: string) {
   })
 }
 
-function godownName(godownId: string) {
-  return GODOWNS_SEED.find((godown) => godown.id === godownId)?.name ?? godownId
+function godownName(godownId: string, godowns: Godown[]) {
+  return godowns.find((godown) => godown.id === godownId)?.name ?? godownId
 }
 
 export function TransferLogPage() {
   const transferLog = useInventoryStore((state) => state.transferLog)
+  const godowns = useInventoryStore((state) => state.godowns)
   const sortedLog = [...transferLog].sort((a, b) => b.transferredAt.localeCompare(a.transferredAt))
 
   function exportTransfers() {
@@ -33,8 +34,8 @@ export function TransferLogPage() {
       sortedLog.map((entry) => [
         new Date(entry.transferredAt).toISOString(),
         entry.productName,
-        godownName(entry.fromGodownId),
-        godownName(entry.toGodownId),
+        godownName(entry.fromGodownId, godowns),
+        godownName(entry.toGodownId, godowns),
         entry.qty,
         entry.transferredBy,
       ])
@@ -84,8 +85,8 @@ export function TransferLogPage() {
                   <TableRow key={entry.id}>
                     <TableCell className="text-sm text-muted-foreground">{formatDateTime(entry.transferredAt)}</TableCell>
                     <TableCell className="font-medium">{entry.productName}</TableCell>
-                    <TableCell>{godownName(entry.fromGodownId)}</TableCell>
-                    <TableCell>{godownName(entry.toGodownId)}</TableCell>
+                    <TableCell>{godownName(entry.fromGodownId, godowns)}</TableCell>
+                    <TableCell>{godownName(entry.toGodownId, godowns)}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{entry.qty}</TableCell>
                     <TableCell>{entry.transferredBy}</TableCell>
                   </TableRow>

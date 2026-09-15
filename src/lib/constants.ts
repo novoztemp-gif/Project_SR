@@ -1,4 +1,4 @@
-import type { Godown, Section, User } from '@/types'
+import type { Section, User } from '@/types'
 
 // ─── Section metadata ────────────────────────────────────────────────────────
 
@@ -174,14 +174,6 @@ export const HOLE_OPTIONS: string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '
 export const ART_WORK_OPTIONS: string[] = ['Yes', 'No']
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
-
-export const GODOWNS_SEED: Godown[] = [
-  { id: 'gd-1', name: 'Main Godown',   location: 'Ground floor, Block A' },
-  { id: 'gd-2', name: 'Annexe A',      location: 'First floor, Block A' },
-  { id: 'gd-3', name: 'Annexe B',      location: 'First floor, Block B' },
-  { id: 'gd-4', name: 'Top Floor',     location: 'Second floor, Block A' },
-  { id: 'gd-5', name: 'Outdoor Yard',  location: 'Rear compound' },
-]
 
 export const MOCK_USERS: User[] = [
   {

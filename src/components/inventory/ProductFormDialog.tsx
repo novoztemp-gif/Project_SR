@@ -12,8 +12,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { GODOWNS_SEED, SECTIONS, UNITS } from '@/lib/constants'
-import type { Product, Section } from '@/types'
+import { SECTIONS, UNITS } from '@/lib/constants'
+import { useInventoryStore } from '@/store/inventoryStore'
+import type { Godown, Product, Section } from '@/types'
 
 export interface ProductFormValues {
   name: string
@@ -48,7 +49,7 @@ function sectionLabel(section: Section) {
   return SECTIONS.find((item) => item.key === section)?.label ?? section
 }
 
-function getInitialValues(product: Product | null | undefined, allowedSections: Section[]): FormState {
+function getInitialValues(product: Product | null | undefined, allowedSections: Section[], godowns: Godown[]): FormState {
   return {
     name: product?.name ?? '',
     spec: product?.spec ?? '',
@@ -57,7 +58,7 @@ function getInitialValues(product: Product | null | undefined, allowedSections: 
     costPrice: product?.costPrice ?? 0,
     salePrice: product?.salePrice != null ? String(product.salePrice) : '',
     section: product?.section ?? allowedSections[0] ?? 'glass',
-    godownId: product?.godownId ?? GODOWNS_SEED[0]?.id ?? '',
+    godownId: product?.godownId ?? godowns[0]?.id ?? '',
     lowStockThreshold: product?.lowStockThreshold ?? 5,
   }
 }
@@ -70,7 +71,8 @@ export function ProductFormDialog({
   onOpenChange,
   onSubmit,
 }: ProductFormDialogProps) {
-  const [values, setValues] = React.useState<FormState>(() => getInitialValues(product, allowedSections))
+  const godowns = useInventoryStore((s) => s.godowns)
+  const [values, setValues] = React.useState<FormState>(() => getInitialValues(product, allowedSections, godowns))
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setValues((current) => ({ ...current, [key]: value }))
@@ -197,7 +199,7 @@ export function ProductFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GODOWNS_SEED.map((godown) => (
+                  {godowns.map((godown) => (
                     <SelectItem key={godown.id} value={godown.id}>
                       {godown.name}
                     </SelectItem>

@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { GODOWNS_SEED, SECTIONS, UNITS } from '@/lib/constants'
+import { SECTIONS, UNITS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
 import { findBestProductMatch } from '@/lib/productMatch'
 import type { ParsedPurchase } from '@/lib/purchaseScan'
@@ -62,18 +62,6 @@ const formSchema = z.object({
 type FormInput = z.input<typeof formSchema>
 type FormValues = z.output<typeof formSchema>
 
-const EMPTY_ITEM = {
-  productId: '',
-  productName: '',
-  sizeDimension: '',
-  quantity: 1,
-  unit: 'pcs',
-  unitPrice: 0,
-  salePrice: 0,
-  subtotal: 0,
-  godownId: GODOWNS_SEED[0]?.id ?? '',
-}
-
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -106,8 +94,23 @@ export function NewPurchasePage() {
   const location = useLocation()
   const currentUser = useAuthStore((state) => state.currentUser)!
   const products = useInventoryStore((state) => state.products)
+  const godowns = useInventoryStore((state) => state.godowns)
   const addPurchase = usePurchaseStore((state) => state.addPurchase)
   const allowedSections = getUserSections(currentUser.id)
+
+  function emptyItem() {
+    return {
+      productId: '',
+      productName: '',
+      sizeDimension: '',
+      quantity: 1,
+      unit: 'pcs',
+      unitPrice: 0,
+      salePrice: 0,
+      subtotal: 0,
+      godownId: godowns[0]?.id ?? '',
+    }
+  }
   const [scanOpen, setScanOpen] = React.useState(false)
   const [scannerOpen, setScannerOpen] = React.useState(false)
   const [scannerImageDataUrl, setScannerImageDataUrl] = React.useState<string>()
@@ -122,7 +125,7 @@ export function NewPurchasePage() {
       date: todayInputValue(),
       section: allowedSections[0],
       imageUrl: undefined,
-      items: [EMPTY_ITEM],
+      items: [emptyItem()],
       transportationAmount: 0,
     },
   })
@@ -231,7 +234,7 @@ export function NewPurchasePage() {
         // A scanned invoice has no notion of which of our own godowns to
         // use — reflect the matched product's actual godown, or fall back
         // to the default; the user can still change it per row afterward.
-        godownId: product?.godownId ?? GODOWNS_SEED[0]?.id ?? '',
+        godownId: product?.godownId ?? godowns[0]?.id ?? '',
       }
     })
 
@@ -398,7 +401,7 @@ export function NewPurchasePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Items</CardTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => append(EMPTY_ITEM)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem())}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add item
               </Button>
@@ -560,14 +563,14 @@ export function NewPurchasePage() {
                     <div className="space-y-2">
                       <Label>Godown</Label>
                       <Select
-                        value={item?.godownId || GODOWNS_SEED[0]?.id}
+                        value={item?.godownId || godowns[0]?.id}
                         onValueChange={(value) => form.setValue(`items.${index}.godownId`, value, { shouldValidate: true })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {GODOWNS_SEED.map((godown) => (
+                          {godowns.map((godown) => (
                             <SelectItem key={godown.id} value={godown.id}>
                               {godown.name}
                             </SelectItem>

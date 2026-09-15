@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
 import { z } from 'zod'
 import { Section } from '@prisma/client'
@@ -35,6 +36,67 @@ inventoryRouter.get(
     })
     const ids = rows.map((r) => r.godownId)
     res.json(await prisma.godown.findMany({ where: { id: { in: ids } }, orderBy: { id: 'asc' } }))
+  }),
+)
+
+const godownSchema = z.object({
+  name: z.string().min(1),
+  location: z.string().min(1),
+})
+
+/** POST /api/inventory/godowns — create a godown. Admin only. */
+inventoryRouter.post(
+  '/godowns',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const data = godownSchema.parse(req.body)
+    const godown = await prisma.godown.create({
+      data: { id: randomUUID(), name: data.name, location: data.location },
+    })
+    res.status(201).json(godown)
+  }),
+)
+
+/** PUT /api/inventory/godowns/:id — rename/relocate a godown. Admin only. */
+inventoryRouter.put(
+  '/godowns/:id',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const data = godownSchema.parse(req.body)
+    const existing = await prisma.godown.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Godown not found')
+
+    const godown = await prisma.godown.update({
+      where: { id: req.params.id },
+      data: { name: data.name, location: data.location },
+    })
+    res.json(godown)
+  }),
+)
+
+/**
+ * DELETE /api/inventory/godowns/:id — Admin only. Refuses while any product
+ * still lives there — the caller must transfer stock out first (the FK on
+ * Product.godownId would reject this anyway; checking first gives a clear
+ * message instead of a raw constraint-violation error).
+ */
+inventoryRouter.delete(
+  '/godowns/:id',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const existing = await prisma.godown.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Godown not found')
+
+    const productCount = await prisma.product.count({ where: { godownId: req.params.id } })
+    if (productCount > 0) {
+      throw new ApiError(
+        400,
+        `This godown still has ${productCount} product${productCount === 1 ? '' : 's'} in it. Transfer all products to another godown before removing it.`,
+      )
+    }
+
+    await prisma.godown.delete({ where: { id: req.params.id } })
+    res.json({ ok: true })
   }),
 )
 
