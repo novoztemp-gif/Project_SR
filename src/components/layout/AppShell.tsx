@@ -7,6 +7,15 @@ import { Topbar } from '@/components/layout/Topbar'
 import { hydrateAll } from '@/lib/bootstrap'
 import { NAV_ITEMS } from '@/lib/navigation'
 import { useAuthStore } from '@/store/authStore'
+import { useInventoryStore } from '@/store/inventoryStore'
+
+// Products/godowns are shared across every user — one counter adding a
+// product or restocking must show up for everyone else's already-open
+// session, not just theirs. There's no push/websocket layer, so poll in
+// the background and also refresh the moment a tab regains focus (covers
+// the common "switched away and came back" case immediately instead of
+// waiting for the next poll tick).
+const INVENTORY_POLL_MS = 30_000
 
 /** Derive a human-readable page title from the current pathname */
 function useTitleFromRoute(): string {
@@ -38,6 +47,30 @@ export function AppShell() {
       active = false
     }
   }, [currentUser?.id, currentUser?.role])
+
+  useEffect(() => {
+    if (!ready) return
+
+    function refresh() {
+      useInventoryStore.getState().refreshInventory().catch(() => {
+        // Background refresh — a transient failure just means we keep
+        // showing the last known data until the next successful poll.
+      })
+    }
+
+    const interval = window.setInterval(refresh, INVENTORY_POLL_MS)
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('focus', refresh)
+
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [ready])
 
   if (failed) {
     return (

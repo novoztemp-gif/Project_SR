@@ -25,6 +25,10 @@ interface InventoryState {
   hydrate: () => Promise<void>
   /** Re-fetch products only (after a bill or purchase changes stock). */
   refreshProducts: () => Promise<void>
+  /** Re-fetch products + godowns — used for background polling so one
+   * user's changes (new product, restock, new godown) show up for every
+   * other already-open session, not just the tab that made the change. */
+  refreshInventory: () => Promise<void>
 
   // ── Synchronous getters (read the hydrated cache) ──────────────────────────
   getBySection: (section: Section) => Product[]
@@ -70,6 +74,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
   refreshProducts: async () => {
     const products = await http.get<Product[]>('/inventory/products')
     set({ products })
+  },
+
+  refreshInventory: async () => {
+    const [products, godowns] = await Promise.all([
+      http.get<Product[]>('/inventory/products'),
+      http.get<Godown[]>('/inventory/godowns'),
+    ])
+    set({ products, godowns })
   },
 
   getBySection: (section) => get().products.filter((p) => p.section === section),
