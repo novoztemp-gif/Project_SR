@@ -8,6 +8,7 @@ import { Plus, ScanLine } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Form } from '@/components/ui/form'
@@ -111,6 +112,8 @@ export function NewBillPage() {
   const watchedTransport     = useWatch({ control: form.control, name: 'transportationAmount'  })
   const watchedDiscount      = useWatch({ control: form.control, name: 'discount'   })
   const watchedPaid          = useWatch({ control: form.control, name: 'paidAmount' })
+  const watchedBookingDate   = useWatch({ control: form.control, name: 'bookingDate' })
+  const watchedDeliveryDate  = useWatch({ control: form.control, name: 'deliveryDate' })
 
   const total = (watchedItems ?? []).reduce((sum, item) => {
     const sqFt  = Number(item.sqFt)      || 0
@@ -324,11 +327,11 @@ export function NewBillPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="bookingDate">Booking date</Label>
-                      <Input id="bookingDate" type="date" {...form.register('bookingDate')} />
+                      <DateInput id="bookingDate" registration={form.register('bookingDate')} displayValue={watchedBookingDate} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="deliveryDate">Delivery date</Label>
-                      <Input id="deliveryDate" type="date" {...form.register('deliveryDate')} />
+                      <DateInput id="deliveryDate" registration={form.register('deliveryDate')} displayValue={watchedDeliveryDate} />
                     </div>
                   </div>
 

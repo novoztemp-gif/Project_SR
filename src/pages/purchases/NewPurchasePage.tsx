@@ -19,6 +19,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -97,6 +98,7 @@ export function NewPurchasePage() {
   const products = useInventoryStore((state) => state.products)
   const godowns = useInventoryStore((state) => state.godowns)
   const addPurchase = usePurchaseStore((state) => state.addPurchase)
+  const applyAndPrint = usePurchaseStore((state) => state.applyAndPrint)
   const allowedSections = getUserSections(currentUser.id)
 
   // Pre-fills the "S.No" column as 1, 2, 3… by row position — staff can edit
@@ -140,6 +142,7 @@ export function NewPurchasePage() {
   const watchedItems = useWatch({ control: form.control, name: 'items' })
   const watchedTransportation = useWatch({ control: form.control, name: 'transportationAmount' })
   const imageUrl = useWatch({ control: form.control, name: 'imageUrl' })
+  const watchedDate = useWatch({ control: form.control, name: 'date' })
 
   const accessibleProducts = products.filter((product) => allowedSections.includes(product.section))
   const total = (watchedItems ?? []).reduce(
@@ -255,8 +258,9 @@ export function NewPurchasePage() {
   }
 
   async function onSubmit(values: FormValues) {
+    let id: string
     try {
-      const id = await addPurchase({
+      id = await addPurchase({
         vendorName: values.vendorName,
         date: new Date(values.date).toISOString(),
         section: values.section,
@@ -268,11 +272,23 @@ export function NewPurchasePage() {
         transportationAmount: values.transportationAmount,
         createdBy: currentUser.id,
       })
-
-      toast.success('Purchase saved. Print to apply stock.')
-      navigate(`/purchases/${id}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save purchase')
+      return
+    }
+
+    // Apply stock and open the print dialog immediately — saving used to be
+    // a separate step from applying stock and printing; now one click does
+    // all three. If applying stock fails for some reason, the purchase
+    // itself is already safely saved (pending) — land on its detail page
+    // without auto-printing so "Apply stock" there can be retried.
+    try {
+      await applyAndPrint(id)
+      toast.success('Purchase saved and stock applied.')
+      navigate(`/purchases/${id}`, { state: { print: true } })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Purchase saved, but applying stock failed — retry from the purchase page.')
+      navigate(`/purchases/${id}`)
     }
   }
 
@@ -281,7 +297,7 @@ export function NewPurchasePage() {
       <div>
         <h1 className="text-2xl font-medium">New purchase</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Saving keeps stock pending until the voucher is printed.
+          Saving applies stock immediately and opens the print dialog.
         </p>
       </div>
 
@@ -302,7 +318,7 @@ export function NewPurchasePage() {
 
               <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" {...form.register('date')} />
+                <DateInput id="date" registration={form.register('date')} displayValue={watchedDate} />
               </div>
 
               <div className="space-y-2">
@@ -356,7 +372,7 @@ export function NewPurchasePage() {
                 Save purchase
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Stock remains pending until print.
+                Stock is applied and the print dialog opens right after saving.
               </p>
             </CardContent>
           </Card>

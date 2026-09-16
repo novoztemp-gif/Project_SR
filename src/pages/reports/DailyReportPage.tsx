@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input'
 import { EmptyState } from '@/components/EmptyState'
 import {
   Table,
@@ -88,12 +89,11 @@ export function DailyReportPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
+          <DateInput
             value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value || today)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            aria-label="Report date"
+            onChange={(value) => setSelectedDate(value || today)}
+            className="w-36"
+            ariaLabel="Report date"
           />
           <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" />

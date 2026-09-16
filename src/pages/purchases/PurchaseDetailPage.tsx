@@ -1,4 +1,5 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { CheckCircle2, FileText, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -19,9 +20,25 @@ function formatDate(iso: string) {
 
 export function PurchaseDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
   const currentUser = useAuthStore((state) => state.currentUser)!
   const bill = usePurchaseStore((state) => (id ? state.getPurchase(id) : undefined))
   const applyAndPrint = usePurchaseStore((state) => state.applyAndPrint)
+  const shouldPrint = Boolean((location.state as { print?: boolean } | null)?.print)
+  // Guards against firing window.print() more than once for the same
+  // navigation — same pattern as BillDetailPage.
+  const hasPrintedRef = useRef(false)
+
+  useEffect(() => {
+    hasPrintedRef.current = false
+  }, [id])
+
+  useEffect(() => {
+    if (bill && shouldPrint && !hasPrintedRef.current) {
+      hasPrintedRef.current = true
+      window.setTimeout(() => window.print(), 0)
+    }
+  }, [bill, shouldPrint])
 
   if (bill && !getUserSections(currentUser.id).includes(bill.section)) {
     return <Navigate to="/dashboard" replace state={{ denied: true, attempted: `/purchases/${id}` }} />
