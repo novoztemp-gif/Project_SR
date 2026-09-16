@@ -278,6 +278,29 @@
   .page-shell {
     overflow: visible !important;
     height: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  /* The screen layout wraps a bill/purchase in a centered, capped-width,
+     bordered "card" (for on-screen presentation) — for print that card
+     must become a plain full-width container, or it clips/narrows the
+     table on anything smaller than the card's screen width (confirmed:
+     A5 in particular is narrower than the card's max-w-3xl, so without
+     this the table was being squeezed under its own screen width cap).
+     position:static (overriding the `relative` used on-screen to anchor
+     ReceiptEdge, itself hidden below) so it no longer establishes its own
+     stacking/fragmentation context — needed for .printable-bill's <thead>
+     to reliably repeat across pages (see below). */
+  .print-page-card {
+    position: static !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
   }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,
@@ -287,9 +310,21 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+  /* .printable-bill/.printable-gp used to be position:absolute too (like
+     .report-printable still is) to escape the screen card's layout — that
+     turned out to be exactly why the header <thead> never repeated on
+     page 2+ (confirmed: 100% reproducible across A4/A5, portrait/
+     landscape) and why per-page top spacing was inconsistent. Chromium's
+     table-header-group repeat and page fragmentation are unreliable for
+     absolutely-positioned boxes; a normal-flow block doesn't have that
+     problem, and .print-page-card above already makes the ancestor chain
+     a plain full-width container so normal flow reaches the page edges
+     the same way position:absolute used to. */
   .printable-bill,
-  .report-printable,
   .printable-gp {
+    width: 100%;
+  }
+  .report-printable {
     position: absolute;
     left: 0;
     top: 0;
@@ -312,7 +347,13 @@
     font-size: 11px;
   }
   .printable-gp table {
-    table-layout: fixed;
+    /* auto (not fixed): every column should size to what it actually needs
+       (a mostly-empty Size column stays narrow, Product Name gets the
+       leftover) instead of a fixed guessed split that looked equal-width
+       regardless of content and broke down on A5's narrower page. Numeric
+       cells force their own column wide enough via white-space: nowrap
+       (set per-cell in the component) so amounts never wrap mid-number. */
+    table-layout: auto;
     width: 100%;
   }
   .printable-gp th,
@@ -382,7 +423,7 @@
     font-size: 11px;
   }
   .printable-bill table {
-    table-layout: fixed;
+    table-layout: auto;
     width: 100%;
   }
   .printable-bill th,

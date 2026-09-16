@@ -63,7 +63,7 @@ export function BillDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="report-screen-only flex items-center justify-between mb-6">
         <Link
           to="/billing"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -98,7 +98,7 @@ export function BillDetailPage() {
         </div>
       </div>
 
-      <div className="relative mx-auto max-w-3xl rounded-xl border border-brand-mid bg-white text-gray-900 shadow-lg">
+      <div className="print-page-card relative mx-auto max-w-3xl rounded-xl border border-brand-mid bg-white text-gray-900 shadow-lg">
         <ReceiptEdge direction="top" color="#ffffff" stroke="#5F9598" className="receipt-edge" />
         <div className="bg-white">
           {isGP ? (

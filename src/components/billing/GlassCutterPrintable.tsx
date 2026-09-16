@@ -55,16 +55,16 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </td>
           </tr>
           <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} w-[6%]`}>Check</th>
-            <th className={`${HEADER_CELL} w-[4%]`}>No.</th>
-            <th className={`${HEADER_CELL} w-[24%] text-left`}>Glass Name / Product</th>
-            <th className={`${HEADER_CELL} w-[11%]`}>Size</th>
-            <th className={`${HEADER_CELL} w-[6%]`}>Qty</th>
-            <th className={`${HEADER_CELL} w-[10%]`}>Arch</th>
-            <th className={`${HEADER_CELL} w-[11%]`}>Corner Type</th>
-            <th className={`${HEADER_CELL} w-[18%]`}>Polish Side &amp; Polish Name</th>
-            <th className={`${HEADER_CELL} w-[5%]`}>Hole</th>
-            <th className={`${HEADER_CELL} w-[5%]`}>Art Work</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Check</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
+            <th className={`${HEADER_CELL} text-left w-full`}>Glass Name / Product</th>
+            <th className={HEADER_CELL}>Size</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
+            <th className={HEADER_CELL}>Polish Side &amp; Polish Name</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Art Work</th>
           </tr>
         </thead>
         <tbody>
@@ -77,10 +77,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                 <td className={`${CELL} text-center`}>
                   <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
                 </td>
-                <td className={`${CELL} text-center ${textColor}`}>{item.serialNumber || i + 1}</td>
+                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.serialNumber || i + 1}</td>
                 <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                 <td className={`${CELL} text-center ${textColor}`}>{item.glassSize || '-'}</td>
-                <td className={`${CELL} text-center ${textColor}`}>{item.quantity}</td>
+                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
                 <td className={`${CELL} ${textColor}`}>
                   {item.arch ? (
                     <div className="flex items-center justify-center gap-1">
@@ -91,7 +91,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                     <span className="block text-center">-</span>
                   )}
                 </td>
-                <td className={`${CELL} text-center ${textColor}`}>{item.cornerType || '-'}</td>
+                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.cornerType || '-'}</td>
                 <td className={`${CELL} ${textColor}`}>
                   {item.polishSide ? (
                     <div className="flex items-center gap-1.5">
@@ -105,8 +105,8 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                     <span className="block text-center">-</span>
                   )}
                 </td>
-                <td className={`${CELL} text-center ${textColor}`}>{getHoleLabel(item.hole)}</td>
-                <td className={`${CELL} text-center font-semibold ${artYes ? 'text-red-700' : ''}`}>
+                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{getHoleLabel(item.hole)}</td>
+                <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artYes ? 'text-red-700' : ''}`}>
                   {artYes ? 'YES' : 'No'}
                 </td>
               </tr>

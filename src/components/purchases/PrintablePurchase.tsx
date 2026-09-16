@@ -80,12 +80,12 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
             </td>
           </tr>
           <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
-            <th className="py-2 text-left font-medium text-gray-600 w-[6%]">S.No</th>
-            <th className="py-2 text-left font-medium text-gray-600 w-[30%]">Item</th>
-            <th className="py-2 text-left font-medium text-gray-600 w-[18%]">Godown</th>
-            <th className="py-2 text-right font-medium text-gray-600 w-[14%] whitespace-nowrap">Qty</th>
-            <th className="py-2 text-right font-medium text-gray-600 w-[16%] whitespace-nowrap">Unit price</th>
-            <th className="py-2 text-right font-medium text-gray-600 w-[16%] whitespace-nowrap">Subtotal</th>
+            <th className="py-2 text-left font-medium text-gray-600 whitespace-nowrap">S.No</th>
+            <th className="py-2 text-left font-medium text-gray-600 w-full">Item</th>
+            <th className="py-2 text-left font-medium text-gray-600">Godown</th>
+            <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Qty</th>
+            <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Unit price</th>
+            <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Subtotal</th>
           </tr>
         </thead>
         <tbody>

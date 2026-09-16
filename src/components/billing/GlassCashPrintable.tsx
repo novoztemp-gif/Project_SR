@@ -77,12 +77,12 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
             </td>
           </tr>
           <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} w-[5%]`}>No.</th>
-            <th className={`${HEADER_CELL} w-[43%] text-left`}>Product &amp; Fabrication Details</th>
-            <th className={`${HEADER_CELL} w-[12%]`}>Size</th>
-            <th className={`${HEADER_CELL} w-[7%]`}>Qty</th>
-            <th className={`${HEADER_CELL} w-[10%]`}>Sq.ft</th>
-            <th className={`${HEADER_CELL} w-[23%]`}>Total (₹)</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
+            <th className={`${HEADER_CELL} text-left w-full`}>Product &amp; Fabrication Details</th>
+            <th className={HEADER_CELL}>Size</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Sq.ft</th>
+            <th className={`${HEADER_CELL} whitespace-nowrap`}>Total (₹)</th>
           </tr>
         </thead>
         <tbody>
@@ -91,7 +91,7 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
             const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
             return (
               <tr key={i} className={rowBg}>
-                <td className={`${CELL} text-center`}>{item.serialNumber || i + 1}</td>
+                <td className={`${CELL} text-center whitespace-nowrap`}>{item.serialNumber || i + 1}</td>
                 <td className={CELL}>
                   <p className="font-semibold">{item.productName}</p>
                   <p className="text-[9.5px] text-gray-600">

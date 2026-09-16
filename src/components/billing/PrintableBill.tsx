@@ -86,13 +86,13 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
             </td>
           </tr>
           <tr className="border-b border-gray-300 bg-gray-100 text-gray-700">
-            <th className="text-left py-1.5 font-medium pr-2 w-[5%] text-gray-700">#</th>
-            <th className="text-left py-1.5 font-medium pr-2 w-[28%] text-gray-700">Materials Name</th>
-            <th className="text-left py-1.5 font-medium pr-2 w-[14%] text-gray-700">Size / Dimension</th>
-            <th className="text-right py-1.5 font-medium pr-2 w-[8%] text-gray-700 whitespace-nowrap">Qty</th>
-            <th className="text-left py-1.5 font-medium pr-2 w-[12%] text-gray-700">Model</th>
-            <th className="text-right py-1.5 font-medium pr-2 w-[13%] text-gray-700 whitespace-nowrap">Sq/-</th>
-            <th className="text-right py-1.5 font-medium w-[20%] text-gray-700 whitespace-nowrap">Amount Rs/-</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">#</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 w-full">Materials Name</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700">Size / Dimension</th>
+            <th className="text-right py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Qty</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700">Model</th>
+            <th className="text-right py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Sq/-</th>
+            <th className="text-right py-1.5 font-medium text-gray-700 whitespace-nowrap">Amount Rs/-</th>
           </tr>
         </thead>
         <tbody>

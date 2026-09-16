@@ -47,7 +47,7 @@ export function PurchaseDetailPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="report-screen-only mb-6 flex items-center justify-between gap-4">
         <Button asChild variant="ghost">
           <Link to="/purchases">&larr; Back to purchases</Link>
         </Button>
@@ -71,7 +71,7 @@ export function PurchaseDetailPage() {
         </div>
       </div>
 
-      <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between">
+      <div className="report-screen-only mx-auto mb-4 flex max-w-3xl items-center justify-between">
         <Badge
           variant="secondary"
           className={
@@ -85,7 +85,7 @@ export function PurchaseDetailPage() {
       </div>
 
       {bill.imageUrl && (
-        <div className="mx-auto mb-4 max-w-3xl">
+        <div className="report-screen-only mx-auto mb-4 max-w-3xl">
           {bill.imageUrl.startsWith('data:application/pdf') ? (
             <div className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-border bg-muted text-muted-foreground">
               <FileText className="h-6 w-6" />
@@ -101,7 +101,7 @@ export function PurchaseDetailPage() {
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl rounded-xl border border-brand-mid bg-white text-gray-900 shadow-lg">
+      <div className="print-page-card mx-auto max-w-3xl rounded-xl border border-brand-mid bg-white text-gray-900 shadow-lg">
         <PrintablePurchase bill={bill} />
       </div>
     </div>
