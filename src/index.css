@@ -263,6 +263,22 @@
   .report-screen-only {
     display: none !important;
   }
+  /* The app shell is a fixed-viewport-height layout for on-screen use
+     (h-screen + overflow-hidden on the frame, overflow-y-auto on <main>) —
+     confirmed as the actual cause of "only part of a long bill printed,
+     the rest is gone": those overflow/height rules clip printed content to
+     one screen's worth exactly like they clip on-screen scrolling, instead
+     of letting the browser paginate a tall .printable-bill across pages.
+     Print only ever shows .printable-bill/.printable-gp/.report-printable
+     (everything else is hidden above), so freeing every ancestor's height
+     is safe here even though it'd be wrong on-screen. */
+  .app-shell,
+  .app-shell-col,
+  .app-shell-main,
+  .page-shell {
+    overflow: visible !important;
+    height: auto !important;
+  }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,
   .report-printable, .report-printable *,
@@ -347,6 +363,13 @@
     border: 1px solid #ccc !important;
     border-color: #ccc !important;
   }
+  /* The repeating header lives in a <td> so it's part of the same table
+     (see PrintableBill/PrintablePurchase) — it isn't tabular data, so it
+     shouldn't get the grid-line border every other cell gets. */
+  .printable-bill .print-header-row td,
+  .report-printable .print-header-row td {
+    border: none !important;
+  }
   .printable-bill {
     box-sizing: border-box;
     max-width: 100%;
@@ -365,6 +388,17 @@
   .printable-bill th,
   .printable-bill td {
     overflow-wrap: anywhere;
+  }
+  /* Repeat the header (company/bill/customer block, built as the table's
+     first thead row — see PrintableBill/PrintablePurchase) and the column
+     titles on every page a long item list spills onto; never split one
+     item's row across a page break. */
+  .printable-bill thead {
+    display: table-header-group;
+  }
+  .printable-bill tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .report-print-header { display: block; }
   .report-printable table {

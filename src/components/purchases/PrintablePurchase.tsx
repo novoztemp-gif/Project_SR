@@ -5,6 +5,7 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import type { Godown, PurchaseBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+const COLUMN_COUNT = 6
 
 // Purchase-voucher-only: the physical printout substitutes each digit with a
 // letter (0=A, 1=B, 2=C, ...) so qty/rate/amount aren't plainly readable off
@@ -35,56 +36,62 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
   const grandTotal = bill.total + bill.transportationAmount
 
   return (
-    <div className="printable-bill bg-white p-8 text-sm text-gray-800">
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <p className="text-lg font-bold text-center text-[#1D546D]">{COMPANY.name}</p>
-          <p className="text-xs text-center text-gray-600">{COMPANY.place}</p>
-          <p className="mt-0.5 text-xs text-gray-600">
-            123 Mount Road, Chennai - 600 002
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="font-mono text-xs uppercase tracking-widest text-[#5F9598]">
-            PURCHASE VOUCHER
-          </p>
-          <p className="font-mono text-lg font-bold text-[#061E29]">{bill.voucherNumber}</p>
-          <p className="mt-0.5 text-xs text-gray-600">{formatDate(bill.date)}</p>
-        </div>
-      </div>
-
-      <hr className="mb-6 border-gray-300" />
-
-      <div className="mb-8 flex justify-between">
-        <div>
-          <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
-            Received from
-          </p>
-          <p className="font-bold text-gray-900">{bill.vendorName}</p>
-        </div>
-        <div className="text-right">
-          <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
-            Section
-          </p>
-          <p className="text-gray-900">{sectionLabel}</p>
-        </div>
-      </div>
-
-      <table className="mb-6 w-full text-sm">
+    <div className="printable-bill bg-white p-6 text-sm text-gray-800">
+      {/* The header/vendor block lives in the table's own <thead> (see
+          print-header-row below) so it — and the column titles — repeat on
+          every page a long item list spills onto. */}
+      <table className="w-full text-sm">
         <thead>
+          <tr className="print-header-row">
+            <td colSpan={COLUMN_COUNT} className="pb-3">
+              <div className="mb-3 flex items-start justify-between">
+                <div>
+                  <p className="text-lg font-bold text-center text-[#1D546D]">{COMPANY.name}</p>
+                  <p className="text-xs text-center text-gray-600">{COMPANY.place}</p>
+                  <p className="mt-0.5 text-xs text-gray-600">
+                    123 Mount Road, Chennai - 600 002
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-xs uppercase tracking-widest text-[#5F9598]">
+                    PURCHASE VOUCHER
+                  </p>
+                  <p className="font-mono text-lg font-bold text-[#061E29]">{bill.voucherNumber}</p>
+                  <p className="mt-0.5 text-xs text-gray-600">{formatDate(bill.date)}</p>
+                </div>
+              </div>
+
+              <hr className="mb-3 border-gray-300" />
+
+              <div className="flex justify-between">
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
+                    Received from
+                  </p>
+                  <p className="font-bold text-gray-900">{bill.vendorName}</p>
+                </div>
+                <div className="text-right">
+                  <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
+                    Section
+                  </p>
+                  <p className="text-gray-900">{sectionLabel}</p>
+                </div>
+              </div>
+            </td>
+          </tr>
           <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
-            <th className="py-2 text-left font-medium text-gray-600 w-10">S.No</th>
-            <th className="py-2 text-left font-medium text-gray-600">Item</th>
-            <th className="py-2 text-left font-medium text-gray-600">Godown</th>
-            <th className="py-2 text-right font-medium text-gray-600">Qty</th>
-            <th className="py-2 text-right font-medium text-gray-600">Unit price</th>
-            <th className="py-2 text-right font-medium text-gray-600">Subtotal</th>
+            <th className="py-2 text-left font-medium text-gray-600 w-[6%]">S.No</th>
+            <th className="py-2 text-left font-medium text-gray-600 w-[30%]">Item</th>
+            <th className="py-2 text-left font-medium text-gray-600 w-[18%]">Godown</th>
+            <th className="py-2 text-right font-medium text-gray-600 w-[14%] whitespace-nowrap">Qty</th>
+            <th className="py-2 text-right font-medium text-gray-600 w-[16%] whitespace-nowrap">Unit price</th>
+            <th className="py-2 text-right font-medium text-gray-600 w-[16%] whitespace-nowrap">Subtotal</th>
           </tr>
         </thead>
         <tbody>
           {bill.items.map((item, index) => (
             <tr key={`${item.productId}-${item.productName}-${index}`} className="border-b border-gray-200 text-gray-800 odd:bg-white even:bg-gray-50">
-              <td className="py-2 font-mono tabular-nums text-gray-600">
+              <td className="py-2 font-mono tabular-nums text-gray-600 whitespace-nowrap">
                 <span className="print:hidden">{item.serialNumber || index + 1}</span>
                 <span className="hidden print:inline">{toLetterDigits(String(item.serialNumber || index + 1))}</span>
               </td>
@@ -97,15 +104,15 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
                 )}
               </td>
               <td className="py-2 text-gray-600">{godownLabelFor(item.godownId ?? bill.godownId, godowns)}</td>
-              <td className="py-2 text-right font-mono tabular-nums">
+              <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
                 <span className="print:hidden">{item.quantity} {item.unit}</span>
                 <span className="hidden print:inline">{toLetterDigits(String(item.quantity))} {item.unit}</span>
               </td>
-              <td className="py-2 text-right font-mono tabular-nums">
+              <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
                 <span className="print:hidden">{INR.format(item.unitPrice)}</span>
                 <span className="hidden print:inline">{toLetterDigits(INR.format(item.unitPrice))}</span>
               </td>
-              <td className="py-2 text-right font-mono tabular-nums">
+              <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
                 <span className="print:hidden">{INR.format(item.subtotal)}</span>
                 <span className="hidden print:inline">{toLetterDigits(INR.format(item.subtotal))}</span>
               </td>
@@ -114,7 +121,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         </tbody>
       </table>
 
-      <div className="mb-10 flex justify-end">
+      <div className="mt-4 mb-6 flex justify-end">
         <div className="w-48 space-y-1">
           <div className="flex justify-between text-sm text-gray-900">
             <span className="text-gray-600">Subtotal</span>
@@ -147,7 +154,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         </div>
       </div>
 
-      <div className="flex items-end justify-between border-t border-gray-300 pt-4">
+      <div className="flex items-end justify-between border-t border-gray-300 pt-3">
         <p className="text-xs text-gray-400">Computer generated voucher</p>
         <div className="text-right">
           <div className="mb-1 w-36 border-t border-gray-300" />

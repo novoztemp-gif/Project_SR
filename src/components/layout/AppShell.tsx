@@ -94,15 +94,15 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="app-shell flex h-screen overflow-hidden bg-background text-foreground">
       {/* Fixed desktop sidebar */}
       <Sidebar />
 
       {/* Right column: topbar + scrollable main */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="app-shell-col flex flex-1 flex-col overflow-hidden">
         <Topbar title={title} />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="app-shell-main flex-1 overflow-y-auto">
           <div className="page-shell mx-auto max-w-7xl px-6 py-6"><Outlet /></div>
         </main>
       </div>

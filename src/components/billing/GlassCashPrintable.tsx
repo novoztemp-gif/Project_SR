@@ -14,6 +14,7 @@ const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR',
 
 const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
 const CELL = 'border border-gray-300 px-1.5 py-1.5'
+const COLUMN_COUNT = 6
 
 function fabricationSummary(item: SalesItem) {
   const arch = item.arch ? (ARCH_SHORT_LABELS[item.arch] ?? item.arch) : '-'
@@ -40,35 +41,41 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
 
   return (
     <div className="printable-gp bg-white text-[#1a1a1a]">
-      <div className="text-center border-b-2 border-[#16232e] pb-2 mb-4">
-        <h1 className="text-lg font-extrabold tracking-wide">SR - MELPURAM</h1>
-        <p className="text-[10px] tracking-[0.2em] text-gray-600 uppercase">Glass / Plywood Estimate</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 text-xs mb-4">
-        <div className="border border-gray-800 rounded overflow-hidden">
-          <p className="bg-[#16232e] text-white text-center font-semibold py-1">Customer Details</p>
-          <div className="p-2 space-y-0.5">
-            <p><span className="font-semibold">Name:</span> {bill.customerName || '-'}</p>
-            <p><span className="font-semibold">Phone:</span> {bill.customerPhone || '-'}</p>
-            <p><span className="font-semibold">Address:</span> {bill.customerAddress || '-'}</p>
-          </div>
-        </div>
-        <div className="border border-gray-800 rounded overflow-hidden">
-          <p className="bg-[#16232e] text-white text-center font-semibold py-1">Order Information</p>
-          <div className="p-2 space-y-0.5">
-            <p><span className="font-semibold">Booking Date:</span> {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
-            <p>
-              <span className="font-semibold">Delivery Date:</span> {fmtGPDate(bill.deliveryDate)}
-              {bill.transportTime ? ` (${bill.transportTime})` : ''}
-            </p>
-            <p><span className="font-semibold">Transport:</span> {bill.transport || '-'}</p>
-          </div>
-        </div>
-      </div>
-
+      {/* The title/customer/order header lives in the table's own <thead>
+          (see print-header-row) so it — and the column titles — repeat on
+          every page a long item list spills onto. */}
       <table className="w-full text-[10.5px] border-collapse mb-3">
         <thead>
+          <tr className="print-header-row">
+            <td colSpan={COLUMN_COUNT} className="pb-3">
+              <div className="text-center border-b-2 border-[#16232e] pb-2 mb-4">
+                <h1 className="text-lg font-extrabold tracking-wide">SR - MELPURAM</h1>
+                <p className="text-[10px] tracking-[0.2em] text-gray-600 uppercase">Glass / Plywood Estimate</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="border border-gray-800 rounded overflow-hidden">
+                  <p className="bg-[#16232e] text-white text-center font-semibold py-1">Customer Details</p>
+                  <div className="p-2 space-y-0.5">
+                    <p><span className="font-semibold">Name:</span> {bill.customerName || '-'}</p>
+                    <p><span className="font-semibold">Phone:</span> {bill.customerPhone || '-'}</p>
+                    <p><span className="font-semibold">Address:</span> {bill.customerAddress || '-'}</p>
+                  </div>
+                </div>
+                <div className="border border-gray-800 rounded overflow-hidden">
+                  <p className="bg-[#16232e] text-white text-center font-semibold py-1">Order Information</p>
+                  <div className="p-2 space-y-0.5">
+                    <p><span className="font-semibold">Booking Date:</span> {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
+                    <p>
+                      <span className="font-semibold">Delivery Date:</span> {fmtGPDate(bill.deliveryDate)}
+                      {bill.transportTime ? ` (${bill.transportTime})` : ''}
+                    </p>
+                    <p><span className="font-semibold">Transport:</span> {bill.transport || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
           <tr className="bg-[#16232e] text-white">
             <th className={`${HEADER_CELL} w-[5%]`}>No.</th>
             <th className={`${HEADER_CELL} w-[43%] text-left`}>Product &amp; Fabrication Details</th>
@@ -93,9 +100,9 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
                   </p>
                 </td>
                 <td className={`${CELL} text-center`}>{item.glassSize || '-'}</td>
-                <td className={`${CELL} text-center`}>{item.quantity}</td>
-                <td className={`${CELL} text-center`}>{NUM.format(item.sqFt ?? 0)}</td>
-                <td className={`${CELL} text-right font-semibold`}>{NUM.format(item.subtotal)}</td>
+                <td className={`${CELL} text-center whitespace-nowrap`}>{item.quantity}</td>
+                <td className={`${CELL} text-center whitespace-nowrap`}>{NUM.format(item.sqFt ?? 0)}</td>
+                <td className={`${CELL} text-right font-semibold whitespace-nowrap`}>{NUM.format(item.subtotal)}</td>
               </tr>
             )
           })}
