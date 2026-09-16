@@ -63,7 +63,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
-              <th className={HEADER_CELL}>Polish Side &amp; Polish Name</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Side &amp; Polish Name</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Art Work</th>
             </tr>
