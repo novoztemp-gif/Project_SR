@@ -86,6 +86,8 @@ function formatUnitLabel(unit?: string) {
       return 'Kg'
     case 'sq.ft':
       return 'Sq.Ft'
+    case 'sq.m':
+      return 'Sq.M'
     default:
       return unit ? unit.charAt(0).toUpperCase() + unit.slice(1) : ''
   }

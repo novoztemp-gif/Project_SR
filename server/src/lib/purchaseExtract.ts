@@ -10,7 +10,7 @@ import { callVisionExtraction, round2 } from './visionExtract.js'
 // Kept in sync by hand with UNITS in src/lib/constants.ts — the frontend's
 // Unit dropdown only offers these values, so a scanned unit that isn't one
 // of them can never be used as-is.
-const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg'] as const
+const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg', 'sq.ft', 'sq.m'] as const
 
 export interface ParsedPurchaseItem {
   name: string
