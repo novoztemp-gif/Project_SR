@@ -95,7 +95,7 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
         <tbody>
           {bill.items.map((item, i) => (
             <tr key={i} className="border-b border-gray-200 text-gray-800">
-              <td className="py-1.5 pr-2 tabular-nums text-gray-600">{i + 1}</td>
+              <td className="py-1.5 pr-2 tabular-nums text-gray-600">{item.serialNumber || i + 1}</td>
               <td className="py-1.5 pr-2">{item.productName}</td>
               <td className="py-1.5 pr-2 text-gray-600">{item.glassSize ?? ''}</td>
               <td className="py-1.5 pr-2 text-right tabular-nums">{item.quantity}</td>

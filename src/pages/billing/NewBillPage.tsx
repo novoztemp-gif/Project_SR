@@ -30,6 +30,7 @@ const PHONE_RE = /^[+]?[\d\s-]{7,15}$/
 const NON_GP_SECTIONS: Section[] = SECTIONS.map((s) => s.key).filter((key) => key !== 'glass' && key !== 'plywood')
 
 const itemSchema = z.object({
+  serialNumber: z.string().optional(),
   productId:   z.string().min(1, 'Select a product'),
   productName: z.string(),
   quantity:    z.coerce.number().min(1, 'Min 1'),
@@ -68,10 +69,16 @@ const todayIso   = new Date().toISOString().slice(0, 10)
 const todayLabel = new Date().toLocaleDateString('en-IN', {
   day: '2-digit', month: 'short', year: 'numeric',
 })
-const EMPTY_ITEM = {
-  productId: '', productName: '', quantity: 1, unit: '',
-  glassSize: '', model: '', sqFt: 0, unitPrice: 0,
-  arch: '', polishSide: '', polishName: '', cornerType: '', hole: '', artWork: '',
+// Pre-fills the "S.No" column as 1, 2, 3… by row position — staff can edit
+// it to anything (e.g. "A2") and that value is what's saved and printed;
+// this is only ever the starting suggestion for a newly added row.
+function emptyItem(serial: number) {
+  return {
+    serialNumber: String(serial),
+    productId: '', productName: '', quantity: 1, unit: '',
+    glassSize: '', model: '', sqFt: 0, unitPrice: 0,
+    arch: '', polishSide: '', polishName: '', cornerType: '', hole: '', artWork: '',
+  }
 }
 
 function isSqFtUnit(unit?: string) {
@@ -94,7 +101,7 @@ export function NewBillPage() {
       customerName: '', customerAddress: '', customerPhone: '',
       bookingDate: todayIso, deliveryDate: '',
       transport: '', transportTime: '',
-      items: [EMPTY_ITEM],
+      items: [emptyItem(1)],
       transportationAmount: 0, discount: 0, paidAmount: 0,
     },
   })
@@ -133,6 +140,7 @@ export function NewBillPage() {
         transportTime:   values.transportTime   || undefined,
         section,
         items: values.items.map((item) => ({
+          serialNumber: item.serialNumber || undefined,
           productId:   item.productId,
           productName: item.productName,
           quantity:    item.quantity,
@@ -203,10 +211,14 @@ export function NewBillPage() {
       Number(firstItem?.sqFt ?? 0) === 0 &&
       Number(firstItem?.unitPrice ?? 0) === 0
 
-    const scannedItems = parsed.items.map((item) => {
+    // Continues the row numbering from wherever these items land: right
+    // after row 0 when it's reused in place, or after every existing row
+    // otherwise — so a freshly scanned bill still reads 1, 2, 3…
+    const scannedItems = parsed.items.map((item, i) => {
       const product = findBestProductMatch(item.name, products)
 
       return {
+        serialNumber: String((canReuseFirstItem ? 0 : currentItems.length) + i + 1),
         productId: product?.id ?? '',
         productName: product?.name ?? item.name,
         quantity: item.qty,
@@ -405,7 +417,7 @@ export function NewBillPage() {
           <Card className="mt-6 bg-brand-raised">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Items</CardTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => append(EMPTY_ITEM)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem(fields.length + 1))}>
                 <Plus className="h-4 w-4 mr-1" /> Add item
               </Button>
             </CardHeader>
@@ -424,7 +436,7 @@ export function NewBillPage() {
                 variant="ghost"
                 size="sm"
                 className="mt-3 w-full"
-                onClick={() => append(EMPTY_ITEM)}
+                onClick={() => append(emptyItem(fields.length + 1))}
               >
                 <Plus className="h-4 w-4 mr-1" /> Add item
               </Button>

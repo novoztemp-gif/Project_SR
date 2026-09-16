@@ -27,6 +27,7 @@ const createBillSchema = z.object({
   items: z
     .array(
       z.object({
+        serialNumber: z.string().optional(),
         productId: z.string().min(1),
         productName: z.string().min(1),
         quantity: z.number().nonnegative(),
@@ -117,6 +118,7 @@ billsRouter.post(
 
       // 3. Compute totals + next bill number, then create the bill.
       const items = input.items.map((item) => ({
+        serialNumber: item.serialNumber,
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,

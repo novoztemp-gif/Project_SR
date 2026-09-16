@@ -73,6 +73,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
       <table className="mb-6 w-full text-sm">
         <thead>
           <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
+            <th className="py-2 text-left font-medium text-gray-600 w-10">S.No</th>
             <th className="py-2 text-left font-medium text-gray-600">Item</th>
             <th className="py-2 text-left font-medium text-gray-600">Godown</th>
             <th className="py-2 text-right font-medium text-gray-600">Qty</th>
@@ -83,6 +84,10 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         <tbody>
           {bill.items.map((item, index) => (
             <tr key={`${item.productId}-${item.productName}-${index}`} className="border-b border-gray-200 text-gray-800 odd:bg-white even:bg-gray-50">
+              <td className="py-2 font-mono tabular-nums text-gray-600">
+                <span className="print:hidden">{item.serialNumber || index + 1}</span>
+                <span className="hidden print:inline">{toLetterDigits(String(item.serialNumber || index + 1))}</span>
+              </td>
               <td className="py-2">
                 <span>{item.productName}</span>
                 {!item.productId && (

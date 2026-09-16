@@ -85,6 +85,8 @@ export interface TransferLogEntry {
 // ─── Purchase ────────────────────────────────────────────────────────────────
 
 export interface PurchaseItem {
+  /** Editable row label, prefilled 1/2/3… but freely overridable (e.g. "A2"). */
+  serialNumber?: string
   productId: string
   productName: string
   sizeDimension?: string
@@ -116,6 +118,8 @@ export interface PurchaseBill {
 // ─── Sales / Billing ─────────────────────────────────────────────────────────
 
 export interface SalesItem {
+  /** Editable row label, prefilled 1/2/3… but freely overridable (e.g. "A2"). */
+  serialNumber?: string
   productId: string
   productName: string  // snapshotted at bill time
   quantity: number
@@ -172,6 +176,7 @@ export interface CreateBillInput {
   transportTime?: string
   section: Section
   items: Array<{
+    serialNumber?: string
     productId: string
     productName: string
     quantity: number

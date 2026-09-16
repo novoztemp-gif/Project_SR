@@ -37,6 +37,7 @@ const NEW_PRODUCT_VALUE = '__new__'
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
 const itemSchema = z.object({
+  serialNumber: z.string().optional(),
   productId: z.string(),
   productName: z.string().min(1, 'Item name is required'),
   sizeDimension: z.string().optional(),
@@ -98,8 +99,12 @@ export function NewPurchasePage() {
   const addPurchase = usePurchaseStore((state) => state.addPurchase)
   const allowedSections = getUserSections(currentUser.id)
 
-  function emptyItem() {
+  // Pre-fills the "S.No" column as 1, 2, 3… by row position — staff can edit
+  // it to anything (e.g. "A2") and that value is what's saved and printed;
+  // this is only ever the starting suggestion for a newly added row.
+  function emptyItem(serial: number) {
     return {
+      serialNumber: String(serial),
       productId: '',
       productName: '',
       sizeDimension: '',
@@ -125,7 +130,7 @@ export function NewPurchasePage() {
       date: todayInputValue(),
       section: allowedSections[0],
       imageUrl: undefined,
-      items: [emptyItem()],
+      items: [emptyItem(1)],
       transportationAmount: 0,
     },
   })
@@ -213,10 +218,14 @@ export function NewPurchasePage() {
       Number(firstItem?.quantity ?? 1) === 1 &&
       Number(firstItem?.unitPrice ?? 0) === 0
 
-    const scannedItems = parsed.items.map((item) => {
+    // Continues the row numbering from wherever these items land: from 1
+    // when the whole list is replaced in place, or after every existing
+    // row when appended — so a freshly scanned purchase still reads 1, 2, 3…
+    const scannedItems = parsed.items.map((item, i) => {
       const product = findBestProductMatch(item.name, products)
 
       return {
+        serialNumber: String((canReuseFirstItem ? 0 : currentItems.length) + i + 1),
         productId: product?.id ?? '',
         productName: product?.name ?? item.name,
         sizeDimension: item.sizeDimension || '',
@@ -401,7 +410,7 @@ export function NewPurchasePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Items</CardTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem())}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem(fields.length + 1))}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add item
               </Button>
@@ -412,7 +421,15 @@ export function NewPurchasePage() {
                 const isNewProduct = !item?.productId
 
                 return (
-                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[2fr_0.9fr_0.6fr_0.6fr_0.8fr_0.8fr_0.9fr_auto]">
+                  <div key={field.id} className="grid gap-3 border-b border-border pb-4 last:border-0 sm:grid-cols-[3.5rem_2fr_0.9fr_0.6fr_0.6fr_0.8fr_0.8fr_0.9fr_auto]">
+                    <div className="space-y-2">
+                      <Label>S.No</Label>
+                      <Input
+                        className="text-center"
+                        {...form.register(`items.${index}.serialNumber`)}
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label>Product</Label>
                       <Popover

@@ -110,6 +110,9 @@ model SalesBill {
 model SalesItem {
   id          String    @id @default(uuid())
   billId      String
+  // Editable row label shown before the product name — prefilled 1/2/3… by
+  // the client but freely overridable (e.g. "A2") and printed as entered.
+  serialNumber String?
   productId   String
   productName String
   quantity    Float
@@ -155,6 +158,9 @@ model PurchaseBill {
 model PurchaseItem {
   id            String       @id @default(uuid())
   purchaseId    String
+  // Editable row label shown before the product name — prefilled 1/2/3… by
+  // the client but freely overridable (e.g. "A2") and printed as entered.
+  serialNumber  String?
   productId     String
   productName   String
   sizeDimension String?

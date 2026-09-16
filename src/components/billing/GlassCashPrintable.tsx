@@ -84,7 +84,7 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
             const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
             return (
               <tr key={i} className={rowBg}>
-                <td className={`${CELL} text-center`}>{i + 1}</td>
+                <td className={`${CELL} text-center`}>{item.serialNumber || i + 1}</td>
                 <td className={CELL}>
                   <p className="font-semibold">{item.productName}</p>
                   <p className="text-[9.5px] text-gray-600">

@@ -26,6 +26,7 @@ const createPurchaseSchema = z.object({
   items: z
     .array(
       z.object({
+        serialNumber: z.string().optional(),
         productId: z.string().default(''),
         productName: z.string().min(1),
         sizeDimension: z.string().optional(),
@@ -103,6 +104,7 @@ purchasesRouter.post(
 
     const date = new Date(input.date)
     const items = input.items.map((item) => ({
+      serialNumber: item.serialNumber,
       productId: item.productId ?? '',
       productName: item.productName,
       sizeDimension: item.sizeDimension,

@@ -70,7 +70,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                 <td className={`${CELL} text-center`}>
                   <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
                 </td>
-                <td className={`${CELL} text-center ${textColor}`}>{i + 1}</td>
+                <td className={`${CELL} text-center ${textColor}`}>{item.serialNumber || i + 1}</td>
                 <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                 <td className={`${CELL} text-center ${textColor}`}>{item.glassSize || '-'}</td>
                 <td className={`${CELL} text-center ${textColor}`}>{item.quantity}</td>
