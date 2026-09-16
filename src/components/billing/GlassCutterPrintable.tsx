@@ -82,7 +82,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
-                  <td className={`${CELL} ${textColor}`}>
+                  <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
                       <div className="flex items-center justify-center gap-1">
                         {ARCH_ICONS_SMALL[item.arch]}
