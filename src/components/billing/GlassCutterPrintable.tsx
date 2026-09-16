@@ -10,7 +10,6 @@ import type { SalesBill } from '@/types'
 
 const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
 const CELL = 'border border-gray-300 px-1.5 py-1.5'
-const COLUMN_COUNT = 10
 
 /**
  * Fixed-format print voucher for the glass cutter / fabrication counter —
@@ -23,37 +22,40 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
 
   return (
     <div className="printable-gp bg-white text-[#1a1a1a]">
-      {/* The title/customer/date header lives in the table's own <thead>
-          (see print-header-row) so it — and the column titles — repeat on
-          every page a long item list spills onto. */}
+      {/* print-running-header is fixed-positioned in print only (see
+          index.css) — the browser repeats a position:fixed element at the
+          same spot on every physical page, far more reliable across
+          Chrome print/PDF than a repeating <thead> turned out to be.
+          print-header-spacer reserves the matching space so the table
+          never starts underneath it, on page 1 or any later page. */}
+      <div className="print-running-header print-running-header--gp-cutter">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b-2 border-[#16232e] pb-2 mb-3">
+          <h1 className="text-sm font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
+          <p className="text-xs whitespace-nowrap">
+            <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-between gap-x-8 gap-y-2 text-xs">
+          <div className="space-y-0.5">
+            <p className="truncate"><span className="font-semibold">Customer:</span> {bill.customerName || '-'}</p>
+            <p className="truncate"><span className="font-semibold">Place:</span> {bill.customerAddress || '-'}</p>
+            <p className="flex items-center gap-1">
+              <span className="font-semibold whitespace-nowrap">Operator:</span>
+              <span className="inline-block border-b border-gray-500 w-28">&nbsp;</span>
+            </p>
+          </div>
+          <div className="text-right space-y-0.5 whitespace-nowrap">
+            <p><span className="font-semibold">Order Date</span> : {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
+            <p><span className="font-semibold">Delivery Date</span> : {fmtGPDate(bill.deliveryDate)}</p>
+            <p><span className="font-semibold">Delivery Time</span> : {bill.transportTime || '-'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="print-header-spacer print-header-spacer--gp-cutter" />
+
       <table className="w-full text-[10.5px] border-collapse">
         <thead>
-          <tr className="print-header-row">
-            <td colSpan={COLUMN_COUNT} className="pb-3">
-              <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b-2 border-[#16232e] pb-2 mb-3">
-                <h1 className="text-sm font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
-                <p className="text-xs whitespace-nowrap">
-                  <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
-                </p>
-              </div>
-
-              <div className="flex flex-wrap justify-between gap-x-8 gap-y-2 text-xs">
-                <div className="space-y-0.5">
-                  <p><span className="font-semibold">Customer:</span> {bill.customerName || '-'}</p>
-                  <p><span className="font-semibold">Place:</span> {bill.customerAddress || '-'}</p>
-                  <p className="flex items-center gap-1">
-                    <span className="font-semibold whitespace-nowrap">Operator:</span>
-                    <span className="inline-block border-b border-gray-500 w-28">&nbsp;</span>
-                  </p>
-                </div>
-                <div className="text-right space-y-0.5 whitespace-nowrap">
-                  <p><span className="font-semibold">Order Date</span> : {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
-                  <p><span className="font-semibold">Delivery Date</span> : {fmtGPDate(bill.deliveryDate)}</p>
-                  <p><span className="font-semibold">Delivery Time</span> : {bill.transportTime || '-'}</p>
-                </div>
-              </div>
-            </td>
-          </tr>
           <tr className="bg-[#16232e] text-white">
             <th className={`${HEADER_CELL} whitespace-nowrap`}>Check</th>
             <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>

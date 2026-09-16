@@ -302,6 +302,55 @@
     border-radius: 0 !important;
     background: transparent !important;
   }
+  /* Repeating header, take 2: a real <thead> row turned out to never
+     actually repeat on page 2+ in Chrome print/PDF (confirmed 100%
+     reproducible — company/bill/customer block AND the plain column-title
+     row both failed to reappear, across A4/A5, portrait/landscape, no
+     matter how the rest of the CSS was tuned). position:fixed elements,
+     by contrast, are a print engine feature specifically for "repeat this
+     at the same spot on every page" and are reliably supported in Chrome
+     — used here instead for the company/bill/customer block (each
+     PrintableBill/PrintablePurchase/GlassCutterPrintable/GlassCashPrintable
+     renders it once in the DOM; the print engine repeats it on paper).
+     The column-title row stays inside the real <thead> as a second-line
+     defense — harmless if it doesn't repeat, a bonus if it does.
+     Fixed positioning takes the header out of flow, so the sibling
+     .print-header-spacer reserves matching empty space (same height on
+     every page, by construction) so in-flow content never starts
+     underneath it — first page or later. Heights below are a generous
+     line-by-line estimate of each format's actual header content with
+     overflow:hidden as a safety net: if some future edit makes a header
+     taller than budgeted, it clips instead of ever overlapping the table. */
+  .print-running-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-sizing: border-box;
+    padding: 8mm 8mm 0 8mm;
+    z-index: 10;
+    overflow: hidden;
+  }
+  .print-header-spacer {
+    display: block;
+  }
+  .print-running-header--sales-bill,
+  .print-header-spacer--sales-bill {
+    height: 58mm;
+  }
+  .print-running-header--purchase,
+  .print-header-spacer--purchase {
+    height: 48mm;
+  }
+  .print-running-header--gp-cutter,
+  .print-header-spacer--gp-cutter {
+    height: 38mm;
+  }
+  .print-running-header--gp-cash,
+  .print-header-spacer--gp-cash {
+    height: 54mm;
+  }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,
   .report-printable, .report-printable *,
@@ -360,13 +409,10 @@
   .printable-gp td {
     overflow-wrap: anywhere;
   }
-  /* A5 is roughly half the width of A4 — column widths are percentage-based
-     (not fixed px) in both Glass/Plywood print components specifically so
-     the table always fits the page it's given instead of overflowing off
-     the right edge on the narrower A5. A long item list should only ever
-     spill onto a second page, never get clipped sideways, so: repeat the
-     header row on that second page, and never split a single item's row
-     across the page break. */
+  /* Best-effort repeat of just the column-title row via <thead> (the
+     title/customer/order block repeats via .print-running-header instead
+     — see the long comment near that rule for why); never split one
+     item's row across a page break either way. */
   .printable-gp thead {
     display: table-header-group;
   }
@@ -404,13 +450,6 @@
     border: 1px solid #ccc !important;
     border-color: #ccc !important;
   }
-  /* The repeating header lives in a <td> so it's part of the same table
-     (see PrintableBill/PrintablePurchase) — it isn't tabular data, so it
-     shouldn't get the grid-line border every other cell gets. */
-  .printable-bill .print-header-row td,
-  .report-printable .print-header-row td {
-    border: none !important;
-  }
   .printable-bill {
     box-sizing: border-box;
     max-width: 100%;
@@ -430,10 +469,10 @@
   .printable-bill td {
     overflow-wrap: anywhere;
   }
-  /* Repeat the header (company/bill/customer block, built as the table's
-     first thead row — see PrintableBill/PrintablePurchase) and the column
-     titles on every page a long item list spills onto; never split one
-     item's row across a page break. */
+  /* Best-effort repeat of just the column-title row via <thead> (the
+     company/bill/customer block repeats via .print-running-header above
+     instead — see the long comment near that rule for why); never split
+     one item's row across a page break either way. */
   .printable-bill thead {
     display: table-header-group;
   }

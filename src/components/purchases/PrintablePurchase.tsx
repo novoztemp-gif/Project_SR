@@ -5,7 +5,6 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import type { Godown, PurchaseBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
-const COLUMN_COUNT = 6
 
 // Purchase-voucher-only: the physical printout substitutes each digit with a
 // letter (0=A, 1=B, 2=C, ...) so qty/rate/amount aren't plainly readable off
@@ -37,48 +36,51 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
 
   return (
     <div className="printable-bill bg-white p-6 text-sm text-gray-800">
-      {/* The header/vendor block lives in the table's own <thead> (see
-          print-header-row below) so it — and the column titles — repeat on
-          every page a long item list spills onto. */}
+      {/* print-running-header is fixed-positioned in print only (see
+          index.css) — the browser repeats a position:fixed element at the
+          same spot on every physical page, far more reliable across
+          Chrome print/PDF than a repeating <thead> turned out to be.
+          print-header-spacer reserves the matching space so the table
+          never starts underneath it, on page 1 or any later page. */}
+      <div className="print-running-header print-running-header--purchase">
+        <div className="mb-3 flex items-start justify-between">
+          <div>
+            <p className="text-lg font-bold text-center text-[#1D546D]">{COMPANY.name}</p>
+            <p className="text-xs text-center text-gray-600">{COMPANY.place}</p>
+            <p className="mt-0.5 text-xs text-gray-600">
+              123 Mount Road, Chennai - 600 002
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-xs uppercase tracking-widest text-[#5F9598]">
+              PURCHASE VOUCHER
+            </p>
+            <p className="font-mono text-lg font-bold text-[#061E29]">{bill.voucherNumber}</p>
+            <p className="mt-0.5 text-xs text-gray-600">{formatDate(bill.date)}</p>
+          </div>
+        </div>
+
+        <hr className="mb-3 border-gray-300" />
+
+        <div className="flex justify-between">
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
+              Received from
+            </p>
+            <p className="font-bold text-gray-900 truncate">{bill.vendorName}</p>
+          </div>
+          <div className="text-right">
+            <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
+              Section
+            </p>
+            <p className="text-gray-900">{sectionLabel}</p>
+          </div>
+        </div>
+      </div>
+      <div className="print-header-spacer print-header-spacer--purchase" />
+
       <table className="w-full text-sm">
         <thead>
-          <tr className="print-header-row">
-            <td colSpan={COLUMN_COUNT} className="pb-3">
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <p className="text-lg font-bold text-center text-[#1D546D]">{COMPANY.name}</p>
-                  <p className="text-xs text-center text-gray-600">{COMPANY.place}</p>
-                  <p className="mt-0.5 text-xs text-gray-600">
-                    123 Mount Road, Chennai - 600 002
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono text-xs uppercase tracking-widest text-[#5F9598]">
-                    PURCHASE VOUCHER
-                  </p>
-                  <p className="font-mono text-lg font-bold text-[#061E29]">{bill.voucherNumber}</p>
-                  <p className="mt-0.5 text-xs text-gray-600">{formatDate(bill.date)}</p>
-                </div>
-              </div>
-
-              <hr className="mb-3 border-gray-300" />
-
-              <div className="flex justify-between">
-                <div>
-                  <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
-                    Received from
-                  </p>
-                  <p className="font-bold text-gray-900">{bill.vendorName}</p>
-                </div>
-                <div className="text-right">
-                  <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
-                    Section
-                  </p>
-                  <p className="text-gray-900">{sectionLabel}</p>
-                </div>
-              </div>
-            </td>
-          </tr>
           <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
             <th className="py-2 text-left font-medium text-gray-600 whitespace-nowrap">S.No</th>
             <th className="py-2 text-left font-medium text-gray-600 w-full">Item</th>

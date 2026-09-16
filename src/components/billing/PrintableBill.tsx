@@ -5,7 +5,6 @@ import { getUserName } from '@/lib/userSections'
 import type { SalesBill } from '@/types'
 
 const NUM = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 })
-const COLUMN_COUNT = 7
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -28,69 +27,73 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
 
   return (
     <div className="printable-bill bg-white p-6 font-mono text-sm text-gray-800">
-      {/* The header/title/meta block lives in the table's own <thead>
-          (see print-header-row below) so it — and the column titles —
-          repeat on every page a long item list spills onto, instead of
-          only ever appearing once at the top of page 1. */}
+      {/* print-running-header is fixed-positioned in print only (see
+          index.css) — the browser repeats a position:fixed element at the
+          same spot on every physical page, which is far more reliable
+          across Chrome print/PDF than a repeating <thead> turned out to
+          be. print-header-spacer reserves the matching space so the
+          in-flow content (the table) never starts underneath it, on page
+          1 or any later page. */}
+      <div className="print-running-header print-running-header--sales-bill">
+        <div className="text-center mb-2">
+          <p className="text-lg font-bold font-sans tracking-wide text-brand-dark">{COMPANY.name}</p>
+          <p className="text-xs text-gray-600">{COMPANY.place}</p>
+          <p className="text-xs text-gray-600 mt-0.5">{dateTime}</p>
+        </div>
+
+        <p className="text-center font-semibold underline uppercase tracking-widest text-xs mb-2 text-[#1D546D]">
+          Products Estimate
+        </p>
+
+        <div className="flex justify-between text-xs gap-8">
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex gap-1">
+              <span className="text-[#1D546D] shrink-0">Bill No :</span>
+              <span className="font-medium text-gray-900">{bill.gpVoucherNumber ?? bill.billNumber}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="text-gray-600 shrink-0">Name    :</span>
+              <span className="truncate">{bill.customerName ?? '—'}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="text-gray-600 shrink-0">Address :</span>
+              <span className="truncate">{bill.customerAddress ?? '—'}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="text-gray-600 shrink-0">Section :</span>
+              <span className="text-gray-800">{sectionLabel}</span>
+            </div>
+          </div>
+          <div className="space-y-0.5 text-right shrink-0">
+            <div>
+              <span className="text-gray-600">Booking Date  : </span>
+              {bill.bookingDate ? fmtDate(bill.bookingDate) : '—'}
+            </div>
+            <div>
+              <span className="text-gray-600">Delivery Date : </span>
+              {bill.deliveryDate ? fmtDate(bill.deliveryDate) : '—'}
+            </div>
+            <div>
+              <span className="text-gray-600">Transport     : </span>
+              {bill.transport ?? '—'}
+              {bill.transportTime ? ` / ${bill.transportTime}` : ''}
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-gray-300 mt-2" />
+      </div>
+      <div className="print-header-spacer print-header-spacer--sales-bill" />
+
+      {/* ── Items table ── */}
       <table className="w-full text-xs">
         <thead>
-          <tr className="print-header-row">
-            <td colSpan={COLUMN_COUNT} className="pb-3">
-              <div className="text-center mb-2">
-                <p className="text-lg font-bold font-sans tracking-wide text-brand-dark">{COMPANY.name}</p>
-                <p className="text-xs text-gray-600">{COMPANY.place}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{dateTime}</p>
-              </div>
-
-              <p className="text-center font-semibold underline uppercase tracking-widest text-xs mb-2 text-[#1D546D]">
-                Products Estimate
-              </p>
-
-              <div className="flex justify-between text-xs gap-8">
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex gap-1">
-                    <span className="text-[#1D546D] shrink-0">Bill No :</span>
-                    <span className="font-medium text-gray-900">{bill.gpVoucherNumber ?? bill.billNumber}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <span className="text-gray-600 shrink-0">Name    :</span>
-                    <span>{bill.customerName ?? '—'}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <span className="text-gray-600 shrink-0">Address :</span>
-                    <span>{bill.customerAddress ?? '—'}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <span className="text-gray-600 shrink-0">Section :</span>
-                    <span className="text-gray-800">{sectionLabel}</span>
-                  </div>
-                </div>
-                <div className="space-y-0.5 text-right shrink-0">
-                  <div>
-                    <span className="text-gray-600">Booking Date  : </span>
-                    {bill.bookingDate ? fmtDate(bill.bookingDate) : '—'}
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Delivery Date : </span>
-                    {bill.deliveryDate ? fmtDate(bill.deliveryDate) : '—'}
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Transport     : </span>
-                    {bill.transport ?? '—'}
-                    {bill.transportTime ? ` / ${bill.transportTime}` : ''}
-                  </div>
-                </div>
-              </div>
-
-              <hr className="border-gray-300 mt-2" />
-            </td>
-          </tr>
           <tr className="border-b border-gray-300 bg-gray-100 text-gray-700">
-            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">#</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">S.No</th>
             <th className="text-left py-1.5 font-medium pr-2 text-gray-700 w-full">Materials Name</th>
-            <th className="text-left py-1.5 font-medium pr-2 text-gray-700">Size / Dimension</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Size / Dimension</th>
             <th className="text-right py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Qty</th>
-            <th className="text-left py-1.5 font-medium pr-2 text-gray-700">Model</th>
+            <th className="text-left py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Model</th>
             <th className="text-right py-1.5 font-medium pr-2 text-gray-700 whitespace-nowrap">Sq/-</th>
             <th className="text-right py-1.5 font-medium text-gray-700 whitespace-nowrap">Amount Rs/-</th>
           </tr>
