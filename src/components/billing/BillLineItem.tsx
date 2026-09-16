@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { Plus, Ruler, Trash2 } from 'lucide-react'
 
@@ -8,6 +8,7 @@ import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
 import { ARCH_ICONS, POLISH_SIDE_ICONS } from '@/components/billing/fabricationIcons'
 import { resolveManualUnitPrice } from '@/lib/productMatch'
+import { computeSqFtFromSize } from '@/lib/sqft'
 import {
   Command,
   CommandEmpty,
@@ -203,12 +204,21 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   const scannedProductName = useWatch({ control, name: `items.${index}.productName` })
   const quantity  = Number(useWatch({ control, name: `items.${index}.quantity`  })) || 0
   const unitPrice = Number(useWatch({ control, name: `items.${index}.unitPrice` })) || 0
-  const sqFt      = Number(useWatch({ control, name: `items.${index}.sqFt`      })) || 0
   const glassSize = String(useWatch({ control, name: `items.${index}.glassSize` }) ?? '')
 
   const selectedProduct = products.find((p) => p.id === selectedProductId)
   const usesSqFt = isSqFtUnit(selectedProduct?.unit)
-  const subtotal = usesSqFt ? sqFt * unitPrice : quantity * unitPrice
+  // Sq.Ft is always derived from Size / Dimension (e.g. "6x6" -> 36), never
+  // typed directly — null while the size doesn't parse, so it shows blank
+  // instead of a misleading 0.
+  const computedSqFt = usesSqFt ? computeSqFtFromSize(glassSize) : null
+  const subtotal = usesSqFt ? (computedSqFt ?? 0) * unitPrice : quantity * unitPrice
+
+  useEffect(() => {
+    if (!usesSqFt) return
+    setValue(`items.${index}.sqFt`, computedSqFt ?? 0, { shouldValidate: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usesSqFt, computedSqFt, index])
   const qtyLabel = selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
   const showFabricationOptions = selectedProduct?.section === 'glass' || selectedProduct?.section === 'plywood'
@@ -378,14 +388,12 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
           {usesSqFt && (
             <div className="flex items-center gap-1.5 pt-1">
               <span className="text-xs text-muted-foreground whitespace-nowrap">Sq.Ft</span>
-              <Input
-                type="number"
-                className="text-right font-mono tabular-nums"
-                step="0.01"
-                min={0}
-                placeholder="0"
-                {...register(`items.${index}.sqFt`)}
-              />
+              <div
+                aria-label="Sq.Ft"
+                className="flex h-9 flex-1 items-center justify-end rounded-md border border-input bg-muted/40 px-2 font-mono tabular-nums text-sm"
+              >
+                {computedSqFt ?? ''}
+              </div>
             </div>
           )}
         </div>
