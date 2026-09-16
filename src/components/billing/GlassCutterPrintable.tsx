@@ -52,91 +52,96 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </div>
         </div>
       </div>
-      <div className="print-header-spacer print-header-spacer--gp-cutter" />
-
-      <table className="w-full text-[10.5px] border-collapse">
-        <thead>
-          <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Check</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
-            <th className={`${HEADER_CELL} text-left w-full`}>Glass Name / Product</th>
-            <th className={HEADER_CELL}>Size</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
-            <th className={HEADER_CELL}>Polish Side &amp; Polish Name</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Art Work</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bill.items.map((item, i) => {
-            const artYes = isArtWorkYes(item.artWork)
-            const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
-            const textColor = artYes ? 'text-red-700' : ''
-            return (
-              <tr key={i} className={rowBg}>
-                <td className={`${CELL} text-center`}>
-                  <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
-                </td>
-                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.serialNumber || i + 1}</td>
-                <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
-                <td className={`${CELL} text-center ${textColor}`}>{item.glassSize || '-'}</td>
-                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
-                <td className={`${CELL} ${textColor}`}>
-                  {item.arch ? (
-                    <div className="flex items-center justify-center gap-1">
-                      {ARCH_ICONS_SMALL[item.arch]}
-                      <span>{ARCH_SHORT_LABELS[item.arch] ?? item.arch}</span>
-                    </div>
-                  ) : (
-                    <span className="block text-center">-</span>
-                  )}
-                </td>
-                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.cornerType || '-'}</td>
-                <td className={`${CELL} ${textColor}`}>
-                  {item.polishSide ? (
-                    <div className="flex items-center gap-1.5">
-                      {POLISH_SIDE_ICONS_SMALL[item.polishSide]}
-                      <div className="leading-tight">
-                        <p className="font-semibold">{POLISH_SIDE_CUTTER_LABELS[item.polishSide] ?? item.polishSide}</p>
-                        {item.polishName && <p className="text-[9.5px] text-gray-600">{item.polishName}</p>}
+      <div className="print-content-block print-content-block--gp-cutter">
+        <table className="w-full text-[10.5px] border-collapse">
+          <thead>
+            <tr className="bg-[#16232e] text-white">
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Check</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
+              <th className={`${HEADER_CELL} text-left w-full`}>Glass Name / Product</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
+              <th className={HEADER_CELL}>Polish Side &amp; Polish Name</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Art Work</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bill.items.map((item, i) => {
+              const artYes = isArtWorkYes(item.artWork)
+              const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
+              const textColor = artYes ? 'text-red-700' : ''
+              return (
+                <tr key={i} className={rowBg}>
+                  <td className={`${CELL} text-center`}>
+                    <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
+                  </td>
+                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.serialNumber || i + 1}</td>
+                  <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
+                  <td className={`${CELL} ${textColor}`}>
+                    {item.arch ? (
+                      <div className="flex items-center justify-center gap-1">
+                        {ARCH_ICONS_SMALL[item.arch]}
+                        <span>{ARCH_SHORT_LABELS[item.arch] ?? item.arch}</span>
                       </div>
-                    </div>
-                  ) : (
-                    <span className="block text-center">-</span>
-                  )}
-                </td>
-                <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{getHoleLabel(item.hole)}</td>
-                <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artYes ? 'text-red-700' : ''}`}>
-                  {artYes ? 'YES' : 'No'}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                    ) : (
+                      <span className="block text-center">-</span>
+                    )}
+                  </td>
+                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.cornerType || '-'}</td>
+                  <td className={`${CELL} ${textColor}`}>
+                    {item.polishSide ? (
+                      <div className="flex items-center gap-1.5">
+                        {POLISH_SIDE_ICONS_SMALL[item.polishSide]}
+                        <div className="leading-tight">
+                          <p className="font-semibold">{POLISH_SIDE_CUTTER_LABELS[item.polishSide] ?? item.polishSide}</p>
+                          {item.polishName && <p className="text-[9.5px] text-gray-600">{item.polishName}</p>}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="block text-center">-</span>
+                    )}
+                  </td>
+                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{getHoleLabel(item.hole)}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artYes ? 'text-red-700' : ''}`}>
+                    {artYes ? 'YES' : 'No'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
 
-      <div className="mt-4 border border-gray-400 rounded p-3 text-xs">
-        <p className="font-semibold mb-2">Glass Process:</p>
-        <div className="flex flex-wrap gap-6">
-          {['Glass Cut', 'Edge Polished', 'Corner Rounded', 'Hole Drilled'].map((label) => (
-            <span key={label} className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 border border-gray-500" /> {label}
-            </span>
-          ))}
-        </div>
-        <div className="mt-3 pt-2 border-t border-gray-300 flex flex-wrap justify-between gap-x-4 gap-y-1">
-          <p>
-            <span className="font-semibold">Batch Summary:</span> {bill.items.length} Items (Total Qty: {totalQty} Sheets)
-          </p>
-          <p className="text-gray-500">SR Fabrication Dept.</p>
-        </div>
-      </div>
+        {/* Glass Process box + signature lines move to the next page
+            together as one block if they don't fit under the last item row
+            (see print-keep-together in index.css). */}
+        <div className="print-keep-together">
+          <div className="mt-4 border border-gray-400 rounded p-3 text-xs">
+            <p className="font-semibold mb-2">Glass Process:</p>
+            <div className="flex flex-wrap gap-6">
+              {['Glass Cut', 'Edge Polished', 'Corner Rounded', 'Hole Drilled'].map((label) => (
+                <span key={label} className="flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 border border-gray-500" /> {label}
+                </span>
+              ))}
+            </div>
+            <div className="mt-3 pt-2 border-t border-gray-300 flex flex-wrap justify-between gap-x-4 gap-y-1">
+              <p>
+                <span className="font-semibold">Batch Summary:</span> {bill.items.length} Items (Total Qty: {totalQty} Sheets)
+              </p>
+              <p className="text-gray-500">SR Fabrication Dept.</p>
+            </div>
+          </div>
 
-      <div className="mt-10 flex flex-wrap justify-between gap-x-4 gap-y-3 text-xs">
-        <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
-        <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
+          <div className="mt-10 flex flex-wrap justify-between gap-x-4 gap-y-3 text-xs">
+            <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
+            <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
+          </div>
+        </div>
       </div>
     </div>
   )

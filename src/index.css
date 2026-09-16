@@ -313,14 +313,7 @@
      PrintableBill/PrintablePurchase/GlassCutterPrintable/GlassCashPrintable
      renders it once in the DOM; the print engine repeats it on paper).
      The column-title row stays inside the real <thead> as a second-line
-     defense — harmless if it doesn't repeat, a bonus if it does.
-     Fixed positioning takes the header out of flow, so the sibling
-     .print-header-spacer reserves matching empty space (same height on
-     every page, by construction) so in-flow content never starts
-     underneath it — first page or later. Heights below are a generous
-     line-by-line estimate of each format's actual header content with
-     overflow:hidden as a safety net: if some future edit makes a header
-     taller than budgeted, it clips instead of ever overlapping the table. */
+     defense — harmless if it doesn't repeat, a bonus if it does. */
   .print-running-header {
     position: fixed;
     top: 0;
@@ -332,24 +325,56 @@
     z-index: 10;
     overflow: hidden;
   }
-  .print-header-spacer {
-    display: block;
+  /* Fixed positioning takes the header out of flow, so print-content-block
+     (everything after it — table, totals, footer) reserves matching space
+     via its own top padding instead of a one-off spacer div. Crucially
+     that padding is *cloned* (box-decoration-break) onto every page this
+     block fragments across, not just applied once at the very top — a
+     plain spacer only reserved room on page 1, so anything that overflowed
+     onto page 2 rendered right underneath the fixed header and was
+     effectively invisible (confirmed: Balance Amount disappearing off the
+     bottom of page 1 was actually landing hidden under page 2's header).
+     Heights below are a generous line-by-line estimate of each format's
+     header content, matched between the header's own height (so it can't
+     grow past its reserved space) and this padding (so content can't
+     start before that space ends) — overflow:hidden on the header is the
+     safety net if a future edit ever makes it taller than budgeted. */
+  .print-content-block {
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
-  .print-running-header--sales-bill,
-  .print-header-spacer--sales-bill {
+  .print-running-header--sales-bill {
     height: 58mm;
   }
-  .print-running-header--purchase,
-  .print-header-spacer--purchase {
+  .print-content-block--sales-bill {
+    padding-top: 58mm;
+  }
+  .print-running-header--purchase {
     height: 48mm;
   }
-  .print-running-header--gp-cutter,
-  .print-header-spacer--gp-cutter {
+  .print-content-block--purchase {
+    padding-top: 48mm;
+  }
+  .print-running-header--gp-cutter {
     height: 38mm;
   }
-  .print-running-header--gp-cash,
-  .print-header-spacer--gp-cash {
+  .print-content-block--gp-cutter {
+    padding-top: 38mm;
+  }
+  .print-running-header--gp-cash {
     height: 54mm;
+  }
+  .print-content-block--gp-cash {
+    padding-top: 54mm;
+  }
+  /* Keep a bill's totals/footer (or a purchase's totals/footer, or the
+     Glass formats' closing boxes) together as one unit if they don't fit
+     under the last item row — the whole block moves to the next page
+     rather than splitting mid-block (confirmed: Balance Amount alone was
+     being stranded away from the rest of the totals). */
+  .print-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   body * { visibility: hidden; }
   .printable-bill, .printable-bill *,

@@ -74,58 +74,63 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
           </div>
         </div>
       </div>
-      <div className="print-header-spacer print-header-spacer--gp-cash" />
+      <div className="print-content-block print-content-block--gp-cash">
+        <table className="w-full text-[10.5px] border-collapse mb-3">
+          <thead>
+            <tr className="bg-[#16232e] text-white">
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
+              <th className={`${HEADER_CELL} text-left w-full`}>Product &amp; Fabrication Details</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Sq.ft</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bill.items.map((item, i) => {
+              const { arch, polish, corner, hole, artYes, artLabel } = fabricationSummary(item)
+              const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
+              return (
+                <tr key={i} className={rowBg}>
+                  <td className={`${CELL} text-center whitespace-nowrap`}>{item.serialNumber || i + 1}</td>
+                  <td className={CELL}>
+                    <p className="font-semibold">{item.productName}</p>
+                    <p className="text-[9.5px] text-gray-600">
+                      Arch: {arch} | Polish: {polish} | Corner: {corner} | Hole: {hole} | Art:{' '}
+                      <span className={artYes ? 'text-red-700 font-semibold' : ''}>{artLabel}</span>
+                    </p>
+                  </td>
+                  <td className={`${CELL} text-center whitespace-nowrap`}>{item.glassSize || '-'}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap`}>{item.quantity}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap`}>{NUM.format(item.sqFt ?? 0)}</td>
+                  <td className={`${CELL} text-right font-semibold whitespace-nowrap`}>{NUM.format(item.subtotal)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
 
-      <table className="w-full text-[10.5px] border-collapse mb-3">
-        <thead>
-          <tr className="bg-[#16232e] text-white">
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
-            <th className={`${HEADER_CELL} text-left w-full`}>Product &amp; Fabrication Details</th>
-            <th className={HEADER_CELL}>Size</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Sq.ft</th>
-            <th className={`${HEADER_CELL} whitespace-nowrap`}>Total (₹)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bill.items.map((item, i) => {
-            const { arch, polish, corner, hole, artYes, artLabel } = fabricationSummary(item)
-            const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
-            return (
-              <tr key={i} className={rowBg}>
-                <td className={`${CELL} text-center whitespace-nowrap`}>{item.serialNumber || i + 1}</td>
-                <td className={CELL}>
-                  <p className="font-semibold">{item.productName}</p>
-                  <p className="text-[9.5px] text-gray-600">
-                    Arch: {arch} | Polish: {polish} | Corner: {corner} | Hole: {hole} | Art:{' '}
-                    <span className={artYes ? 'text-red-700 font-semibold' : ''}>{artLabel}</span>
-                  </p>
-                </td>
-                <td className={`${CELL} text-center`}>{item.glassSize || '-'}</td>
-                <td className={`${CELL} text-center whitespace-nowrap`}>{item.quantity}</td>
-                <td className={`${CELL} text-center whitespace-nowrap`}>{NUM.format(item.sqFt ?? 0)}</td>
-                <td className={`${CELL} text-right font-semibold whitespace-nowrap`}>{NUM.format(item.subtotal)}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+        {/* The VA/H/M/L legend + signature/totals boxes move to the next
+            page together as one block if they don't fit under the last
+            item row (see print-keep-together in index.css). */}
+        <div className="print-keep-together">
+          <p className="mb-6 text-xs font-semibold tracking-[0.6em]">VA&nbsp;&nbsp;&nbsp;&nbsp;H&nbsp;&nbsp;&nbsp;&nbsp;M&nbsp;&nbsp;&nbsp;&nbsp;L</p>
 
-      <p className="mb-6 text-xs font-semibold tracking-[0.6em]">VA&nbsp;&nbsp;&nbsp;&nbsp;H&nbsp;&nbsp;&nbsp;&nbsp;M&nbsp;&nbsp;&nbsp;&nbsp;L</p>
-
-      <div className="grid grid-cols-2 gap-6 items-stretch">
-        <div className="border border-gray-800 rounded p-3 flex flex-col justify-between text-xs">
-          <p className="font-semibold">Authorized Signature</p>
-          <p className="border-t border-gray-500 pt-1 text-center text-[10px] text-gray-600">Physical Signature &amp; Stamp</p>
-        </div>
-        <div className="border border-gray-800 rounded overflow-hidden text-xs self-start">
-          <div className="p-2 space-y-1">
-            <div className="flex justify-between"><span>Subtotal</span><span>{INR.format(bill.total)}</span></div>
-            <div className="flex justify-between"><span>Transportation</span><span>{INR.format(bill.transportationAmount)}</span></div>
-            <div className="flex justify-between"><span>Paid Amount</span><span>{INR.format(bill.paidAmount)}</span></div>
-          </div>
-          <div className="flex justify-between bg-gray-100 px-2 py-1.5 font-bold border-t border-gray-800">
-            <span>Balance Due</span><span>{INR.format(balanceDue)}</span>
+          <div className="grid grid-cols-2 gap-6 items-stretch">
+            <div className="border border-gray-800 rounded p-3 flex flex-col justify-between text-xs">
+              <p className="font-semibold">Authorized Signature</p>
+              <p className="border-t border-gray-500 pt-1 text-center text-[10px] text-gray-600">Physical Signature &amp; Stamp</p>
+            </div>
+            <div className="border border-gray-800 rounded overflow-hidden text-xs self-start">
+              <div className="p-2 space-y-1">
+                <div className="flex justify-between"><span>Subtotal</span><span>{INR.format(bill.total)}</span></div>
+                <div className="flex justify-between"><span>Transportation</span><span>{INR.format(bill.transportationAmount)}</span></div>
+                <div className="flex justify-between"><span>Paid Amount</span><span>{INR.format(bill.paidAmount)}</span></div>
+              </div>
+              <div className="flex justify-between bg-gray-100 px-2 py-1.5 font-bold border-t border-gray-800">
+                <span>Balance Due</span><span>{INR.format(balanceDue)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
