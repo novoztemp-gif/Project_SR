@@ -7,6 +7,7 @@ import {
   POLISH_SIDE_CASH_LABELS,
   stripCornerSuffix,
 } from '@/lib/glassPrintFormat'
+import { getUserName } from '@/lib/userSections'
 import type { SalesBill, SalesItem } from '@/types'
 
 const NUM = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -37,6 +38,7 @@ function fabricationSummary(item: SalesItem) {
  */
 export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
   const balanceDue = Math.max(0, bill.total + bill.transportationAmount - bill.discount - bill.paidAmount)
+  const staffName = getUserName(bill.createdBy)
 
   return (
     <div className="printable-gp bg-white text-[#1a1a1a]">
@@ -114,7 +116,13 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
             page together as one block if they don't fit under the last
             item row (see print-keep-together in index.css). */}
         <div className="print-keep-together">
-          <p className="mb-6 text-xs font-semibold tracking-[0.6em]">VA&nbsp;&nbsp;&nbsp;&nbsp;H&nbsp;&nbsp;&nbsp;&nbsp;M&nbsp;&nbsp;&nbsp;&nbsp;L</p>
+          {/* "VA" was a placeholder — this is the staff who billed it,
+              followed by the fixed H / M / L legend (unrelated, always the
+              same three letters, kept widely tracked for its own spacing). */}
+          <p className="mb-6 text-xs font-semibold">
+            <span>{staffName}</span>
+            <span className="ml-6 tracking-[0.6em]">H&nbsp;&nbsp;&nbsp;&nbsp;M&nbsp;&nbsp;&nbsp;&nbsp;L</span>
+          </p>
 
           <div className="grid grid-cols-2 gap-6 items-stretch">
             <div className="border border-gray-800 rounded p-3 flex flex-col justify-between text-xs">
