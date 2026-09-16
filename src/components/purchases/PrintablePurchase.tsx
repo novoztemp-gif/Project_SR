@@ -78,25 +78,27 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         </div>
       </div>
       <div className="print-content-block print-content-block--purchase">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-300 bg-gray-100 text-xs uppercase tracking-widest text-gray-600">
-              <th className="py-2 text-left font-medium text-gray-600 whitespace-nowrap">S.No</th>
-              <th className="py-2 text-left font-medium text-gray-600 w-full">Item</th>
-              <th className="py-2 text-left font-medium text-gray-600 whitespace-nowrap">Godown</th>
-              <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Qty</th>
-              <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Unit price</th>
-              <th className="py-2 text-right font-medium text-gray-600 whitespace-nowrap">Subtotal</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">S.No</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-600 w-full">Item</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Godown</th>
+              <th className="px-2 py-2 text-right font-medium text-gray-600 whitespace-nowrap">Qty</th>
+              <th className="px-2 py-2 text-right font-medium text-gray-600 whitespace-nowrap">Unit price</th>
+              <th className="px-2 py-2 text-right font-medium text-gray-600 whitespace-nowrap">Subtotal</th>
             </tr>
           </thead>
           <tbody>
             {bill.items.map((item, index) => (
               <tr key={`${item.productId}-${item.productName}-${index}`} className="border-b border-gray-200 text-gray-800 odd:bg-white even:bg-gray-50">
-                <td className="py-2 font-mono tabular-nums text-gray-600 whitespace-nowrap">
-                  <span className="print:hidden">{item.serialNumber || index + 1}</span>
-                  <span className="hidden print:inline">{toLetterDigits(String(item.serialNumber || index + 1))}</span>
+                {/* S.No and Qty print as plain numbers — only prices/amounts
+                    get the digit-letter cipher, a row count or a quantity
+                    isn't sensitive the way a rate or a total is. */}
+                <td className="px-2 py-2 font-mono tabular-nums text-gray-600 whitespace-nowrap">
+                  {item.serialNumber || index + 1}
                 </td>
-                <td className="py-2">
+                <td className="px-2 py-2">
                   <span>{item.productName}</span>
                   {!item.productId && (
                     <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">
@@ -104,16 +106,15 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
                     </Badge>
                   )}
                 </td>
-                <td className="py-2 text-gray-600 whitespace-nowrap">{godownLabelFor(item.godownId ?? bill.godownId, godowns)}</td>
-                <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
-                  <span className="print:hidden">{item.quantity} {item.unit}</span>
-                  <span className="hidden print:inline">{toLetterDigits(String(item.quantity))} {item.unit}</span>
+                <td className="px-2 py-2 text-gray-600 whitespace-nowrap">{godownLabelFor(item.godownId ?? bill.godownId, godowns)}</td>
+                <td className="px-2 py-2 text-right font-mono tabular-nums whitespace-nowrap">
+                  {item.quantity} {item.unit}
                 </td>
-                <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
+                <td className="px-2 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                   <span className="print:hidden">{INR.format(item.unitPrice)}</span>
                   <span className="hidden print:inline">{toLetterDigits(INR.format(item.unitPrice))}</span>
                 </td>
-                <td className="py-2 text-right font-mono tabular-nums whitespace-nowrap">
+                <td className="px-2 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                   <span className="print:hidden">{INR.format(item.subtotal)}</span>
                   <span className="hidden print:inline">{toLetterDigits(INR.format(item.subtotal))}</span>
                 </td>
