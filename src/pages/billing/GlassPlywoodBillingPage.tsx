@@ -420,7 +420,7 @@ export function GlassPlywoodBillingPage() {
           <Card className="mt-6 bg-brand-raised">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Items</CardTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem(fields.length + 1))}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => append(emptyItem(fields.length + 1), { shouldFocus: false })}>
                 <Plus className="h-4 w-4 mr-1" /> Add item
               </Button>
             </CardHeader>
@@ -439,7 +439,7 @@ export function GlassPlywoodBillingPage() {
                 variant="ghost"
                 size="sm"
                 className="mt-3 w-full"
-                onClick={() => append(emptyItem(fields.length + 1))}
+                onClick={() => append(emptyItem(fields.length + 1), { shouldFocus: false })}
               >
                 <Plus className="h-4 w-4 mr-1" /> Add item
               </Button>
