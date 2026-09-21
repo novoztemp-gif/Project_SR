@@ -57,7 +57,7 @@ function getInitialValues(product: Product | null | undefined, allowedSections: 
     unit: product?.unit ?? 'pcs',
     costPrice: product?.costPrice ?? 0,
     salePrice: product?.salePrice != null ? String(product.salePrice) : '',
-    section: product?.section ?? allowedSections[0] ?? 'glass',
+    section: product?.section ?? allowedSections[0] ?? 'glass_plywood',
     godownId: product?.godownId ?? godowns[0]?.id ?? '',
     lowStockThreshold: product?.lowStockThreshold ?? 5,
   }

@@ -9,12 +9,11 @@ export interface SectionMeta {
 }
 
 export const SECTIONS: SectionMeta[] = [
-  { key: 'glass',      label: 'Glass',      colorVar: '--section-glass' },
-  { key: 'plywood',    label: 'Plywood',    colorVar: '--section-plywood' },
-  { key: 'plumbing',   label: 'Plumbing',   colorVar: '--section-plumbing' },
-  { key: 'painting',   label: 'Painting',   colorVar: '--section-painting' },
-  { key: 'electrical', label: 'Electrical', colorVar: '--section-electrical' },
-  { key: 'hardware',   label: 'Hardware',   colorVar: '--section-hardware' },
+  { key: 'glass_plywood', label: 'Glass & Plywood', colorVar: '--section-glass-plywood' },
+  { key: 'plumbing',      label: 'Plumbing',        colorVar: '--section-plumbing' },
+  { key: 'painting',      label: 'Painting',        colorVar: '--section-painting' },
+  { key: 'electrical',    label: 'Electrical',      colorVar: '--section-electrical' },
+  { key: 'hardware',      label: 'Hardware',        colorVar: '--section-hardware' },
 ]
 
 // The fixed set of unit values usable across products/purchases/bills — also
@@ -24,8 +23,7 @@ export const SECTIONS: SectionMeta[] = [
 export const UNITS = ['pcs', 'box', 'sheet', 'length', 'tin', 'bag', 'roll', 'set', 'pair', 'kg', 'sq.ft', 'sq.m']
 
 export const SECTION_COLORS: Record<string, string> = {
-  Glass: '#4FC3F7',
-  Plywood: '#FFB74D',
+  'Glass & Plywood': '#4FC3F7',
   Plumbing: '#81C784',
   Painting: '#F06292',
   Electrical: '#FFD54F',

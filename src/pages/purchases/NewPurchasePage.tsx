@@ -70,8 +70,7 @@ function todayInputValue() {
 
 function getSizePlaceholder(section?: Section) {
   switch (section) {
-    case 'glass':
-    case 'plywood':
+    case 'glass_plywood':
       return 'e.g. 6x4 ft'
     case 'painting':
       return 'e.g. 4 ltr / 500 ml'

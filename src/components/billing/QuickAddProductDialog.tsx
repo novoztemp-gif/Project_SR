@@ -62,7 +62,7 @@ export function QuickAddProductDialog({
   const allowedSections = getUserSections(currentUser.id)
 
   const [name, setName] = React.useState(initialName)
-  const [section, setSection] = React.useState<Section>(allowedSections[0] ?? 'glass')
+  const [section, setSection] = React.useState<Section>(allowedSections[0] ?? 'glass_plywood')
   const [godownId, setGodownId] = React.useState(godowns[0]?.id ?? '')
   const [unit, setUnit] = React.useState('pcs')
   const [salePrice, setSalePrice] = React.useState(String(initialRate || 0))
@@ -74,7 +74,7 @@ export function QuickAddProductDialog({
   React.useEffect(() => {
     if (!open) return
     setName(initialName)
-    setSection(allowedSections[0] ?? 'glass')
+    setSection(allowedSections[0] ?? 'glass_plywood')
     setGodownId(godowns[0]?.id ?? '')
     setUnit('pcs')
     setSalePrice(String(initialRate || 0))

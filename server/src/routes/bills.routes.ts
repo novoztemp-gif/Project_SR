@@ -81,8 +81,8 @@ billsRouter.post(
     const input = createBillSchema.parse(req.body)
     assertSectionAccess(req.user!, input.section)
 
-    if (input.billType === 'glass_plywood' && input.section !== 'glass' && input.section !== 'plywood') {
-      throw new ApiError(400, 'A Glass & Plywood bill must be in the Glass or Plywood section')
+    if (input.billType === 'glass_plywood' && input.section !== 'glass_plywood') {
+      throw new ApiError(400, 'A Glass & Plywood bill must be in the Glass & Plywood section')
     }
 
     if (input.customerPhone && !PHONE_RE.test(input.customerPhone)) {

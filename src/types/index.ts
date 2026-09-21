@@ -2,26 +2,25 @@
 
 /** Matches the product departments / nav sections */
 export type Section =
-  | 'glass'
-  | 'plywood'
+  | 'glass_plywood'
   | 'plumbing'
   | 'painting'
   | 'electrical'
   | 'hardware'
 
-export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
+export type SectionType = 'Glass & Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
 
 export type BillingRole = `billing_${string}`
 export type Role = 'admin' | BillingRole
 
 /** Maps each role to the sections it may access */
 export const SECTION_ACCESS: Record<Role, Section[]> = {
-  admin:     ['glass', 'plywood', 'plumbing', 'painting', 'electrical'],
+  admin:     ['glass_plywood', 'plumbing', 'painting', 'electrical'],
   billing_b: ['plumbing', 'painting', 'electrical'],
-  billing_a: ['glass', 'plywood'],
-  billing_c: ['glass', 'plywood'],
+  billing_a: ['glass_plywood'],
+  billing_c: ['glass_plywood'],
   billing_d: ['plumbing', 'painting', 'electrical'],
-  billing_e: ['glass', 'plywood'],
+  billing_e: ['glass_plywood'],
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────

@@ -29,8 +29,7 @@
        colorVar in SECTIONS (src/lib/constants.ts) for e.g. the active
        section-tab underline on the Inventory page. Kept in sync with the
        hex values in SECTION_COLORS. */
-    --section-glass: 199 91% 64%;
-    --section-plywood: 36 100% 65%;
+    --section-glass-plywood: 199 91% 64%;
     --section-plumbing: 123 38% 64%;
     --section-painting: 340 83% 66%;
     --section-electrical: 46 100% 65%;

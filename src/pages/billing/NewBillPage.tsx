@@ -25,10 +25,10 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import type { Section } from '@/types'
 
 const PHONE_RE = /^[+]?[\d\s-]{7,15}$/
-// Glass and Plywood have their own dedicated billing flow (separate print
-// format, own invoice numbering) — excluded here so they can only be billed
+// Glass & Plywood has its own dedicated billing flow (separate print
+// format, own invoice numbering) — excluded here so it can only be billed
 // through that page, not this one.
-const NON_GP_SECTIONS: Section[] = SECTIONS.map((s) => s.key).filter((key) => key !== 'glass' && key !== 'plywood')
+const NON_GP_SECTIONS: Section[] = SECTIONS.map((s) => s.key).filter((key) => key !== 'glass_plywood')
 
 const itemSchema = z.object({
   serialNumber: z.string().optional(),

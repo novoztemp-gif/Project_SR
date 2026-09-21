@@ -43,7 +43,7 @@ export function InventoryPage() {
   )
 
   const [activeSection, setActiveSection] = React.useState<Section>(
-    accessibleSections[0]?.key ?? 'glass'
+    accessibleSections[0]?.key ?? 'glass_plywood'
   )
   const [openGodown, setOpenGodown] = React.useState<{
     godown: Godown

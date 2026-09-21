@@ -18,16 +18,15 @@ import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
 import { api, InsufficientStockError } from '@/lib/api'
 import type { ParsedBill } from '@/lib/billScan'
 import { findBestProductMatch, resolveScannedUnitPrice } from '@/lib/productMatch'
-import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { Section } from '@/types'
 
 const PHONE_RE = /^[+]?[\d\s-]{7,15}$/
-// The mirror image of NewBillPage's exclusion — this page is Glass/Plywood
-// ONLY, since those two have their own dedicated billing flow (separate
+// The mirror image of NewBillPage's exclusion — this page is Glass & Plywood
+// ONLY, since that section has its own dedicated billing flow (separate
 // print format, own invoice numbering) split out from every other section.
-const GP_SECTIONS: Section[] = ['glass', 'plywood']
+const GP_SECTIONS: Section[] = ['glass_plywood']
 
 const itemSchema = z.object({
   serialNumber: z.string().optional(),
@@ -128,8 +127,7 @@ export function GlassPlywoodBillingPage() {
   const balanceAmount = finalAmount - paidAmount
 
   async function onSubmit(values: FormValues) {
-    const firstProduct = products.find((p) => p.id === values.items[0]?.productId)
-    const section = firstProduct?.section ?? getUserSections(currentUser.id).find((s) => GP_SECTIONS.includes(s)) ?? 'glass'
+    const section: Section = 'glass_plywood'
 
     try {
       const bill = await api.bills.create({

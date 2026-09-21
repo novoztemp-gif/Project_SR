@@ -180,9 +180,14 @@ model PurchaseItem {
 }
 
 /// Lowercase section keys, matching the frontend `Section` union.
+/// glass/plywood were merged into glass_plywood — see
+/// prisma/migrations/20260921000000_merge_glass_plywood_section for the
+/// raw-SQL migration that added this value and rewrote existing rows. The
+/// old `glass`/`plywood` labels stay defined-but-unused in the physical
+/// Postgres enum (Postgres can't drop enum values without recreating the
+/// type) but must never be written again.
 enum Section {
-  glass
-  plywood
+  glass_plywood
   plumbing
   painting
   electrical

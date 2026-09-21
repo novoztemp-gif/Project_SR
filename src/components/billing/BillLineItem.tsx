@@ -49,8 +49,7 @@ interface BillLineItemProps {
 
 function getSizePlaceholder(section?: Section) {
   switch (section) {
-    case 'glass':
-    case 'plywood':
+    case 'glass_plywood':
       return 'e.g. 6×4 ft'
     case 'painting':
       return 'e.g. 4 ltr / 500 ml'
@@ -223,7 +222,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   }, [usesSqFt, computedSqFt, index])
   const qtyLabel = selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
-  const showFabricationOptions = selectedProduct?.section === 'glass' || selectedProduct?.section === 'plywood'
+  const showFabricationOptions = selectedProduct?.section === 'glass_plywood'
   const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
   const polishSide = String(useWatch({ control, name: `items.${index}.polishSide` }) ?? '')
   const polishName = String(useWatch({ control, name: `items.${index}.polishName` }) ?? '')

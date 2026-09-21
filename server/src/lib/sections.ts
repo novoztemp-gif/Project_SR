@@ -1,11 +1,10 @@
 import { Section } from '@prisma/client'
 
 /** Capitalized process labels used by the frontend Counter UI. */
-export type SectionType = 'Glass' | 'Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
+export type SectionType = 'Glass & Plywood' | 'Plumbing' | 'Painting' | 'Electrical' | 'Hardware'
 
 export const ALL_SECTIONS: Section[] = [
-  Section.glass,
-  Section.plywood,
+  Section.glass_plywood,
   Section.plumbing,
   Section.painting,
   Section.electrical,
@@ -13,8 +12,7 @@ export const ALL_SECTIONS: Section[] = [
 ]
 
 const TYPE_BY_SECTION: Record<Section, SectionType> = {
-  glass: 'Glass',
-  plywood: 'Plywood',
+  glass_plywood: 'Glass & Plywood',
   plumbing: 'Plumbing',
   painting: 'Painting',
   electrical: 'Electrical',
@@ -22,8 +20,7 @@ const TYPE_BY_SECTION: Record<Section, SectionType> = {
 }
 
 const SECTION_BY_TYPE: Record<SectionType, Section> = {
-  Glass: Section.glass,
-  Plywood: Section.plywood,
+  'Glass & Plywood': Section.glass_plywood,
   Plumbing: Section.plumbing,
   Painting: Section.painting,
   Electrical: Section.electrical,
