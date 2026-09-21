@@ -260,22 +260,15 @@ export function ProductsPage() {
                   </div>
 
                   {product.salePrice != null ? (
-                    isAdmin ? (
-                      <button
-                        type="button"
-                        onClick={() => setPriceTarget(product)}
-                        className="rounded-md border border-border p-3 text-left transition-colors hover:border-brand-mid"
-                      >
-                        <p className="text-xs text-muted-foreground">Selling price</p>
-                        <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.salePrice)}</p>
-                      </button>
-                    ) : (
-                      <div className="rounded-md border border-border p-3">
-                        <p className="text-xs text-muted-foreground">Selling price</p>
-                        <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.salePrice)}</p>
-                      </div>
-                    )
-                  ) : isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => setPriceTarget(product)}
+                      className="rounded-md border border-border p-3 text-left transition-colors hover:border-brand-mid"
+                    >
+                      <p className="text-xs text-muted-foreground">Selling price</p>
+                      <p className="mt-1 font-mono text-base font-medium tabular-nums">{INR.format(product.salePrice)}</p>
+                    </button>
+                  ) : (
                     <button
                       type="button"
                       onClick={() => setPriceTarget(product)}
@@ -284,11 +277,6 @@ export function ProductsPage() {
                       <Plus className="h-4 w-4" />
                       <span className="text-xs font-medium">Add price</span>
                     </button>
-                  ) : (
-                    <div className="rounded-md border border-border p-3">
-                      <p className="text-xs text-muted-foreground">Selling price</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Not set</p>
-                    </div>
                   )}
                 </div>
 

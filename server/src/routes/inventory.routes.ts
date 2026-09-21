@@ -236,6 +236,33 @@ inventoryRouter.put(
   }),
 )
 
+const salePriceSchema = z.object({
+  salePrice: z.number().nonnegative().nullable(),
+})
+
+/**
+ * PUT /api/inventory/products/:id/sale-price — set/clear just the selling
+ * price. Deliberately NOT admin-only, unlike the full product-update route
+ * above: this is the one field counters need to keep current while billing
+ * day to day. Everything else about a product (name, sku, cost price,
+ * section, godown, deletion) stays admin-only.
+ */
+inventoryRouter.put(
+  '/products/:id/sale-price',
+  asyncHandler(async (req, res) => {
+    const data = salePriceSchema.parse(req.body)
+    const existing = await prisma.product.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Product not found')
+    assertSectionAccess(req.user!, existing.section)
+
+    const product = await prisma.product.update({
+      where: { id: req.params.id },
+      data: { salePrice: data.salePrice },
+    })
+    res.json(product)
+  }),
+)
+
 /** DELETE /api/inventory/products/:id — Admin only. */
 inventoryRouter.delete(
   '/products/:id',

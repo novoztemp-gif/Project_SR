@@ -48,6 +48,9 @@ interface InventoryState {
   // ── Async write-through mutations ──────────────────────────────────────────
   addProductDefinition: (input: ProductDefinitionInput) => Promise<Product>
   updateProductDefinition: (productId: string, input: ProductDefinitionInput) => Promise<void>
+  /** Set/clear just the selling price — the one product edit every counter
+   * (not just admin) is allowed to make. */
+  setSalePrice: (productId: string, salePrice: number | null) => Promise<Product>
   deleteProduct: (productId: string) => Promise<void>
   transferStock: (
     productId: string,
@@ -136,6 +139,14 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     set((state) => ({
       products: state.products.map((p) => (p.id === productId ? product : p)),
     }))
+  },
+
+  setSalePrice: async (productId, salePrice) => {
+    const product = await http.put<Product>(`/inventory/products/${productId}/sale-price`, { salePrice })
+    set((state) => ({
+      products: state.products.map((p) => (p.id === productId ? product : p)),
+    }))
+    return product
   },
 
   deleteProduct: async (productId) => {

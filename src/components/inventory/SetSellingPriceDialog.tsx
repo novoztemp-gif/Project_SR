@@ -18,16 +18,20 @@ import type { Product } from '@/types'
 interface SetSellingPriceDialogProps {
   product: Product | null
   onOpenChange: (open: boolean) => void
+  /** Fires with the updated product right after a successful save — lets a
+   * caller like the bill form sync its own in-progress Rate field. */
+  onSaved?: (product: Product) => void
 }
 
 /**
  * Fast, single-purpose "set the selling price" action for one product —
- * distinct from the full Edit dialog. Until this is used, a product's
- * salePrice stays null (unset), and billing falls back to a scanned price
- * or cost price instead.
+ * distinct from the full (admin-only) Edit dialog. Any counter with access
+ * to the product's section can use this one, via its own narrow API route.
+ * Until this is used, a product's salePrice stays null (unset), and billing
+ * falls back to a scanned price or cost price instead.
  */
-export function SetSellingPriceDialog({ product, onOpenChange }: SetSellingPriceDialogProps) {
-  const updateProductDefinition = useInventoryStore((s) => s.updateProductDefinition)
+export function SetSellingPriceDialog({ product, onOpenChange, onSaved }: SetSellingPriceDialogProps) {
+  const setSalePrice = useInventoryStore((s) => s.setSalePrice)
   const [price, setPrice] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
 
@@ -42,18 +46,9 @@ export function SetSellingPriceDialog({ product, onOpenChange }: SetSellingPrice
 
     try {
       setSubmitting(true)
-      await updateProductDefinition(product.id, {
-        name: product.name,
-        spec: product.spec ?? '',
-        sku: product.sku,
-        unit: product.unit,
-        costPrice: product.costPrice,
-        salePrice: parsed,
-        section: product.section,
-        godownId: product.godownId,
-        lowStockThreshold: product.lowStockThreshold,
-      })
+      const updated = await setSalePrice(product.id, parsed)
       toast.success(parsed === null ? 'Selling price cleared' : 'Selling price saved')
+      onSaved?.(updated)
       onOpenChange(false)
     } catch {
       toast.error('Could not save the selling price')

@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { Plus, Ruler, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Ruler, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
+import { SetSellingPriceDialog } from '@/components/inventory/SetSellingPriceDialog'
 import { ARCH_ICONS, POLISH_SIDE_ICONS } from '@/components/billing/fabricationIcons'
 import { resolveManualUnitPrice } from '@/lib/productMatch'
 import { computeSqFtFromSize } from '@/lib/sqft'
@@ -196,6 +197,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   const [open, setOpen] = useState(false)
   const [measurementsOpen, setMeasurementsOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false)
   const { register, setValue, control, formState: { errors } } = useFormContext()
   const currentUser = useAuthStore((s) => s.currentUser)!
   const products = useInventoryStore((s) => s.products)
@@ -400,7 +402,20 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
         </div>
 
         <div className="space-y-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Rate</span>
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Rate</span>
+            {selectedProduct && (
+              <button
+                type="button"
+                onClick={() => setPriceDialogOpen(true)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Set selling price"
+                title="Set selling price"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            )}
+          </div>
           <Input
             type="number"
             className="text-right font-mono tabular-nums"
@@ -483,6 +498,12 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
           onClose={() => setMeasurementsOpen(false)}
         />
       )}
+
+      <SetSellingPriceDialog
+        product={priceDialogOpen ? (selectedProduct ?? null) : null}
+        onOpenChange={(nextOpen) => setPriceDialogOpen(nextOpen)}
+        onSaved={(updated) => setValue(`items.${index}.unitPrice`, resolveManualUnitPrice(updated), { shouldValidate: true })}
+      />
 
       <QuickAddProductDialog
         open={quickAddOpen}
