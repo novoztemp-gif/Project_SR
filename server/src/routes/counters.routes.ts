@@ -21,7 +21,10 @@ const SectionTypeEnum = z.enum(['Glass & Plywood', 'Plumbing', 'Painting', 'Elec
 const counterSchema = z.object({
   name: z.string().min(1),
   label: z.string().min(1),
-  process: z.array(SectionTypeEnum).min(1, 'Pick at least one process'),
+  // A counter may only cover one section — kept as a length-1 array on the
+  // wire so it still flows straight into User.processes (Section[]) without
+  // a DB shape change.
+  process: z.array(SectionTypeEnum).length(1, 'Pick a process'),
   active: z.boolean().default(true),
   password: z.string().min(4).optional(),
 })

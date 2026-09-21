@@ -74,14 +74,10 @@ export function CounterManagementPage() {
     setFormOpen(true)
   }
 
-  function toggleProcess(process: SectionType) {
-    setForm((current) => {
-      const exists = current.process.includes(process)
-      const next = exists
-        ? current.process.filter((item) => item !== process)
-        : [...current.process, process]
-      return { ...current, process: next }
-    })
+  // A counter covers exactly one section — kept as a length-1 array so it
+  // still matches the wire/DB shape (Section[]) without a schema change.
+  function selectProcess(process: SectionType) {
+    setForm((current) => ({ ...current, process: [process] }))
   }
 
   async function saveCounter() {
@@ -90,7 +86,7 @@ export function CounterManagementPage() {
       return
     }
     if (form.process.length === 0) {
-      toast.error('Select at least one process.')
+      toast.error('Select a process.')
       return
     }
 
@@ -202,7 +198,7 @@ export function CounterManagementPage() {
           <DialogHeader>
             <DialogTitle>{editingCounter ? 'Edit counter' : 'Add counter'}</DialogTitle>
             <DialogDescription>
-              Configure who can sign in and which processes they can access.
+              Configure who can sign in and which process they can access.
             </DialogDescription>
           </DialogHeader>
 
@@ -232,9 +228,10 @@ export function CounterManagementPage() {
                 {PROCESSES.map((process) => (
                   <label key={process} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name="process"
                       checked={form.process.includes(process)}
-                      onChange={() => toggleProcess(process)}
+                      onChange={() => selectProcess(process)}
                       className="h-4 w-4 accent-primary"
                     />
                     {process}
