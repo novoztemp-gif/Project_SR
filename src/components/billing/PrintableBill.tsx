@@ -161,7 +161,10 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
 
           {/* ── Footer ── */}
           <div className="flex justify-between items-end border-t border-gray-300 pt-3 text-xs">
-            <p className="text-gray-600">Staff Name : {staffName}</p>
+            <div className="text-gray-600 space-y-0.5">
+              <p>Staff Name : {staffName}</p>
+              {bill.writtenStaff && <p>Written Staff : {bill.writtenStaff}</p>}
+            </div>
             <div className="text-right">
               <div className="border-t border-gray-900 w-36 mb-1" />
               <p className="text-gray-600">Authorized signature</p>

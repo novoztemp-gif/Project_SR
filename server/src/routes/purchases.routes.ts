@@ -23,6 +23,7 @@ const createPurchaseSchema = z.object({
   date: z.string().min(1),
   section: SectionEnum,
   imageUrl: z.string().optional(),
+  writtenStaff: z.string().optional(),
   items: z
     .array(
       z.object({
@@ -135,6 +136,7 @@ purchasesRouter.post(
           subtotal,
           total: subtotal,
           transportationAmount,
+          writtenStaff: input.writtenStaff || null,
           createdBy: req.user!.id,
           printedAt: null,
           items: { create: items },

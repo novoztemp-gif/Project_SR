@@ -110,6 +110,9 @@ export interface PurchaseBill {
   total: number
   transportationAmount: number // default 0
   createdBy: string // User.id
+  /** Free text: the staff member who physically wrote the bill — distinct
+   * from createdBy, the counter/login that entered it. */
+  writtenStaff?: string | null
   createdAt: string // ISO-8601
   printedAt: string | null
 }
@@ -162,6 +165,9 @@ export interface SalesBill {
   billType: 'general' | 'glass_plywood' // default 'general'
   gpVoucherNumber?: string // e.g. "GP-2026-0001" — set only when billType is 'glass_plywood'
   createdBy: string    // User.id
+  /** Free text: the staff member who physically wrote the bill — distinct
+   * from createdBy, the counter/login that entered it. */
+  writtenStaff?: string | null
   createdAt: string    // ISO-8601
 }
 
@@ -173,6 +179,7 @@ export interface CreateBillInput {
   deliveryDate?: string
   transport?: string
   transportTime?: string
+  writtenStaff?: string
   section: Section
   items: Array<{
     serialNumber?: string

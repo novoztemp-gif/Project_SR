@@ -56,6 +56,7 @@ const billSchema = z.object({
   deliveryDate:    z.string().optional(),
   transport:       z.string().optional(),
   transportTime:   z.string().optional(),
+  writtenStaff:    z.string().optional(),
   items:           z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
   discount:        z.coerce.number().min(0).default(0),
@@ -102,6 +103,7 @@ export function NewBillPage() {
       customerName: '', customerAddress: '', customerPhone: '',
       bookingDate: todayIso, deliveryDate: '',
       transport: '', transportTime: '',
+      writtenStaff: '',
       items: [emptyItem(1)],
       transportationAmount: 0, discount: 0, paidAmount: 0,
     },
@@ -141,6 +143,7 @@ export function NewBillPage() {
         deliveryDate:    values.deliveryDate    || undefined,
         transport:       values.transport       || undefined,
         transportTime:   values.transportTime   || undefined,
+        writtenStaff:    values.writtenStaff    || undefined,
         section,
         items: values.items.map((item) => ({
           serialNumber: item.serialNumber || undefined,
@@ -344,6 +347,11 @@ export function NewBillPage() {
                       <Label htmlFor="transportTime">Transport time</Label>
                       <Input id="transportTime" placeholder="e.g. 2 PM" {...form.register('transportTime')} />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="writtenStaff">Written staff</Label>
+                    <Input id="writtenStaff" placeholder="Name of the staff who wrote this bill" {...form.register('writtenStaff')} />
                   </div>
                 </CardContent>
               </Card>

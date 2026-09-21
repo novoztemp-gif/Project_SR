@@ -57,6 +57,7 @@ const formSchema = z.object({
   date: z.string().min(1),
   section: z.custom<Section>((value) => typeof value === 'string' && SECTIONS.some((section) => section.key === value)),
   imageUrl: z.string().optional(),
+  writtenStaff: z.string().optional(),
   items: z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
 })
@@ -131,6 +132,7 @@ export function NewPurchasePage() {
       date: todayInputValue(),
       section: allowedSections[0],
       imageUrl: undefined,
+      writtenStaff: '',
       items: [emptyItem(1)],
       transportationAmount: 0,
     },
@@ -269,6 +271,7 @@ export function NewPurchasePage() {
           subtotal: item.quantity * item.unitPrice,
         })),
         transportationAmount: values.transportationAmount,
+        writtenStaff: values.writtenStaff || undefined,
         createdBy: currentUser.id,
       })
     } catch (error) {
@@ -337,6 +340,11 @@ export function NewPurchasePage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="writtenStaff">Written staff</Label>
+                <Input id="writtenStaff" placeholder="Name of the staff who wrote this" {...form.register('writtenStaff')} />
               </div>
             </CardContent>
           </Card>

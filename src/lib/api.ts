@@ -49,6 +49,7 @@ export const api = {
           deliveryDate: input.deliveryDate,
           transport: input.transport,
           transportTime: input.transportTime,
+          writtenStaff: input.writtenStaff,
           section: input.section,
           items: input.items,
           transportationAmount: input.transportationAmount ?? 0,

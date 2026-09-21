@@ -98,6 +98,9 @@ model SalesBill {
   // has to change.
   gpVoucherNumber String?     @unique
   createdBy       String
+  // Free text: the staff member who physically wrote the bill — distinct
+  // from createdBy, the counter/login account that entered it.
+  writtenStaff    String?
   createdAt       DateTime    @default(now())
   items           SalesItem[]
 
@@ -148,6 +151,9 @@ model PurchaseBill {
   total         Float
   transportationAmount Float @default(0)
   createdBy     String
+  // Free text: the staff member who physically wrote the purchase voucher —
+  // distinct from createdBy, the counter/login account that entered it.
+  writtenStaff  String?
   createdAt     DateTime       @default(now())
   printedAt     DateTime?
   items         PurchaseItem[]

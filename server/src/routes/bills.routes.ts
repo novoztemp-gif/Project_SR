@@ -23,6 +23,7 @@ const createBillSchema = z.object({
   deliveryDate: z.string().optional(),
   transport: z.string().optional(),
   transportTime: z.string().optional(),
+  writtenStaff: z.string().optional(),
   section: SectionEnum,
   items: z
     .array(
@@ -184,6 +185,7 @@ billsRouter.post(
           deliveryDate: input.deliveryDate,
           transport: input.transport,
           transportTime: input.transportTime,
+          writtenStaff: input.writtenStaff || null,
           section: input.section,
           subtotal,
           total: subtotal,

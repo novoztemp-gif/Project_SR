@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { COMPANY } from '@/lib/brand'
 import { SECTIONS } from '@/lib/constants'
+import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { Godown, PurchaseBill } from '@/types'
 
@@ -33,6 +34,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
   const godowns = useInventoryStore((s) => s.godowns)
   const sectionLabel = SECTIONS.find((section) => section.key === bill.section)?.label ?? bill.section
   const grandTotal = bill.total + bill.transportationAmount
+  const staffName = getUserName(bill.createdBy)
 
   return (
     <div className="printable-bill bg-white p-6 text-sm text-gray-800">
@@ -161,7 +163,11 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
           </div>
 
           <div className="flex items-end justify-between border-t border-gray-300 pt-3">
-            <p className="text-xs text-gray-400">Computer generated voucher</p>
+            <div className="space-y-0.5 text-xs text-gray-400">
+              <p>Computer generated voucher</p>
+              <p>Staff Name : {staffName}</p>
+              {bill.writtenStaff && <p>Written Staff : {bill.writtenStaff}</p>}
+            </div>
             <div className="text-right">
               <div className="mb-1 w-36 border-t border-gray-300" />
               <p className="text-xs text-gray-400">Authorized signature</p>
