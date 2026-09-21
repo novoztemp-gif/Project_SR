@@ -1,6 +1,6 @@
 
 import * as React from 'react'
-import { GripVertical, Plus, Users } from 'lucide-react'
+import { Eye, EyeOff, GripVertical, Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -28,6 +28,9 @@ interface CounterForm {
   name: string
   process: SectionType[]
   active: boolean
+  /** Blank = keep the current password unchanged (edit) / use the server
+   * default (add) — only a non-blank value ever reaches the API. */
+  password: string
 }
 
 const EMPTY_FORM: CounterForm = {
@@ -35,6 +38,7 @@ const EMPTY_FORM: CounterForm = {
   name: '',
   process: ['Glass & Plywood'],
   active: true,
+  password: '',
 }
 
 function processBadgeStyle(process: SectionType) {
@@ -56,10 +60,12 @@ export function CounterManagementPage() {
   const [formOpen, setFormOpen] = React.useState(false)
   const [form, setForm] = React.useState<CounterForm>(EMPTY_FORM)
   const [draggingId, setDraggingId] = React.useState<string | null>(null)
+  const [showPassword, setShowPassword] = React.useState(false)
 
   function openAdd() {
     setEditingCounter(null)
     setForm(EMPTY_FORM)
+    setShowPassword(false)
     setFormOpen(true)
   }
 
@@ -70,7 +76,9 @@ export function CounterManagementPage() {
       name: counter.name,
       process: counter.process,
       active: counter.active,
+      password: '',
     })
+    setShowPassword(false)
     setFormOpen(true)
   }
 
@@ -89,12 +97,17 @@ export function CounterManagementPage() {
       toast.error('Select a process.')
       return
     }
+    if (form.password.trim() && form.password.trim().length < 4) {
+      toast.error('Password must be at least 4 characters.')
+      return
+    }
 
     const data = {
       label: form.label.trim(),
       name: form.name.trim(),
       process: form.process,
       active: form.active,
+      ...(form.password.trim() ? { password: form.password.trim() } : {}),
     }
 
     try {
@@ -220,6 +233,35 @@ export function CounterManagementPage() {
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="counterPassword">
+                {editingCounter ? 'New password' : 'Password'}
+              </Label>
+              <div className="relative">
+                <Input
+                  id="counterPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                  placeholder={editingCounter ? 'Leave blank to keep current password' : 'Leave blank for the default password'}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {editingCounter && (
+                <p className="text-xs text-muted-foreground">
+                  Setting a new password immediately replaces the old one — it stops working right away.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

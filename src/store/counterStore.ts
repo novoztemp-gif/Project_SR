@@ -19,6 +19,10 @@ type CounterInput = {
   label: string
   process: SectionType[]
   active: boolean
+  /** Omit to leave the counter's existing password untouched (edit) or fall
+   * back to the server default (add). Setting it always replaces the old
+   * password outright — there's no dual validity window. */
+  password?: string
 }
 
 /** Map the backend's public user shape onto the Counter the UI expects. */
