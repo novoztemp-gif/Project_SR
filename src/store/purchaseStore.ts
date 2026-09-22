@@ -6,11 +6,14 @@ import type { PurchaseBill, Role, Section } from '@/types'
 
 interface PurchaseDraft {
   vendorName: string
+  vendorAddress?: string
   date: string
   section: Section
   imageUrl?: string
   items: PurchaseBill['items']
   transportationAmount?: number
+  discount?: number
+  paidAmount?: number
   writtenStaff?: string
   createdBy: string
 }
@@ -38,11 +41,14 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
   addPurchase: async (draft) => {
     const purchase = await http.post<PurchaseBill>('/purchases', {
       vendorName: draft.vendorName,
+      vendorAddress: draft.vendorAddress,
       date: draft.date,
       section: draft.section,
       imageUrl: draft.imageUrl,
       items: draft.items,
       transportationAmount: draft.transportationAmount ?? 0,
+      discount: draft.discount ?? 0,
+      paidAmount: draft.paidAmount ?? 0,
       writtenStaff: draft.writtenStaff,
     })
     set((state) => ({ purchases: [purchase, ...state.purchases] }))

@@ -54,12 +54,15 @@ const itemSchema = z.object({
 
 const formSchema = z.object({
   vendorName: z.string().min(1, 'Vendor name is required'),
+  vendorAddress: z.string().optional(),
   date: z.string().min(1),
   section: z.custom<Section>((value) => typeof value === 'string' && SECTIONS.some((section) => section.key === value)),
   imageUrl: z.string().optional(),
   writtenStaff: z.string().optional(),
   items: z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
+  discount: z.coerce.number().min(0).default(0),
+  paidAmount: z.coerce.number().min(0).default(0),
 })
 
 type FormInput = z.input<typeof formSchema>
@@ -135,12 +138,15 @@ export function NewPurchasePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       vendorName: '',
+      vendorAddress: '',
       date: todayInputValue(),
       section: allowedSections[0],
       imageUrl: undefined,
       writtenStaff: '',
       items: [emptyItem(1)],
       transportationAmount: 0,
+      discount: 0,
+      paidAmount: 0,
     },
   })
 
@@ -148,6 +154,8 @@ export function NewPurchasePage() {
   const watchedSection = useWatch({ control: form.control, name: 'section' }) as Section
   const watchedItems = useWatch({ control: form.control, name: 'items' })
   const watchedTransportation = useWatch({ control: form.control, name: 'transportationAmount' })
+  const watchedDiscount = useWatch({ control: form.control, name: 'discount' })
+  const watchedPaidAmount = useWatch({ control: form.control, name: 'paidAmount' })
   const imageUrl = useWatch({ control: form.control, name: 'imageUrl' })
   const watchedDate = useWatch({ control: form.control, name: 'date' })
 
@@ -157,7 +165,11 @@ export function NewPurchasePage() {
     0
   )
   const transportationAmount = Number(watchedTransportation) || 0
+  const discount = Number(watchedDiscount) || 0
+  const paidAmount = Number(watchedPaidAmount) || 0
   const grandTotal = total + transportationAmount
+  const finalAmount = grandTotal - discount
+  const balanceAmount = finalAmount - paidAmount
 
   React.useEffect(() => {
     const state = location.state as { restockProductId?: string } | null
@@ -283,6 +295,7 @@ export function NewPurchasePage() {
     try {
       id = await addPurchase({
         vendorName: values.vendorName,
+        vendorAddress: values.vendorAddress || undefined,
         date: new Date(values.date).toISOString(),
         section: values.section,
         imageUrl: values.imageUrl,
@@ -291,6 +304,8 @@ export function NewPurchasePage() {
           subtotal: item.quantity * item.unitPrice,
         })),
         transportationAmount: values.transportationAmount,
+        discount: values.discount,
+        paidAmount: values.paidAmount,
         writtenStaff: values.writtenStaff || undefined,
         createdBy: currentUser.id,
       })
@@ -336,6 +351,11 @@ export function NewPurchasePage() {
                 {form.formState.errors.vendorName && (
                   <p className="text-xs text-destructive">{form.formState.errors.vendorName.message}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendorAddress">Vendor address</Label>
+                <Input id="vendorAddress" {...form.register('vendorAddress')} />
               </div>
 
               <div className="space-y-2">
@@ -391,9 +411,38 @@ export function NewPurchasePage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="discount">Discount (₹)</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="font-mono tabular-nums text-right"
+                  {...form.register('discount')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="paidAmount">Paid amount (₹)</Label>
+                <Input
+                  id="paidAmount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="font-mono tabular-nums text-right"
+                  {...form.register('paidAmount')}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Final amount</span>
+                <span className="font-mono text-lg font-medium tabular-nums">{INR.format(finalAmount)}</span>
+              </div>
+
               <div className="flex items-center justify-between border-b border-border pb-3 pt-1">
-                <span className="font-medium">Grand total</span>
-                <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(grandTotal)}</span>
+                <span className="font-medium">Balance</span>
+                <span className="font-mono text-2xl font-medium tabular-nums">{INR.format(balanceAmount)}</span>
               </div>
               <Button type="submit" className="w-full" size="lg">
                 Save purchase

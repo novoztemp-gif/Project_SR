@@ -20,6 +20,7 @@ const extractSchema = z.object({
 
 const createPurchaseSchema = z.object({
   vendorName: z.string().min(1),
+  vendorAddress: z.string().optional(),
   date: z.string().min(1),
   section: SectionEnum,
   imageUrl: z.string().optional(),
@@ -43,6 +44,8 @@ const createPurchaseSchema = z.object({
     )
     .min(1, 'A purchase needs at least one item'),
   transportationAmount: z.number().nonnegative().optional(),
+  discount: z.number().nonnegative().optional(),
+  paidAmount: z.number().nonnegative().optional(),
 })
 
 /**
@@ -129,6 +132,7 @@ purchasesRouter.post(
         data: {
           voucherNumber: await nextVoucherNumber(tx, date),
           vendorName: input.vendorName,
+          vendorAddress: input.vendorAddress || null,
           date,
           section: input.section,
           godownId: primaryGodownId,
@@ -136,6 +140,8 @@ purchasesRouter.post(
           subtotal,
           total: subtotal,
           transportationAmount,
+          discount: input.discount ?? 0,
+          paidAmount: input.paidAmount ?? 0,
           writtenStaff: input.writtenStaff || null,
           createdBy: req.user!.id,
           printedAt: null,

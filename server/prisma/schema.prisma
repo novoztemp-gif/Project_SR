@@ -143,6 +143,7 @@ model PurchaseBill {
   id            String         @id @default(uuid())
   voucherNumber String         @unique
   vendorName    String
+  vendorAddress String?
   date          DateTime
   section       Section
   godownId      String
@@ -150,6 +151,8 @@ model PurchaseBill {
   subtotal      Float
   total         Float
   transportationAmount Float @default(0)
+  discount      Float          @default(0)
+  paidAmount    Float          @default(0)
   createdBy     String
   // Free text: the staff member who physically wrote the purchase voucher —
   // distinct from createdBy, the counter/login account that entered it.

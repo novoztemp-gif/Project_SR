@@ -101,6 +101,7 @@ export interface PurchaseBill {
   id: string
   voucherNumber: string
   vendorName: string
+  vendorAddress?: string | null
   date: string      // ISO-8601
   section: Section
   godownId: string // legacy/display fallback — each item now carries its own godownId
@@ -109,6 +110,8 @@ export interface PurchaseBill {
   subtotal: number
   total: number
   transportationAmount: number // default 0
+  discount: number // default 0
+  paidAmount: number // default 0
   createdBy: string // User.id
   /** Free text: the staff member who physically wrote the bill — distinct
    * from createdBy, the counter/login that entered it. */
