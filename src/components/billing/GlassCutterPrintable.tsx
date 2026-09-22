@@ -104,7 +104,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               <th className={`${HEADER_CELL} text-left w-full`}>Product Name</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap pl-3`}>Arch</th>
+              {/* Borderless spacer — a real gap between the item-detail and
+                  fabrication column groups, not just cell padding. */}
+              <th className="w-3 border-0 bg-white p-0" />
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Details</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
@@ -114,13 +117,13 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           <tbody>
             {bill.items.map((item, i) => {
               const artSet = isArtWorkSet(item.artWork)
-              const rowBg = artSet ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
-              // Text color follows the same row tint, not just red for a
-              // flagged row — an alternating (non-flagged) row's text is
-              // green too, matching its light-green background.
+              // The table itself stays plain black-and-white — only the
+              // fabrication text/values are colored (red when Art Work is
+              // set, green on an alternating row otherwise), not the row's
+              // own background.
               const textColor = artSet ? 'text-red-700' : i % 2 === 1 ? 'text-green-700' : ''
               return (
-                <tr key={i} className={rowBg}>
+                <tr key={i}>
                   <td className={`${CELL} text-center`}>
                     <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
                   </td>
@@ -128,7 +131,8 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
-                  <td className={`${CELL} whitespace-nowrap pl-3 ${textColor}`}>
+                  <td className="w-3 border-0 bg-white p-0" />
+                  <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
                       <div className="flex items-center justify-center gap-1">
                         {ARCH_ICONS_SMALL[item.arch]}
