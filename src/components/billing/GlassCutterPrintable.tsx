@@ -2,16 +2,24 @@ import { ARCH_ICONS_SMALL, POLISH_SIDE_ICONS_SMALL } from '@/components/billing/
 import {
   ARCH_SHORT_LABELS,
   fmtGPDate,
+  fmtGPTime,
   getArtWorkLabel,
   getHoleLabel,
   isArtWorkSet,
   POLISH_SIDE_CUTTER_LABELS,
 } from '@/lib/glassPrintFormat'
+import { COMPANY } from '@/lib/brand'
+import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
 const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
 const CELL = 'border border-gray-300 px-1.5 py-1.5'
+const FILL_LINE = 'inline-block border-b border-gray-400'
+
+// Fixed hand-fill checklist of pickup/delivery points — same blank-line
+// codes on every voucher, not derived from the bill's data.
+const LOGISTICS_CHECKLIST = ['K.G', 'CH.G', 'HOU.G', 'HAR.G', 'SHO.ROOM', 'Car G', 'Alapancode G']
 
 /**
  * Fixed-format print voucher for the glass cutter / fabrication counter —
@@ -20,7 +28,7 @@ const CELL = 'border border-gray-300 px-1.5 py-1.5'
  */
 export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   const voucher = bill.gpVoucherNumber ?? bill.billNumber
-  const totalQty = bill.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+  const staffName = getUserName(bill.createdBy)
 
   // Which godown(s) to pull stock from — every distinct godown among this
   // bill's actual products, in first-appearance order, read from live
@@ -47,35 +55,43 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           print-header-spacer reserves the matching space so the table
           never starts underneath it, on page 1 or any later page. */}
       <div className="print-running-header print-running-header--gp-cutter">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b-2 border-[#16232e] pb-2 mb-3">
-          <h1 className="text-sm font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
-          <div className="text-right text-xs">
-            {billGodowns.length > 0 && (
-              <div className="mb-0.5 font-semibold leading-tight">
-                {billGodowns.map((name) => (
-                  <p key={name} className="whitespace-nowrap">{name}</p>
-                ))}
-              </div>
-            )}
-            <p className="whitespace-nowrap">
-              <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
-            </p>
+        <div className="border-2 border-[#16232e] rounded-t-md">
+          <div className="flex items-start justify-between gap-3 px-3 py-2 text-xs">
+            <div className="leading-tight whitespace-nowrap">
+              <p>{fmtGPDate(bill.createdAt)}</p>
+              <p>{fmtGPTime(bill.createdAt)}</p>
+            </div>
+            <div className="text-center">
+              <h1 className="text-base font-extrabold tracking-wide">{COMPANY.name}</h1>
+              <p className="text-sm font-semibold">{COMPANY.place}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              {/* Unlabeled in the reference format — reproduced as-is. */}
+              <span className="inline-block h-6 w-6 shrink-0 rounded-full border-2 border-[#16232e]" />
+              <span className="inline-block h-6 w-6 shrink-0 border-2 border-[#16232e]" />
+              {billGodowns.length > 0 && (
+                <div className="text-right font-semibold leading-tight">
+                  {billGodowns.map((name) => (
+                    <p key={name} className="whitespace-nowrap">{name}</p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-
-        <div className="flex flex-wrap justify-between gap-x-8 gap-y-2 text-xs">
-          <div className="space-y-0.5">
-            <p className="truncate"><span className="font-semibold">Customer:</span> {bill.customerName || '-'}</p>
-            <p className="truncate"><span className="font-semibold">Place:</span> {bill.customerAddress || '-'}</p>
-            <p className="flex items-center gap-1">
-              <span className="font-semibold whitespace-nowrap">Operator:</span>
-              <span className="inline-block border-b border-gray-500 w-28">&nbsp;</span>
-            </p>
+          <div className="border-t-2 border-[#16232e] py-1.5 text-center">
+            <p className="text-sm font-extrabold tracking-wide">GLASS / PLYWOOD ESTIMATE</p>
           </div>
-          <div className="text-right space-y-0.5 whitespace-nowrap">
-            <p><span className="font-semibold">Order Date</span> : {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
-            <p><span className="font-semibold">Delivery Date</span> : {fmtGPDate(bill.deliveryDate)}</p>
-            <p><span className="font-semibold">Delivery Time</span> : {bill.transportTime || '-'}</p>
+          <div className="flex flex-wrap justify-between gap-x-8 gap-y-1 border-t-2 border-[#16232e] px-3 py-2 text-xs">
+            <div className="space-y-0.5">
+              <p><span className="font-semibold">Bill No:</span> {voucher}</p>
+              <p className="truncate"><span className="font-semibold">Name :</span> {bill.customerName || '-'}</p>
+              <p className="truncate"><span className="font-semibold">Address:</span> {bill.customerAddress || '-'}</p>
+            </div>
+            <div className="text-right space-y-0.5 whitespace-nowrap">
+              <p><span className="font-semibold">Booking Date :</span> {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
+              <p><span className="font-semibold">Delivery Date :</span> {fmtGPDate(bill.deliveryDate)}</p>
+              <p><span className="font-semibold">Transport :</span> {bill.transport || '-'}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -85,14 +101,14 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             <tr className="bg-[#16232e] text-white">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
-              <th className={`${HEADER_CELL} text-left w-full`}>Glass Name / Product</th>
+              <th className={`${HEADER_CELL} text-left w-full`}>Product Name</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
               <th className={`${HEADER_CELL} whitespace-nowrap pl-3`}>Arch</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Side &amp; Polish Name</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Details</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Art Work</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>Art</th>
             </tr>
           </thead>
           <tbody>
@@ -143,28 +159,74 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </tbody>
         </table>
 
-        {/* Glass Process box + signature lines move to the next page
-            together as one block if they don't fit under the last item row
-            (see print-keep-together in index.css). */}
-        <div className="print-keep-together">
-          <div className="mt-4 border border-gray-400 rounded p-3 text-xs">
-            <p className="font-semibold mb-2">Glass Process:</p>
-            <div className="flex flex-wrap gap-6">
-              {['Glass Cut', 'Edge Polished', 'Corner Rounded', 'Hole Drilled'].map((label) => (
-                <span key={label} className="flex items-center gap-1.5">
-                  <span className="inline-block h-2.5 w-2.5 border border-gray-500" /> {label}
-                </span>
-              ))}
-            </div>
-            <div className="mt-3 pt-2 border-t border-gray-300 flex flex-wrap justify-between gap-x-4 gap-y-1">
-              <p>
-                <span className="font-semibold">Batch Summary:</span> {bill.items.length} Items (Total Qty: {totalQty} Sheets)
-              </p>
-              <p className="text-gray-500">SR Fabrication Dept.</p>
-            </div>
+        {/* Everything below the table moves to the next page together as
+            one block if it doesn't fit under the last item row (see
+            print-keep-together in index.css). */}
+        <div className="print-keep-together mt-4 space-y-3 text-xs">
+          <div className="flex flex-wrap gap-6">
+            {['Glass Cut', 'Edge Polished', 'Corner Rounded', 'Hole Drilled'].map((label) => (
+              <span key={label} className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-2.5 border border-gray-500" /> {label}
+              </span>
+            ))}
           </div>
 
-          <div className="mt-10 flex flex-wrap justify-between gap-x-4 gap-y-3 text-xs">
+          <div className="space-y-2 rounded border border-gray-400 p-3">
+            <p className="flex flex-wrap items-baseline gap-1">
+              <span className="whitespace-nowrap font-semibold">Things Eduthavar Name:</span>
+              <span className={`${FILL_LINE} min-w-[16rem] flex-1`}>&nbsp;</span>
+              <span className="ml-4 whitespace-nowrap font-semibold">Sign:</span>
+              <span className={`${FILL_LINE} w-28`}>&nbsp;</span>
+            </p>
+            <p className="flex flex-wrap gap-x-4 gap-y-1">
+              {LOGISTICS_CHECKLIST.map((label) => (
+                <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
+                  <span className="font-semibold">{label}</span>
+                  <span className={`${FILL_LINE} w-10`}>&nbsp;</span>
+                </span>
+              ))}
+            </p>
+            <p className="flex flex-wrap items-baseline gap-1">
+              <span className="whitespace-nowrap font-semibold">Driver Name:</span>
+              <span className={`${FILL_LINE} w-24`}>&nbsp;</span>
+              <span className="ml-2 whitespace-nowrap font-semibold">Sign:</span>
+              <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+              <span className="ml-2 whitespace-nowrap font-semibold">Key Out Time:</span>
+              <span className={`${FILL_LINE} w-14`}>&nbsp;</span>
+              <span className="ml-2 whitespace-nowrap font-semibold">Key In Time:</span>
+              <span className={`${FILL_LINE} w-14`}>&nbsp;</span>
+              <span className="ml-2 whitespace-nowrap font-semibold">Security Sign:</span>
+              <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-4 rounded border border-gray-400 p-3">
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+              <span className="font-semibold">Serious :</span>
+              <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
+            </span>
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+              <span className="font-semibold">Long Route:</span>
+              <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
+            </span>
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+              <span className="font-semibold">Heavy Long:</span>
+              <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
+            </span>
+            <span className="flex flex-1 min-w-[14rem] items-baseline gap-1">
+              <span className="whitespace-nowrap font-semibold">Long Route Extra Checking Name:</span>
+              <span className={`${FILL_LINE} min-w-[6rem] flex-1`}>&nbsp;</span>
+              <span className="whitespace-nowrap font-semibold">Sign:</span>
+              <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+            </span>
+          </div>
+
+          <p className="font-semibold">
+            Staff: {staffName}
+            {bill.writtenStaff && <span className="font-normal"> &nbsp;·&nbsp; Written Staff: {bill.writtenStaff}</span>}
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-between gap-x-4 gap-y-3">
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
           </div>

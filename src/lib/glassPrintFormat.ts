@@ -13,6 +13,13 @@ export function fmtGPDate(iso?: string): string {
   return `${dd}-${mm}-${d.getFullYear()}`
 }
 
+/** "01:10:53 PM" — the Cutter voucher's header timestamp. */
+export function fmtGPTime(iso?: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+}
+
 export const ARCH_SHORT_LABELS: Record<string, string> = {
   'arch-top': 'Arch',
   'flat-square': 'Flat',
