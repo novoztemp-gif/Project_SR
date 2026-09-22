@@ -227,7 +227,11 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
     setValue(`items.${index}.sqFt`, computedSqFt, { shouldValidate: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usesSqFt, computedSqFt, index])
-  const qtyLabel = selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
+  // Sq.Ft now has its own dedicated column, so "Qty" for a sq.ft-priced
+  // product means piece count (e.g. number of sheets), not an area — don't
+  // relabel it to "Qty (Sq.Ft)" here, that reads as if this box is also in
+  // sq.ft and duplicates the separate Sq.Ft column right next to it.
+  const qtyLabel = usesSqFt ? 'Qty' : selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
   const showFabricationOptions = isGlassProduct
   const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
