@@ -46,6 +46,9 @@ const createBillSchema = z.object({
         cornerType: z.string().optional(),
         hole: z.string().optional(),
         artWork: z.string().optional(),
+        polishAmt: z.number().nonnegative().optional(),
+        holeAmt: z.number().nonnegative().optional(),
+        artAmt: z.number().nonnegative().optional(),
       }),
     )
     .min(1, 'A bill needs at least one item'),
@@ -105,18 +108,28 @@ billsRouter.post(
       // A conditional `UPDATE ... WHERE stock >= qty` makes the check part
       // of the same statement as the write, so Postgres's row lock does the
       // serializing; a 0-row result means someone else already took it.
+      //
+      // Glass stock is tracked in sq.ft, not piece count, so a glass line
+      // item deducts its sqFt value instead of quantity — everything else
+      // (plywood/other) still deducts quantity as before. productType is
+      // static metadata (not concurrency-sensitive like stock), so reading
+      // it in a separate query ahead of the atomic decrement doesn't
+      // reintroduce the race the conditional update guards against.
       for (const item of input.items) {
+        const product = await tx.product.findUnique({ where: { id: item.productId }, select: { productType: true } })
+        if (!product) throw new ApiError(404, `Product ${item.productId} not found`)
+        const deductQty = product.productType === 'glass' && item.sqFt ? item.sqFt : item.quantity
+
         const result = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
+          where: { id: item.productId, stock: { gte: deductQty } },
+          data: { stock: { decrement: deductQty } },
         })
         if (result.count === 0) {
-          const product = await tx.product.findUnique({ where: { id: item.productId } })
-          if (!product) throw new ApiError(404, `Product ${item.productId} not found`)
+          const existing = await tx.product.findUnique({ where: { id: item.productId } })
           throw new ApiError(409, `Not enough stock for ${item.productName}`, {
             productName: item.productName,
-            available: product.stock,
-            requested: item.quantity,
+            available: existing?.stock ?? 0,
+            requested: deductQty,
           })
         }
       }
@@ -139,6 +152,9 @@ billsRouter.post(
         cornerType: item.cornerType,
         hole: item.hole,
         artWork: item.artWork,
+        polishAmt: item.polishAmt,
+        holeAmt: item.holeAmt,
+        artAmt: item.artAmt,
       }))
       const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
       const transportationAmount = input.transportationAmount ?? 0

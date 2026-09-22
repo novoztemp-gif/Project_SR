@@ -17,6 +17,8 @@ export interface ProductDefinitionInput {
   /** null = leave/reset the selling price unset. */
   salePrice: number | null
   section: Section
+  /** Sub-classification within the glass_plywood section — omit/null outside it. */
+  productType?: 'glass' | 'plywood' | 'other' | null
   godownId: string
   lowStockThreshold: number
   /** Opening stock for the new product (create only; ignored on update). */

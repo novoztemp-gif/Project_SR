@@ -25,6 +25,8 @@ export interface ProductFormValues {
   /** null = leave/reset the selling price unset. */
   salePrice: number | null
   section: Section
+  /** Sub-classification within the glass_plywood section — null outside it. */
+  productType: 'glass' | 'plywood' | 'other' | null
   godownId: string
   lowStockThreshold: number
 }
@@ -58,6 +60,7 @@ function getInitialValues(product: Product | null | undefined, allowedSections: 
     costPrice: product?.costPrice ?? 0,
     salePrice: product?.salePrice != null ? String(product.salePrice) : '',
     section: product?.section ?? allowedSections[0] ?? 'glass_plywood',
+    productType: product?.productType ?? null,
     godownId: product?.godownId ?? godowns[0]?.id ?? '',
     lowStockThreshold: product?.lowStockThreshold ?? 5,
   }
@@ -89,6 +92,9 @@ export function ProductFormDialog({
       unit: values.unit.trim(),
       costPrice: Number(values.costPrice) || 0,
       salePrice: trimmedSalePrice === '' ? null : Number(trimmedSalePrice) || 0,
+      // Meaningless outside the glass_plywood section — don't carry a stale
+      // value over if the section is changed away from it.
+      productType: values.section === 'glass_plywood' ? values.productType : null,
       lowStockThreshold: Number(values.lowStockThreshold) || 0,
     })
   }
@@ -191,6 +197,28 @@ export function ProductFormDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {values.section === 'glass_plywood' && (
+              <div className="space-y-2">
+                <Label>Product type</Label>
+                <Select
+                  value={values.productType ?? undefined}
+                  onValueChange={(value) => update('productType', value as ProductFormValues['productType'])}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="glass">Glass</SelectItem>
+                    <SelectItem value="plywood">Plywood</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Controls fabrication details and sq.ft-based stock on bills — only Glass gets them.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Godown</Label>

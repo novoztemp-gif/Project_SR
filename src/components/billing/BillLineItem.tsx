@@ -208,29 +208,39 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   const quantity  = Number(useWatch({ control, name: `items.${index}.quantity`  })) || 0
   const unitPrice = Number(useWatch({ control, name: `items.${index}.unitPrice` })) || 0
   const glassSize = String(useWatch({ control, name: `items.${index}.glassSize` }) ?? '')
+  const sqFtValue = Number(useWatch({ control, name: `items.${index}.sqFt`      })) || 0
 
   const selectedProduct = products.find((p) => p.id === selectedProductId)
   const usesSqFt = isSqFtUnit(selectedProduct?.unit)
-  // Sq.Ft is always derived from Size / Dimension (e.g. "6x6" -> 36), never
-  // typed directly — null while the size doesn't parse, so it shows blank
-  // instead of a misleading 0.
+  // Sub-classification within the (merged) glass_plywood section — only a
+  // literal glass product gets fabrication details, sqft-based stock, and
+  // the Polish/Hole/Art amount boxes; plywood/other price and stock the
+  // normal qty-based way even when also sold by sq.ft.
+  const isGlassProduct = selectedProduct?.productType === 'glass'
+  // Auto-fills from Size / Dimension (e.g. "6x6" -> 36) whenever it parses,
+  // but stays a normal editable field — sizes with inch marks etc. that
+  // don't parse leave it for the counter to type in by hand.
   const computedSqFt = usesSqFt ? computeSqFtFromSize(glassSize) : null
-  const subtotal = usesSqFt ? (computedSqFt ?? 0) * unitPrice : quantity * unitPrice
 
   useEffect(() => {
-    if (!usesSqFt) return
-    setValue(`items.${index}.sqFt`, computedSqFt ?? 0, { shouldValidate: true })
+    if (!usesSqFt || computedSqFt === null) return
+    setValue(`items.${index}.sqFt`, computedSqFt, { shouldValidate: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usesSqFt, computedSqFt, index])
   const qtyLabel = selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
-  const showFabricationOptions = selectedProduct?.section === 'glass_plywood'
+  const showFabricationOptions = isGlassProduct
   const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
   const polishSide = String(useWatch({ control, name: `items.${index}.polishSide` }) ?? '')
   const polishName = String(useWatch({ control, name: `items.${index}.polishName` }) ?? '')
   const cornerType = String(useWatch({ control, name: `items.${index}.cornerType` }) ?? '')
   const hole       = String(useWatch({ control, name: `items.${index}.hole`       }) ?? '')
   const artWork    = String(useWatch({ control, name: `items.${index}.artWork`    }) ?? '')
+  const polishAmt = Number(useWatch({ control, name: `items.${index}.polishAmt` })) || 0
+  const holeAmt   = Number(useWatch({ control, name: `items.${index}.holeAmt`   })) || 0
+  const artAmt    = Number(useWatch({ control, name: `items.${index}.artAmt`    })) || 0
+  const fabricationExtras = isGlassProduct ? polishAmt + holeAmt + artAmt : 0
+  const subtotal = (usesSqFt ? sqFtValue * unitPrice : quantity * unitPrice) + fabricationExtras
 
   const displayedProducts = products.filter(
     (p) => allowedSections.includes(p.section) && (!sectionFilter || sectionFilter.includes(p.section))
@@ -246,6 +256,11 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
     setValue(`items.${index}.unitPrice`,   resolveManualUnitPrice(product))
     setValue(`items.${index}.quantity`,    1)
     setValue(`items.${index}.sqFt`,        0,                  { shouldValidate: true })
+    // A previous selection's glass-only amounts don't carry over to a
+    // different product.
+    setValue(`items.${index}.polishAmt`,   0)
+    setValue(`items.${index}.holeAmt`,     0)
+    setValue(`items.${index}.artAmt`,      0)
     setOpen(false)
   }
 
@@ -263,7 +278,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
 
   return (
     <div className="border-b border-border last:border-0 py-3 space-y-2">
-      {/* Single row: S.No | Product | Size/Dimension | Model | Qty | (Sq.Ft) | Rate | Amount | Delete */}
+      {/* Single row: S.No | Product | Size/Dimension | Model-or-Sq.Ft | Qty | Rate | Amount | Delete */}
       <div className="grid grid-cols-[3.5rem_minmax(320px,2fr)_11rem_7rem_5.5rem_7rem_7rem_auto] items-start gap-2">
         <div className="space-y-1">
           <span className="text-xs text-muted-foreground whitespace-nowrap">S.No</span>
@@ -363,13 +378,27 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
           </div>
         </div>
 
-        <div className="space-y-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Model</span>
-          <Input
-            placeholder="Model"
-            {...register(`items.${index}.model`)}
-          />
-        </div>
+        {usesSqFt ? (
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Sq.Ft</span>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              className="text-right font-mono tabular-nums"
+              aria-label="Sq.Ft"
+              {...register(`items.${index}.sqFt`)}
+            />
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Model</span>
+            <Input
+              placeholder="Model"
+              {...register(`items.${index}.model`)}
+            />
+          </div>
+        )}
 
         <div className="space-y-1">
           <span className="text-xs text-muted-foreground whitespace-nowrap">{qtyLabel}</span>
@@ -388,17 +417,6 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
             max={selectedProduct && selectedProduct.stock >= 1 ? selectedProduct.stock : undefined}
             {...register(`items.${index}.quantity`)}
           />
-          {usesSqFt && (
-            <div className="flex items-center gap-1.5 pt-1">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Sq.Ft</span>
-              <div
-                aria-label="Sq.Ft"
-                className="flex h-9 flex-1 items-center justify-end rounded-md border border-input bg-muted/40 px-2 font-mono tabular-nums text-sm"
-              >
-                {computedSqFt ?? ''}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="space-y-1">
@@ -445,6 +463,38 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
 
       {itemErrors?.quantity && (
         <p className="text-xs text-destructive">{String(itemErrors.quantity.message)}</p>
+      )}
+
+      {isGlassProduct && (
+        <div className="flex flex-wrap gap-2">
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            placeholder="Polish Amt."
+            aria-label="Polish amount"
+            className="w-32 text-right font-mono tabular-nums"
+            {...register(`items.${index}.polishAmt`)}
+          />
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            placeholder="Hole Amt."
+            aria-label="Hole amount"
+            className="w-32 text-right font-mono tabular-nums"
+            {...register(`items.${index}.holeAmt`)}
+          />
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            placeholder="Art Amt."
+            aria-label="Art amount"
+            className="w-32 text-right font-mono tabular-nums"
+            {...register(`items.${index}.artAmt`)}
+          />
+        </div>
       )}
 
       {showFabricationOptions && (

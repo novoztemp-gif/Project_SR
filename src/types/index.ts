@@ -61,6 +61,8 @@ export interface Product {
   hsnCode: string
   taxRate: number   // percentage, e.g. 18
   section: Section
+  /** Sub-classification within the glass_plywood section — null outside it. */
+  productType?: 'glass' | 'plywood' | 'other' | null
   godownId: string
   stock: number
   costPrice: number // per unit
@@ -141,6 +143,10 @@ export interface SalesItem {
   cornerType?: string
   hole?: string
   artWork?: string
+  // Glass-only: cost components added on top of sqFt * unitPrice.
+  polishAmt?: number
+  holeAmt?: number
+  artAmt?: number
 }
 
 export type BillStatus = 'paid' | 'pending' | 'partial'
@@ -202,6 +208,15 @@ export interface CreateBillInput {
     glassSize?: string
     model?: string
     sqFt?: number
+    arch?: string
+    polishSide?: string
+    polishName?: string
+    cornerType?: string
+    hole?: string
+    artWork?: string
+    polishAmt?: number
+    holeAmt?: number
+    artAmt?: number
   }>
   transportationAmount?: number
   cuttingCharge?: number

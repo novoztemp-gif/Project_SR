@@ -1,14 +1,24 @@
 import { BillStatus } from '@prisma/client'
 
-/** Sq-ft items price as sqFt × rate; everything else as qty × rate. */
+/**
+ * Sq-ft items price as sqFt × rate; everything else as qty × rate. Glass
+ * line items add polishAmt/holeAmt/artAmt on top — separate cost
+ * components the bill breaks out (Glass/Polish/Hole/Art), not folded into
+ * the per-unit rate.
+ */
 export function computeItemSubtotal(item: {
   quantity: number
   unitPrice: number
   sqFt?: number | null
+  polishAmt?: number | null
+  holeAmt?: number | null
+  artAmt?: number | null
 }): number {
-  return item.sqFt && item.sqFt > 0
+  const base = item.sqFt && item.sqFt > 0
     ? item.sqFt * item.unitPrice
     : item.quantity * item.unitPrice
+  const extras = (item.polishAmt || 0) + (item.holeAmt || 0) + (item.artAmt || 0)
+  return base + extras
 }
 
 export function getBillStatus(

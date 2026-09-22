@@ -160,6 +160,10 @@ const productDefinitionSchema = z.object({
   // here; billing decides the fallback dynamically at bill time.
   salePrice: z.number().nonnegative().nullable().optional(),
   section: SectionEnum,
+  // Sub-classification within the glass_plywood section — 'glass' |
+  // 'plywood' | 'other'. Meaningless outside that section; sent as
+  // undefined/null there.
+  productType: z.enum(['glass', 'plywood', 'other']).nullable().optional(),
   godownId: z.string().min(1),
   lowStockThreshold: z.number().nonnegative(),
 })
@@ -190,6 +194,7 @@ inventoryRouter.post(
         hsnCode: '',
         taxRate: 18,
         section: data.section,
+        productType: data.productType ?? null,
         godownId: data.godownId,
         stock: data.openingStock,
         costPrice: data.costPrice ?? 0,
@@ -228,6 +233,7 @@ inventoryRouter.put(
         ...(data.costPrice !== undefined ? { costPrice: data.costPrice } : {}),
         salePrice: data.salePrice ?? null,
         section: data.section,
+        productType: data.productType ?? null,
         godownId: data.godownId,
         lowStockThreshold: data.lowStockThreshold,
       },

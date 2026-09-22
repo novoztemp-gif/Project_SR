@@ -46,6 +46,9 @@ const itemSchema = z.object({
   cornerType:  z.string().optional(),
   hole:        z.string().optional(),
   artWork:     z.string().optional(),
+  polishAmt:   z.coerce.number().min(0).default(0),
+  holeAmt:     z.coerce.number().min(0).default(0),
+  artAmt:      z.coerce.number().min(0).default(0),
 })
 
 const billSchema = z.object({
@@ -80,6 +83,7 @@ function emptyItem(serial: number) {
     productId: '', productName: '', quantity: 1, unit: '',
     glassSize: '', model: '', sqFt: 0, unitPrice: 0,
     arch: '', polishSide: '', polishName: '', cornerType: '', hole: '', artWork: '',
+    polishAmt: 0, holeAmt: 0, artAmt: 0,
   }
 }
 
@@ -121,7 +125,9 @@ export function NewBillPage() {
     const sqFt  = Number(item.sqFt)      || 0
     const qty   = Number(item.quantity)  || 0
     const rate  = Number(item.unitPrice) || 0
-    return sum + (isSqFtUnit(item.unit) ? sqFt * rate : qty * rate)
+    const base  = isSqFtUnit(item.unit) ? sqFt * rate : qty * rate
+    const extras = (Number(item.polishAmt) || 0) + (Number(item.holeAmt) || 0) + (Number(item.artAmt) || 0)
+    return sum + base + extras
   }, 0)
 
   const transportationAmount = Number(watchedTransport) || 0
@@ -161,6 +167,9 @@ export function NewBillPage() {
           cornerType:  item.cornerType || undefined,
           hole:        item.hole       || undefined,
           artWork:     item.artWork    || undefined,
+          polishAmt:   item.polishAmt  || undefined,
+          holeAmt:     item.holeAmt    || undefined,
+          artAmt:      item.artAmt     || undefined,
         })),
         transportationAmount: values.transportationAmount,
         discount:   values.discount,

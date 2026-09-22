@@ -41,6 +41,12 @@ model Product {
   hsnCode           String   @default("")
   taxRate           Float    @default(18)
   section           Section
+  // Sub-classification within the (now-merged) glass_plywood section —
+  // 'glass' | 'plywood' | 'other'. Null for products outside that section.
+  // Needed because pricing/stock/fabrication rules differ for glass
+  // specifically (e.g. stock is tracked in sq.ft, not piece count) even
+  // though Glass and Plywood share one Section value.
+  productType       String?
   godownId          String
   stock             Float    @default(0)
   costPrice         Float    @default(0)
@@ -142,6 +148,13 @@ model SalesItem {
   cornerType  String?
   hole        String?
   artWork     String?
+  // Glass-only cost components, added on top of sqFt × unitPrice to make up
+  // the item's subtotal — entered separately from the base glass price so
+  // the printed bill can show a "Glass: x | Polish: y | Hole: z | Art: w"
+  // breakdown.
+  polishAmt   Float?
+  holeAmt     Float?
+  artAmt      Float?
   bill        SalesBill @relation(fields: [billId], references: [id], onDelete: Cascade)
 
   @@index([billId])
