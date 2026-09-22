@@ -56,6 +56,7 @@ export const api = {
           section: input.section,
           items: input.items,
           transportationAmount: input.transportationAmount ?? 0,
+          cuttingCharge: input.cuttingCharge ?? 0,
           discount: input.discount ?? 0,
           paidAmount: input.paidAmount ?? 0,
           billType: input.billType ?? 'general',

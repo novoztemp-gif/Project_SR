@@ -50,6 +50,7 @@ const createBillSchema = z.object({
     )
     .min(1, 'A bill needs at least one item'),
   transportationAmount: z.number().nonnegative().optional(),
+  cuttingCharge: z.number().nonnegative().optional(),
   discount: z.number().nonnegative().optional(),
   paidAmount: z.number().nonnegative().optional(),
   billType: z.enum(['general', 'glass_plywood']).default('general'),
@@ -141,6 +142,7 @@ billsRouter.post(
       }))
       const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
       const transportationAmount = input.transportationAmount ?? 0
+      const cuttingCharge = input.cuttingCharge ?? 0
       const discount = input.discount ?? 0
       const paidAmount = input.paidAmount ?? 0
 
@@ -196,9 +198,10 @@ billsRouter.post(
           subtotal,
           total: subtotal,
           transportationAmount,
+          cuttingCharge,
           discount,
           paidAmount,
-          status: getBillStatus(subtotal, transportationAmount, discount, paidAmount),
+          status: getBillStatus(subtotal, transportationAmount, discount, paidAmount, cuttingCharge),
           createdBy: req.user!.id,
           items: { create: items },
         },

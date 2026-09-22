@@ -84,6 +84,8 @@ model SalesBill {
   subtotal        Float
   total           Float
   transportationAmount Float  @default(0)
+  // Glass & Plywood billing only — never set on a general bill.
+  cuttingCharge   Float       @default(0)
   discount        Float       @default(0)
   paidAmount      Float       @default(0)
   status          BillStatus

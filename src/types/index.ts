@@ -161,10 +161,11 @@ export interface SalesBill {
   subtotal: number
   total: number        // sum of item subtotals (pre-discount)
   transportationAmount: number // default 0
+  cuttingCharge: number // default 0 — Glass & Plywood billing only
   discount: number     // default 0
   paidAmount: number   // default 0
   status: BillStatus   // explicit: paid | pending | partial
-  // derived (not stored): finalAmount = total + transportationAmount - discount, balanceAmount = finalAmount - paidAmount
+  // derived (not stored): finalAmount = total + transportationAmount + cuttingCharge - discount, balanceAmount = finalAmount - paidAmount
   billType: 'general' | 'glass_plywood' // default 'general'
   gpVoucherNumber?: string // e.g. "GP-2026-0001" — set only when billType is 'glass_plywood'
   createdBy: string    // User.id
@@ -203,6 +204,7 @@ export interface CreateBillInput {
     sqFt?: number
   }>
   transportationAmount?: number
+  cuttingCharge?: number
   discount?: number
   paidAmount?: number
   billType?: 'general' | 'glass_plywood'

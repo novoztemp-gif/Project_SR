@@ -61,6 +61,7 @@ const billSchema = z.object({
   jobDescription:  z.string().optional(),
   items:           z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
+  cuttingCharge:   z.coerce.number().min(0).default(0),
   discount:        z.coerce.number().min(0).default(0),
   paidAmount:      z.coerce.number().min(0).default(0),
 })
@@ -107,13 +108,14 @@ export function GlassPlywoodBillingPage() {
       transport: '', transportTime: '',
       writtenStaff: '', priority: '', orderNumber: '', jobDescription: '',
       items: [emptyItem(1)],
-      transportationAmount: 0, discount: 0, paidAmount: 0,
+      transportationAmount: 0, cuttingCharge: 0, discount: 0, paidAmount: 0,
     },
   })
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' })
   const watchedItems         = useWatch({ control: form.control, name: 'items'                })
   const watchedTransport     = useWatch({ control: form.control, name: 'transportationAmount'  })
+  const watchedCuttingCharge = useWatch({ control: form.control, name: 'cuttingCharge' })
   const watchedDiscount      = useWatch({ control: form.control, name: 'discount'   })
   const watchedPaid          = useWatch({ control: form.control, name: 'paidAmount' })
   const watchedBookingDate   = useWatch({ control: form.control, name: 'bookingDate' })
@@ -128,9 +130,10 @@ export function GlassPlywoodBillingPage() {
   }, 0)
 
   const transportationAmount = Number(watchedTransport) || 0
+  const cuttingCharge = Number(watchedCuttingCharge) || 0
   const discount      = Number(watchedDiscount) || 0
   const paidAmount    = Number(watchedPaid)      || 0
-  const finalAmount   = total + transportationAmount - discount
+  const finalAmount   = total + transportationAmount + cuttingCharge - discount
   const balanceAmount = finalAmount - paidAmount
 
   async function onSubmit(values: FormValues) {
@@ -168,6 +171,7 @@ export function GlassPlywoodBillingPage() {
           artWork:     item.artWork    || undefined,
         })),
         transportationAmount: values.transportationAmount,
+        cuttingCharge: values.cuttingCharge,
         discount:   values.discount,
         paidAmount: values.paidAmount,
         billType:   'glass_plywood',
@@ -404,6 +408,18 @@ export function GlassPlywoodBillingPage() {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Total</span>
                     <span className="font-mono tabular-nums">{INR.format(total)}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cuttingCharge">Cutting Charges (₹)</Label>
+                    <Input
+                      id="cuttingCharge"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="font-mono tabular-nums text-right"
+                      {...form.register('cuttingCharge')}
+                    />
                   </div>
 
                   <div className="space-y-2">
