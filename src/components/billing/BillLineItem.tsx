@@ -238,7 +238,6 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   // sq.ft and duplicates the separate Sq.Ft column right next to it.
   const qtyLabel = isGPContext ? 'Qty' : selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
-  const showFabricationOptions = isGlassProduct
   const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
   const polishSide = String(useWatch({ control, name: `items.${index}.polishSide` }) ?? '')
   const polishName = String(useWatch({ control, name: `items.${index}.polishName` }) ?? '')
@@ -429,7 +428,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
         </div>
 
         <div className="space-y-1">
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex h-4 items-center justify-between gap-1">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Rate</span>
             {selectedProduct && (
               <button
@@ -482,39 +481,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
       )}
 
       {isGlassProduct && (
-        <div className="flex flex-wrap gap-2">
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            placeholder="Polish Amt."
-            aria-label="Polish amount"
-            className="w-32 text-right font-mono tabular-nums"
-            {...register(`items.${index}.polishAmt`)}
-          />
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            placeholder="Hole Amt."
-            aria-label="Hole amount"
-            className="w-32 text-right font-mono tabular-nums"
-            {...register(`items.${index}.holeAmt`)}
-          />
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            placeholder="Art Amt."
-            aria-label="Art amount"
-            className="w-32 text-right font-mono tabular-nums"
-            {...register(`items.${index}.artAmt`)}
-          />
-        </div>
-      )}
-
-      {showFabricationOptions && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <IconOptionPicker
             label="Arch"
             value={arch}
@@ -529,30 +496,65 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
             icons={POLISH_SIDE_ICONS}
             onChange={(value) => setValue(`items.${index}.polishSide`, value, { shouldValidate: true })}
           />
-          <FabricationOptionPill
-            label="Polish Name"
-            value={polishName}
-            options={POLISH_NAME_OPTIONS}
-            onChange={(value) => setValue(`items.${index}.polishName`, value, { shouldValidate: true })}
-          />
+          {/* Amount box sits directly above the pill it prices, so it's
+              obvious which fabrication option each charge belongs to. */}
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              placeholder="Polish Amt."
+              aria-label="Polish amount"
+              className="w-28 text-right font-mono tabular-nums"
+              {...register(`items.${index}.polishAmt`)}
+            />
+            <FabricationOptionPill
+              label="Polish Name"
+              value={polishName}
+              options={POLISH_NAME_OPTIONS}
+              onChange={(value) => setValue(`items.${index}.polishName`, value, { shouldValidate: true })}
+            />
+          </div>
           <FabricationOptionPill
             label="Corner Type"
             value={cornerType}
             options={CORNER_TYPE_OPTIONS}
             onChange={(value) => setValue(`items.${index}.cornerType`, value, { shouldValidate: true })}
           />
-          <FabricationOptionPill
-            label="Hole"
-            value={hole}
-            options={HOLE_OPTIONS}
-            onChange={(value) => setValue(`items.${index}.hole`, value, { shouldValidate: true })}
-          />
-          <FabricationOptionPill
-            label="Art Work"
-            value={artWork}
-            options={ART_WORK_OPTIONS}
-            onChange={(value) => setValue(`items.${index}.artWork`, value, { shouldValidate: true })}
-          />
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              placeholder="Hole Amt."
+              aria-label="Hole amount"
+              className="w-28 text-right font-mono tabular-nums"
+              {...register(`items.${index}.holeAmt`)}
+            />
+            <FabricationOptionPill
+              label="Hole"
+              value={hole}
+              options={HOLE_OPTIONS}
+              onChange={(value) => setValue(`items.${index}.hole`, value, { shouldValidate: true })}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              placeholder="Art Amt."
+              aria-label="Art amount"
+              className="w-28 text-right font-mono tabular-nums"
+              {...register(`items.${index}.artAmt`)}
+            />
+            <FabricationOptionPill
+              label="Art Work"
+              value={artWork}
+              options={ART_WORK_OPTIONS}
+              onChange={(value) => setValue(`items.${index}.artWork`, value, { shouldValidate: true })}
+            />
+          </div>
         </div>
       )}
 
