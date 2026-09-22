@@ -98,7 +98,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
       <div className="print-content-block print-content-block--gp-cutter">
         <table className="w-full text-[10.5px] border-collapse">
           <thead>
-            <tr className="bg-[#16232e] text-white">
+            <tr className="bg-white text-[#16232e]">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
               <th className={`${HEADER_CELL} text-left w-full`}>Product Name</th>
