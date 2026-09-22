@@ -358,7 +358,10 @@
     height: 50mm;
   }
   .print-content-block--gp-cutter {
-    padding-top: 50mm;
+    /* A couple mm more than the header's own reserved height — leaves a
+       small visible gap between the header card and the table, matching
+       the reference, instead of the table touching the header's border. */
+    padding-top: 53mm;
   }
   .print-running-header--gp-cash {
     height: 54mm;

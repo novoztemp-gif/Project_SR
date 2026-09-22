@@ -96,7 +96,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
         </div>
       </div>
       <div className="print-content-block print-content-block--gp-cutter">
-        <table className="w-full text-[10.5px] border-collapse">
+        <table className="mt-2 w-full text-[10.5px] border-collapse">
           <thead>
             <tr className="bg-white text-[#16232e]">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
@@ -115,7 +115,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             {bill.items.map((item, i) => {
               const artSet = isArtWorkSet(item.artWork)
               const rowBg = artSet ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
-              const textColor = artSet ? 'text-red-700' : ''
+              // Text color follows the same row tint, not just red for a
+              // flagged row — an alternating (non-flagged) row's text is
+              // green too, matching its light-green background.
+              const textColor = artSet ? 'text-red-700' : i % 2 === 1 ? 'text-green-700' : ''
               return (
                 <tr key={i} className={rowBg}>
                   <td className={`${CELL} text-center`}>
