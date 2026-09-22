@@ -7,6 +7,7 @@ import {
   isArtWorkSet,
   POLISH_SIDE_CUTTER_LABELS,
 } from '@/lib/glassPrintFormat'
+import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
 const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
@@ -21,6 +22,22 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   const voucher = bill.gpVoucherNumber ?? bill.billNumber
   const totalQty = bill.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
 
+  // Which godown(s) to pull stock from — every distinct godown among this
+  // bill's actual products, in first-appearance order, read from live
+  // inventory (not snapshotted on the bill) since that's where the cutter
+  // needs to go get it as of right now.
+  const products = useInventoryStore((s) => s.products)
+  const godowns = useInventoryStore((s) => s.godowns)
+  const billGodowns: string[] = []
+  const seenGodownIds = new Set<string>()
+  for (const item of bill.items) {
+    const product = products.find((p) => p.id === item.productId)
+    if (!product || seenGodownIds.has(product.godownId)) continue
+    seenGodownIds.add(product.godownId)
+    const godown = godowns.find((g) => g.id === product.godownId)
+    if (godown) billGodowns.push(godown.name)
+  }
+
   return (
     <div className="printable-gp bg-white text-[#1a1a1a]">
       {/* print-running-header is fixed-positioned in print only (see
@@ -32,9 +49,18 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
       <div className="print-running-header print-running-header--gp-cutter">
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b-2 border-[#16232e] pb-2 mb-3">
           <h1 className="text-sm font-extrabold uppercase tracking-wide">Glass Cutting &amp; Production Order</h1>
-          <p className="text-xs whitespace-nowrap">
-            <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
-          </p>
+          <div className="text-right text-xs">
+            {billGodowns.length > 0 && (
+              <div className="mb-0.5 font-semibold leading-tight">
+                {billGodowns.map((name) => (
+                  <p key={name} className="whitespace-nowrap">{name}</p>
+                ))}
+              </div>
+            )}
+            <p className="whitespace-nowrap">
+              <span className="font-semibold">Bill No:</span> {voucher} <span className="text-gray-500">| Page 1 of 1</span>
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap justify-between gap-x-8 gap-y-2 text-xs">
@@ -57,12 +83,12 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
         <table className="w-full text-[10.5px] border-collapse">
           <thead>
             <tr className="bg-[#16232e] text-white">
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Check</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
               <th className={`${HEADER_CELL} text-left w-full`}>Glass Name / Product</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
+              <th className={`${HEADER_CELL} whitespace-nowrap pl-3`}>Arch</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner Type</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Side &amp; Polish Name</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
@@ -83,7 +109,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
-                  <td className={`${CELL} whitespace-nowrap ${textColor}`}>
+                  <td className={`${CELL} whitespace-nowrap pl-3 ${textColor}`}>
                     {item.arch ? (
                       <div className="flex items-center justify-center gap-1">
                         {ARCH_ICONS_SMALL[item.arch]}
