@@ -169,7 +169,14 @@ export const CORNER_TYPE_OPTIONS: string[] = [
   '1 1/2" Corner',
 ]
 export const HOLE_OPTIONS: string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-export const ART_WORK_OPTIONS: string[] = ['Yes', 'No']
+export const ART_WORK_OPTIONS: string[] = [
+  'White Design',
+  'Line Design',
+  'Colour Work',
+  'Double Line Work',
+  'Stone work',
+  'Crystal Work',
+]
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
 

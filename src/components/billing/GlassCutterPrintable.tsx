@@ -2,8 +2,9 @@ import { ARCH_ICONS_SMALL, POLISH_SIDE_ICONS_SMALL } from '@/components/billing/
 import {
   ARCH_SHORT_LABELS,
   fmtGPDate,
+  getArtWorkLabel,
   getHoleLabel,
-  isArtWorkYes,
+  isArtWorkSet,
   POLISH_SIDE_CUTTER_LABELS,
 } from '@/lib/glassPrintFormat'
 import type { SalesBill } from '@/types'
@@ -70,9 +71,9 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </thead>
           <tbody>
             {bill.items.map((item, i) => {
-              const artYes = isArtWorkYes(item.artWork)
-              const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
-              const textColor = artYes ? 'text-red-700' : ''
+              const artSet = isArtWorkSet(item.artWork)
+              const rowBg = artSet ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
+              const textColor = artSet ? 'text-red-700' : ''
               return (
                 <tr key={i} className={rowBg}>
                   <td className={`${CELL} text-center`}>
@@ -107,8 +108,8 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                     )}
                   </td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{getHoleLabel(item.hole)}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artYes ? 'text-red-700' : ''}`}>
-                    {artYes ? 'YES' : 'No'}
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artSet ? 'text-red-700' : ''}`}>
+                    {getArtWorkLabel(item.artWork)}
                   </td>
                 </tr>
               )

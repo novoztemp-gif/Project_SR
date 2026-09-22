@@ -3,7 +3,7 @@ import {
   fmtGPDate,
   getArtWorkLabel,
   getHoleLabel,
-  isArtWorkYes,
+  isArtWorkSet,
   POLISH_SIDE_CASH_LABELS,
   stripCornerSuffix,
 } from '@/lib/glassPrintFormat'
@@ -26,7 +26,7 @@ function fabricationSummary(item: SalesItem) {
     polish,
     corner: stripCornerSuffix(item.cornerType),
     hole: getHoleLabel(item.hole),
-    artYes: isArtWorkYes(item.artWork),
+    artSet: isArtWorkSet(item.artWork),
     artLabel: getArtWorkLabel(item.artWork),
   }
 }
@@ -90,8 +90,8 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
           </thead>
           <tbody>
             {bill.items.map((item, i) => {
-              const { arch, polish, corner, hole, artYes, artLabel } = fabricationSummary(item)
-              const rowBg = artYes ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
+              const { arch, polish, corner, hole, artSet, artLabel } = fabricationSummary(item)
+              const rowBg = artSet ? 'bg-red-50' : i % 2 === 1 ? 'bg-green-50' : 'bg-white'
               return (
                 <tr key={i} className={rowBg}>
                   <td className={`${CELL} text-center whitespace-nowrap`}>{item.serialNumber || i + 1}</td>
@@ -99,7 +99,7 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
                     <p className="font-semibold">{item.productName}</p>
                     <p className="text-[9.5px] text-gray-600">
                       Arch: {arch} | Polish: {polish} | Corner: {corner} | Hole: {hole} | Art:{' '}
-                      <span className={artYes ? 'text-red-700 font-semibold' : ''}>{artLabel}</span>
+                      <span className={artSet ? 'text-red-700 font-semibold' : ''}>{artLabel}</span>
                     </p>
                   </td>
                   <td className={`${CELL} text-center whitespace-nowrap`}>{item.glassSize || '-'}</td>

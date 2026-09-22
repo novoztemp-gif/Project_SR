@@ -56,10 +56,12 @@ export function getHoleLabel(value?: string): string {
   return value || '0'
 }
 
-export function isArtWorkYes(value?: string): boolean {
-  return (value ?? '').trim().toLowerCase() === 'yes'
+/** Any of the named art work options (White Design, Line Design, …) picked — as opposed to none. */
+export function isArtWorkSet(value?: string): boolean {
+  return !!(value ?? '').trim()
 }
 
 export function getArtWorkLabel(value?: string): string {
-  return isArtWorkYes(value) ? 'Yes' : 'No'
+  const trimmed = (value ?? '').trim()
+  return trimmed || '–'
 }
