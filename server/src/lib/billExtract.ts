@@ -27,6 +27,11 @@ export interface ParsedBill {
   transportationAmount?: number
   discount?: number
   paidAmount?: number
+  // Glass & Plywood billing only — 'H'/'M'/'L' priority, an order ID, and a
+  // short job description, if the scanned document happens to show them.
+  priority?: 'H' | 'M' | 'L'
+  orderNumber?: string
+  jobDescription?: string
   items: ParsedBillItem[]
 }
 
@@ -58,6 +63,11 @@ const EXTRACTION_INSTRUCTIONS = [
   '- transportationAmount: a separate transportation/freight/delivery charge amount, if shown.',
   '- discount: a discount amount shown on the document.',
   '- paidAmount: an amount already paid / advance received, if shown.',
+  `- priority: an "H"/"M"/"L" priority or urgency marker if the document shows one`,
+  '  (e.g. a circled/checked H, M or L) — empty string if there is no such marker.',
+  '- orderNumber: an order ID / job number / reference number printed on the document,',
+  '  distinct from the bill/invoice number itself — empty string if none.',
+  '- jobDescription: a short job/work description if the document has one — empty string if none.',
 ].join(' ')
 
 // JSON Schema for structured output — forces valid, parseable JSON back.
@@ -74,6 +84,9 @@ const BILL_SCHEMA = {
     'transportationAmount',
     'discount',
     'paidAmount',
+    'priority',
+    'orderNumber',
+    'jobDescription',
     'items',
   ],
   properties: {
@@ -86,6 +99,9 @@ const BILL_SCHEMA = {
     transportationAmount: { type: 'number' },
     discount: { type: 'number' },
     paidAmount: { type: 'number' },
+    priority: { type: 'string', enum: ['H', 'M', 'L', ''] },
+    orderNumber: { type: 'string' },
+    jobDescription: { type: 'string' },
     items: {
       type: 'array',
       items: {
@@ -121,6 +137,9 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
     transportationAmount: Number(parsed.transportationAmount) || undefined,
     discount: Number(parsed.discount) || undefined,
     paidAmount: Number(parsed.paidAmount) || undefined,
+    priority: (['H', 'M', 'L'] as const).includes(parsed.priority) ? parsed.priority : undefined,
+    orderNumber: parsed.orderNumber || undefined,
+    jobDescription: parsed.jobDescription || undefined,
     items: rawItems.map((it) => {
       const qty = Number(it?.qty) || 0
       const sqFt = Number(it?.sqFt) || 0

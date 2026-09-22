@@ -171,6 +171,10 @@ export interface SalesBill {
   /** Free text: the staff member who physically wrote the bill — distinct
    * from createdBy, the counter/login that entered it. */
   writtenStaff?: string | null
+  /** Glass & Plywood billing only — never set on a general bill. */
+  priority?: 'H' | 'M' | 'L' | null
+  orderNumber?: string | null
+  jobDescription?: string | null
   createdAt: string    // ISO-8601
 }
 
@@ -183,6 +187,9 @@ export interface CreateBillInput {
   transport?: string
   transportTime?: string
   writtenStaff?: string
+  priority?: 'H' | 'M' | 'L'
+  orderNumber?: string
+  jobDescription?: string
   section: Section
   items: Array<{
     serialNumber?: string

@@ -24,6 +24,9 @@ const createBillSchema = z.object({
   transport: z.string().optional(),
   transportTime: z.string().optional(),
   writtenStaff: z.string().optional(),
+  priority: z.enum(['H', 'M', 'L']).optional(),
+  orderNumber: z.string().optional(),
+  jobDescription: z.string().optional(),
   section: SectionEnum,
   items: z
     .array(
@@ -186,6 +189,9 @@ billsRouter.post(
           transport: input.transport,
           transportTime: input.transportTime,
           writtenStaff: input.writtenStaff || null,
+          priority: input.priority || null,
+          orderNumber: input.orderNumber || null,
+          jobDescription: input.jobDescription || null,
           section: input.section,
           subtotal,
           total: subtotal,

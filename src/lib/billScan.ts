@@ -19,6 +19,9 @@ export interface ParsedBill {
   transportationAmount?: number
   discount?: number
   paidAmount?: number
+  priority?: 'H' | 'M' | 'L'
+  orderNumber?: string
+  jobDescription?: string
   items: ParsedBillItem[]
 }
 

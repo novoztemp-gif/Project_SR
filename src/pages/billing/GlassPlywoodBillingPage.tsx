@@ -12,6 +12,7 @@ import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Form } from '@/components/ui/form'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BillLineItem } from '@/components/billing/BillLineItem'
 import { BillScanDialog } from '@/components/billing/BillScanDialog'
 import { ScannerConnectDialog } from '@/components/billing/ScannerConnectDialog'
@@ -55,6 +56,9 @@ const billSchema = z.object({
   transport:       z.string().optional(),
   transportTime:   z.string().optional(),
   writtenStaff:    z.string().optional(),
+  priority:        z.string().optional(),
+  orderNumber:     z.string().optional(),
+  jobDescription:  z.string().optional(),
   items:           z.array(itemSchema).min(1),
   transportationAmount: z.coerce.number().min(0).default(0),
   discount:        z.coerce.number().min(0).default(0),
@@ -101,7 +105,7 @@ export function GlassPlywoodBillingPage() {
       customerName: '', customerAddress: '', customerPhone: '',
       bookingDate: todayIso, deliveryDate: '',
       transport: '', transportTime: '',
-      writtenStaff: '',
+      writtenStaff: '', priority: '', orderNumber: '', jobDescription: '',
       items: [emptyItem(1)],
       transportationAmount: 0, discount: 0, paidAmount: 0,
     },
@@ -114,6 +118,7 @@ export function GlassPlywoodBillingPage() {
   const watchedPaid          = useWatch({ control: form.control, name: 'paidAmount' })
   const watchedBookingDate   = useWatch({ control: form.control, name: 'bookingDate' })
   const watchedDeliveryDate  = useWatch({ control: form.control, name: 'deliveryDate' })
+  const watchedPriority      = useWatch({ control: form.control, name: 'priority' })
 
   const total = (watchedItems ?? []).reduce((sum, item) => {
     const sqFt  = Number(item.sqFt)      || 0
@@ -141,6 +146,9 @@ export function GlassPlywoodBillingPage() {
         transport:       values.transport       || undefined,
         transportTime:   values.transportTime   || undefined,
         writtenStaff:    values.writtenStaff    || undefined,
+        priority:        (values.priority || undefined) as 'H' | 'M' | 'L' | undefined,
+        orderNumber:     values.orderNumber     || undefined,
+        jobDescription:  values.jobDescription  || undefined,
         section,
         items: values.items.map((item) => ({
           serialNumber: item.serialNumber || undefined,
@@ -207,6 +215,9 @@ export function GlassPlywoodBillingPage() {
     if (parsed.transportationAmount) form.setValue('transportationAmount', parsed.transportationAmount, { shouldValidate: true })
     if (parsed.discount) form.setValue('discount', parsed.discount, { shouldValidate: true })
     if (parsed.paidAmount) form.setValue('paidAmount', parsed.paidAmount, { shouldValidate: true })
+    if (parsed.priority) form.setValue('priority', parsed.priority, { shouldValidate: true })
+    if (parsed.orderNumber) form.setValue('orderNumber', parsed.orderNumber, { shouldValidate: true })
+    if (parsed.jobDescription) form.setValue('jobDescription', parsed.jobDescription, { shouldValidate: true })
 
     const currentItems = form.getValues('items') ?? []
     const firstItem = currentItems[0]
@@ -306,12 +317,13 @@ export function GlassPlywoodBillingPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Customer</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="customerName">Name</Label>
                       <Input id="customerName" placeholder="Name" {...form.register('customerName')} />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="customerPhone">Phone</Label>
                       <Input id="customerPhone" placeholder="+91 98765 43210" {...form.register('customerPhone')} />
@@ -321,38 +333,65 @@ export function GlassPlywoodBillingPage() {
                         </p>
                       )}
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="customerAddress">Address</Label>
-                    <Input id="customerAddress" placeholder="Address" {...form.register('customerAddress')} />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="customerAddress">Address</Label>
+                      <Input id="customerAddress" placeholder="Address" {...form.register('customerAddress')} />
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="bookingDate">Booking date</Label>
                       <DateInput id="bookingDate" registration={form.register('bookingDate')} displayValue={watchedBookingDate} />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="deliveryDate">Delivery date</Label>
                       <DateInput id="deliveryDate" registration={form.register('deliveryDate')} displayValue={watchedDeliveryDate} />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="transport">Transport</Label>
                       <Input id="transport" placeholder="Vehicle / carrier" {...form.register('transport')} />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="transportTime">Transport time</Label>
                       <Input id="transportTime" placeholder="e.g. 2 PM" {...form.register('transportTime')} />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="writtenStaff">Written staff</Label>
-                    <Input id="writtenStaff" placeholder="Name of the staff who wrote this bill" {...form.register('writtenStaff')} />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">H M L</Label>
+                      <Select
+                        value={watchedPriority || undefined}
+                        onValueChange={(value) => form.setValue('priority', value, { shouldValidate: true })}
+                      >
+                        <SelectTrigger id="priority">
+                          <SelectValue placeholder="Select Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="H">H</SelectItem>
+                          <SelectItem value="M">M</SelectItem>
+                          <SelectItem value="L">L</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="orderNumber">Number</Label>
+                      <Input id="orderNumber" placeholder="e.g. Order ID" {...form.register('orderNumber')} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="jobDescription">Work</Label>
+                      <Input id="jobDescription" placeholder="Enter Job Description" {...form.register('jobDescription')} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="writtenStaff">Written staff</Label>
+                      <Input id="writtenStaff" placeholder="Select or Enter Name" {...form.register('writtenStaff')} />
+                    </div>
                   </div>
                 </CardContent>
               </Card>

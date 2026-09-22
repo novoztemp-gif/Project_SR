@@ -101,6 +101,12 @@ model SalesBill {
   // Free text: the staff member who physically wrote the bill — distinct
   // from createdBy, the counter/login account that entered it.
   writtenStaff    String?
+  // Glass & Plywood billing only — 'H' | 'M' | 'L' priority tier, an
+  // internal order ID, and a short job description. Nullable since general
+  // bills never set them.
+  priority        String?
+  orderNumber     String?
+  jobDescription  String?
   createdAt       DateTime    @default(now())
   items           SalesItem[]
 
