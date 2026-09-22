@@ -157,7 +157,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                     )}
                   </td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{getHoleLabel(item.hole)}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap font-semibold ${artSet ? 'text-red-700' : ''}`}>
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold ${textColor}`}>
                     {getArtWorkLabel(item.artWork)}
                   </td>
                 </tr>
@@ -179,12 +179,15 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </div>
 
           <div className="space-y-2 rounded border border-gray-400 p-3">
-            <p className="flex flex-wrap items-baseline gap-1">
-              <span className="whitespace-nowrap font-semibold">Things Eduthavar Name:</span>
+            <p className="flex flex-wrap items-baseline gap-1 uppercase">
+              <span className="whitespace-nowrap font-semibold">Things Eduththavar Name:</span>
               <span className={`${FILL_LINE} min-w-[16rem] flex-1`}>&nbsp;</span>
               <span className="ml-4 whitespace-nowrap font-semibold">Sign:</span>
               <span className={`${FILL_LINE} w-28`}>&nbsp;</span>
             </p>
+            {/* Fixed hand-fill checklist codes — kept in their original
+                mixed case (e.g. "Car G", "Alapancode G"), not uppercased
+                like the rest of this box. */}
             <p className="flex flex-wrap gap-x-4 gap-y-1">
               {LOGISTICS_CHECKLIST.map((label) => (
                 <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
@@ -193,7 +196,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                 </span>
               ))}
             </p>
-            <p className="flex flex-wrap items-baseline gap-1">
+            <p className="flex flex-wrap items-baseline gap-1 uppercase">
               <span className="whitespace-nowrap font-semibold">Driver Name:</span>
               <span className={`${FILL_LINE} w-24`}>&nbsp;</span>
               <span className="ml-2 whitespace-nowrap font-semibold">Sign:</span>
@@ -207,7 +210,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-baseline gap-4 rounded border border-gray-400 p-3">
+          <div className="flex flex-wrap items-baseline gap-4 rounded border border-gray-400 p-3 uppercase">
             <span className="flex items-baseline gap-1.5 whitespace-nowrap">
               <span className="font-semibold">Serious :</span>
               <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
