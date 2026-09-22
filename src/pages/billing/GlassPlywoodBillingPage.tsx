@@ -261,6 +261,12 @@ export function GlassPlywoodBillingPage() {
         model: '',
         sqFt: item.sqFt,
         unitPrice: resolveScannedUnitPrice(product, item.rate),
+        // Only meaningful for a matched glass product, but harmless to
+        // carry through otherwise — BillLineItem only shows/uses these for
+        // a product whose Product Type is Glass.
+        polishAmt: item.polishAmt || 0,
+        holeAmt: item.holeAmt || 0,
+        artAmt: item.artAmt || 0,
       }
     })
 

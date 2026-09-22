@@ -242,6 +242,9 @@ export function NewBillPage() {
         model: '',
         sqFt: item.sqFt,
         unitPrice: resolveScannedUnitPrice(product, item.rate),
+        polishAmt: item.polishAmt || 0,
+        holeAmt: item.holeAmt || 0,
+        artAmt: item.artAmt || 0,
       }
     })
 

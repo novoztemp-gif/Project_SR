@@ -7,6 +7,9 @@ export interface ParsedBillItem {
   rate: number
   sizeDimension: string
   unit: string
+  polishAmt: number
+  holeAmt: number
+  artAmt: number
 }
 
 export interface ParsedBill {

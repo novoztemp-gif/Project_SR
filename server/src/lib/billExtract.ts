@@ -15,6 +15,12 @@ export interface ParsedBillItem {
   rate: number
   sizeDimension: string
   unit: string
+  // Glass & Plywood billing only — separate Polish/Hole/Art charges when
+  // the document shows a per-item price breakdown (e.g. "Glass: 2,100 |
+  // Polish: 120 | Hole: 80 | Art: 500"), else 0.
+  polishAmt: number
+  holeAmt: number
+  artAmt: number
 }
 
 export interface ParsedBill {
@@ -53,6 +59,11 @@ const EXTRACTION_INSTRUCTIONS = [
   '  item (a count of pieces is "pcs", a length/rod is "length", sheets of glass',
   '  or ply are "sheet", loose material sold by weight is "kg", etc.). Default to',
   '  "pcs" if genuinely unclear — always return one of this exact list, nothing else.',
+  '- polishAmt, holeAmt, artAmt: only if this row shows a broken-out price',
+  '  breakdown (e.g. "Glass: 2,100 | Polish: 120 | Hole: 80 | Art: 500"),',
+  '  the separate Polish / Hole / Art charge amounts for that row — 0 for',
+  '  each if the row has no such breakdown (a single rate/amount is normal',
+  '  and does not mean these should be guessed).',
   'Never put the line total into rate. If a column is missing, use 0 for numbers and an',
   'empty string for text. Do not invent items or values.',
   'Also extract these document-level fields if shown anywhere on the page (leave as an',
@@ -107,7 +118,7 @@ const BILL_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['name', 'qty', 'sqFt', 'rate', 'amount', 'sizeDimension', 'unit'],
+        required: ['name', 'qty', 'sqFt', 'rate', 'amount', 'sizeDimension', 'unit', 'polishAmt', 'holeAmt', 'artAmt'],
         properties: {
           name: { type: 'string' },
           qty: { type: 'number' },
@@ -116,6 +127,9 @@ const BILL_SCHEMA = {
           amount: { type: 'number' },
           sizeDimension: { type: 'string' },
           unit: { type: 'string', enum: [...UNITS] },
+          polishAmt: { type: 'number' },
+          holeAmt: { type: 'number' },
+          artAmt: { type: 'number' },
         },
       },
     },
@@ -145,16 +159,21 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
       const sqFt = Number(it?.sqFt) || 0
       const rate = Number(it?.rate) || 0
       const amount = Number(it?.amount) || 0
+      const polishAmt = Number(it?.polishAmt) || 0
+      const holeAmt = Number(it?.holeAmt) || 0
+      const artAmt = Number(it?.artAmt) || 0
 
-      // The client computes the line as qty × rate, so `rate` MUST be per-unit.
-      // The printed "Amount" (line total) is the most reliable number, so derive
-      // the per-unit rate from it. This prevents the double-multiply bug where the
-      // model returns the line total in the rate field.
+      // The client computes the line as qty × rate (plus polish/hole/art on
+      // top for glass), so `rate` MUST be the per-unit base price alone —
+      // exclude those extras before deriving it from the printed line
+      // total, or they'd get silently baked into the rate and double-counted
+      // once the client adds them back in separately.
+      const baseAmount = Math.max(amount - polishAmt - holeAmt - artAmt, 0)
       let unitRate = rate
-      if (amount > 0 && qty > 0) {
-        unitRate = round2(amount / qty)
-      } else if (amount > 0 && qty === 0) {
-        unitRate = round2(amount)
+      if (baseAmount > 0 && qty > 0) {
+        unitRate = round2(baseAmount / qty)
+      } else if (baseAmount > 0 && qty === 0) {
+        unitRate = round2(baseAmount)
       }
 
       const unit = UNITS.includes(it?.unit) ? String(it.unit) : 'pcs'
@@ -166,6 +185,9 @@ export async function extractBillFromDataUrl(dataUrl: string): Promise<ParsedBil
         rate: unitRate,
         sizeDimension: String(it?.sizeDimension ?? ''),
         unit,
+        polishAmt,
+        holeAmt,
+        artAmt,
       }
     }),
   }
