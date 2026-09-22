@@ -166,7 +166,10 @@ export function GlassPlywoodBillingPage() {
         createdBy:  currentUser.id,
       })
       toast.success(`Bill ${bill.gpVoucherNumber ?? bill.billNumber} saved`)
-      navigate(`/billing/${bill.id}`)
+      // Auto-print the customer-facing Cash bill on save (Print Cutter Bill
+      // stays available as a manual action on the detail page for the
+      // workshop copy).
+      navigate(`/billing/${bill.id}`, { state: { print: true, printType: 'cash' } })
     } catch (err) {
       if (err instanceof InsufficientStockError) {
         toast.error(`Not enough stock for ${err.productName}`)

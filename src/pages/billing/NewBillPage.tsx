@@ -168,7 +168,7 @@ export function NewBillPage() {
         createdBy:  currentUser.id,
       })
       toast.success(`Bill ${bill.billNumber} saved`)
-      navigate(`/billing/${bill.id}`)
+      navigate(`/billing/${bill.id}`, { state: { print: true } })
     } catch (err) {
       if (err instanceof InsufficientStockError) {
         toast.error(`Not enough stock for ${err.productName}`)
