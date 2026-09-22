@@ -13,11 +13,19 @@ export function fmtGPDate(iso?: string): string {
   return `${dd}-${mm}-${d.getFullYear()}`
 }
 
-/** "01:10:53 PM" — the Cutter voucher's header timestamp. */
+/** "01:10:53 PM" — the Cutter voucher's header timestamp. Built manually
+ * rather than via toLocaleTimeString, whose AM/PM casing (and format
+ * generally) follows the browser/OS locale, not anything this page
+ * controls — the same class of bug DateInput had. */
 export function fmtGPTime(iso?: string): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+  const hours24 = d.getHours()
+  const hours = String(hours24 % 12 || 12).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  const ampm = hours24 >= 12 ? 'PM' : 'AM'
+  return `${hours}:${minutes}:${seconds} ${ampm}`
 }
 
 export const ARCH_SHORT_LABELS: Record<string, string> = {
