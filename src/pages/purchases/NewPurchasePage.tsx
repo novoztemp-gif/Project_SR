@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useFieldArray, useForm, useWatch } from 'react-hook-form'
+import { type FieldErrors, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronDown, FileText, Plus, Ruler, ScanLine, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -115,7 +115,13 @@ export function NewPurchasePage() {
       unitPrice: 0,
       salePrice: 0,
       subtotal: 0,
-      godownId: godowns[0]?.id ?? '',
+      // Left blank rather than defaulting to the first godown — with no
+      // product picked yet there's no way to know where it actually
+      // belongs, and a silently-wrong default was easy to miss and save
+      // stock into the wrong place. Selecting an existing product (or a
+      // scan match) fills this in correctly; a genuinely new product still
+      // requires an explicit, conscious pick.
+      godownId: '',
     }
   }
   const [scanOpen, setScanOpen] = React.useState(false)
@@ -244,10 +250,14 @@ export function NewPurchasePage() {
         // point — it's editable, but this beats leaving it at 0.
         salePrice: product?.salePrice ?? item.rate,
         subtotal: 0,
-        // A scanned invoice has no notion of which of our own godowns to
-        // use — reflect the matched product's actual godown, or fall back
-        // to the default; the user can still change it per row afterward.
-        godownId: product?.godownId ?? godowns[0]?.id ?? '',
+        // Matched product: use its own actual godown — this is the whole
+        // point, a scanned line should land back where that product
+        // already lives. Unmatched (brand-new) item: leave blank rather
+        // than silently defaulting to the first godown alphabetically —
+        // that default looked "selected" but usually wasn't where the item
+        // actually belonged, and was easy to miss before saving. Blank
+        // forces a conscious pick instead.
+        godownId: product?.godownId ?? '',
       }
     })
 
@@ -256,6 +266,16 @@ export function NewPurchasePage() {
     } else {
       append(scannedItems)
     }
+  }
+
+  // Godown used to always come pre-filled (even when we genuinely didn't
+  // know where an item belonged), so this validation error never fired and
+  // a wrong guess saved silently. Now that it's left blank until known,
+  // make the block itself visible instead of just relying on the red
+  // border — this is the one field callers actually got stuck on.
+  function onInvalid(errors: FieldErrors<FormInput>) {
+    const missingGodown = Array.isArray(errors.items) && errors.items.some((item) => item?.godownId)
+    toast.error(missingGodown ? 'Select a godown for every item before saving.' : 'Please fix the highlighted fields before saving.')
   }
 
   async function onSubmit(values: FormValues) {
@@ -303,7 +323,7 @@ export function NewPurchasePage() {
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
           <Card>
             <CardHeader>
@@ -603,11 +623,11 @@ export function NewPurchasePage() {
                     <div className="space-y-2">
                       <Label>Godown</Label>
                       <Select
-                        value={item?.godownId || godowns[0]?.id}
+                        value={item?.godownId || undefined}
                         onValueChange={(value) => form.setValue(`items.${index}.godownId`, value, { shouldValidate: true })}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className={cn(!item?.godownId && 'border-destructive text-destructive')}>
+                          <SelectValue placeholder="Select godown" />
                         </SelectTrigger>
                         <SelectContent>
                           {godowns.map((godown) => (
