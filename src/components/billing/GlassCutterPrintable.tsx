@@ -221,10 +221,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </span>
           </div>
 
-          <p className="font-semibold">
-            Staff: {staffName}
-            {bill.writtenStaff && <span className="font-normal"> &nbsp;·&nbsp; Written Staff: {bill.writtenStaff}</span>}
-          </p>
+          <div className="space-y-2">
+            <p className="font-semibold">Staff: {staffName}</p>
+            {bill.writtenStaff && <p>Written Staff: {bill.writtenStaff}</p>}
+          </div>
 
           <div className="mt-8 flex flex-wrap justify-between gap-x-4 gap-y-3">
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>

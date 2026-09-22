@@ -119,7 +119,7 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
           {/* "VA" was a placeholder — this is the staff who billed it,
               followed by the fixed H / M / L legend (unrelated, always the
               same three letters, kept widely tracked for its own spacing). */}
-          <div className="mb-6 text-xs space-y-1">
+          <div className="mb-6 text-xs space-y-2">
             <p className="font-semibold">
               <span>{staffName}</span>
               <span className="ml-6 tracking-[0.6em]">H&nbsp;&nbsp;&nbsp;&nbsp;M&nbsp;&nbsp;&nbsp;&nbsp;L</span>

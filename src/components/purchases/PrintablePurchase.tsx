@@ -163,10 +163,12 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
           </div>
 
           <div className="flex items-end justify-between border-t border-gray-300 pt-3">
-            <div className="space-y-0.5 text-xs text-gray-400">
+            <div className="text-xs text-gray-400">
               <p>Computer generated voucher</p>
-              <p>Staff Name : {staffName}</p>
-              {bill.writtenStaff && <p>Written Staff : {bill.writtenStaff}</p>}
+              <div className="mt-2 space-y-2">
+                <p>Staff Name : {staffName}</p>
+                {bill.writtenStaff && <p>Written Staff : {bill.writtenStaff}</p>}
+              </div>
             </div>
             <div className="text-right">
               <div className="mb-1 w-36 border-t border-gray-300" />
