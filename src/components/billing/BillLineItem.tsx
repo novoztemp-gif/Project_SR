@@ -474,6 +474,13 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
         <p className="text-xs text-destructive">{String(itemErrors.quantity.message)}</p>
       )}
 
+      {isGPContext && selectedProduct && !selectedProduct.productType && (
+        <p className="text-xs text-amber-700 dark:text-amber-400">
+          This product has no Product Type set — fabrication details and sq.ft-based stock won't apply until you
+          set it to Glass in Inventory.
+        </p>
+      )}
+
       {isGlassProduct && (
         <div className="flex flex-wrap gap-2">
           <Input
