@@ -212,6 +212,11 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
 
   const selectedProduct = products.find((p) => p.id === selectedProductId)
   const usesSqFt = isSqFtUnit(selectedProduct?.unit)
+  // Every item on the Glass & Plywood bill gets a Sq.Ft box instead of
+  // Model — Model doesn't apply to glass/plywood at all — regardless of
+  // the specific product's own unit; Model still shows on the general New
+  // Bill page (sectionFilter excludes glass_plywood there).
+  const isGPContext = sectionFilter?.includes('glass_plywood') ?? false
   // Sub-classification within the (merged) glass_plywood section — only a
   // literal glass product gets fabrication details, sqft-based stock, and
   // the Polish/Hole/Art amount boxes; plywood/other price and stock the
@@ -220,18 +225,18 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
   // Auto-fills from Size / Dimension (e.g. "6x6" -> 36) whenever it parses,
   // but stays a normal editable field — sizes with inch marks etc. that
   // don't parse leave it for the counter to type in by hand.
-  const computedSqFt = usesSqFt ? computeSqFtFromSize(glassSize) : null
+  const computedSqFt = isGPContext ? computeSqFtFromSize(glassSize) : null
 
   useEffect(() => {
-    if (!usesSqFt || computedSqFt === null) return
+    if (!isGPContext || computedSqFt === null) return
     setValue(`items.${index}.sqFt`, computedSqFt, { shouldValidate: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usesSqFt, computedSqFt, index])
-  // Sq.Ft now has its own dedicated column, so "Qty" for a sq.ft-priced
-  // product means piece count (e.g. number of sheets), not an area — don't
-  // relabel it to "Qty (Sq.Ft)" here, that reads as if this box is also in
+  }, [isGPContext, computedSqFt, index])
+  // Sq.Ft has its own dedicated column throughout Glass & Plywood billing,
+  // so "Qty" there means piece count (e.g. number of sheets), not an area —
+  // don't relabel it to "Qty (Sq.Ft)", that reads as if this box is also in
   // sq.ft and duplicates the separate Sq.Ft column right next to it.
-  const qtyLabel = usesSqFt ? 'Qty' : selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
+  const qtyLabel = isGPContext ? 'Qty' : selectedProduct ? `Qty (${formatUnitLabel(selectedProduct.unit)})` : 'Qty'
   const sizePlaceholder = getSizePlaceholder(selectedProduct?.section)
   const showFabricationOptions = isGlassProduct
   const arch       = String(useWatch({ control, name: `items.${index}.arch`       }) ?? '')
@@ -382,7 +387,7 @@ export function BillLineItem({ index, onRemove, isOnly, sectionFilter }: BillLin
           </div>
         </div>
 
-        {usesSqFt ? (
+        {isGPContext ? (
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Sq.Ft</span>
             <Input
