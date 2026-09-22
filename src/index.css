@@ -355,13 +355,20 @@
     padding-top: 32mm;
   }
   .print-running-header--gp-cutter {
-    height: 50mm;
+    /* Measured the actual rendered header (date/time, company, godown,
+       title bar, Bill No/Name/Address panel) at ~44.5mm in a headless
+       Chrome print-media render with the real content — a prior blind
+       guess of 50mm reserved ~5.5mm of dead space (too big a gap below
+       it) while an earlier, tighter guess had clipped the header's own
+       bottom border via this rule's overflow:hidden. Small buffer here,
+       not a guess.
+    */
+    height: 46mm;
   }
   .print-content-block--gp-cutter {
-    /* A couple mm more than the header's own reserved height — leaves a
-       small visible gap between the header card and the table, matching
-       the reference, instead of the table touching the header's border. */
-    padding-top: 53mm;
+    /* ~2mm past the header's own height — a small visible gap, not the
+       large one the old 50mm/53mm pair left. */
+    padding-top: 48mm;
   }
   .print-running-header--gp-cash {
     height: 54mm;

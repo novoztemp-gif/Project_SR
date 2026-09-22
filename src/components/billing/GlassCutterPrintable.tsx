@@ -14,7 +14,7 @@ import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
 const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
-const CELL = 'border border-gray-300 px-1.5 py-1.5'
+const CELL = 'border border-gray-600 px-1.5 py-1.5'
 const FILL_LINE = 'inline-block border-b border-gray-400'
 
 // Fixed hand-fill checklist of pickup/delivery points — same blank-line
@@ -47,7 +47,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   }
 
   return (
-    <div className="printable-gp bg-white text-[#1a1a1a]">
+    <div className="printable-gp border-2 border-[#16232e] bg-white text-[#1a1a1a]">
       {/* print-running-header is fixed-positioned in print only (see
           index.css) — the browser repeats a position:fixed element at the
           same spot on every physical page, far more reliable across
@@ -106,7 +106,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
               {/* Borderless spacer — a real gap between the item-detail and
                   fabrication column groups, not just cell padding. */}
-              <th className="w-3 border-0 bg-white p-0" />
+              <th className="w-1 border-0 bg-white p-0" />
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Details</th>
@@ -131,7 +131,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
                   <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
-                  <td className="w-3 border-0 bg-white p-0" />
+                  <td className="w-1 border-0 bg-white p-0" />
                   <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
                       <div className="flex items-center justify-center gap-1">
@@ -170,7 +170,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             one block if it doesn't fit under the last item row (see
             print-keep-together in index.css). */}
         <div className="print-keep-together mt-4 space-y-3 text-xs">
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             {['Glass Cut', 'Edge Polished', 'Corner Rounded', 'Hole Drilled'].map((label) => (
               <span key={label} className="flex items-center gap-1.5">
                 <span className="inline-block h-2.5 w-2.5 border border-gray-500" /> {label}
@@ -189,10 +189,12 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                 mixed case (e.g. "Car G", "Alapancode G"), not uppercased
                 like the rest of this box. */}
             <p className="flex flex-wrap gap-x-4 gap-y-1">
-              {LOGISTICS_CHECKLIST.map((label) => (
+              {LOGISTICS_CHECKLIST.map((label, i) => (
                 <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
                   <span className="font-semibold">{label}</span>
                   <span className={`${FILL_LINE} w-10`}>&nbsp;</span>
+                  {/* Trailing dash after the last entry, matching the reference exactly. */}
+                  {i === LOGISTICS_CHECKLIST.length - 1 && <span>-</span>}
                 </span>
               ))}
             </p>
@@ -231,10 +233,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </span>
           </div>
 
-          <div className="space-y-2">
-            <p className="font-semibold">Staff: {staffName}</p>
-            {bill.writtenStaff && <p>Written Staff: {bill.writtenStaff}</p>}
-          </div>
+          <p className="font-semibold">
+            Staff: {staffName}
+            {bill.writtenStaff && <span className="ml-6 font-normal">Written Staff: {bill.writtenStaff}</span>}
+          </p>
 
           <div className="mt-8 flex flex-wrap justify-between gap-x-4 gap-y-3">
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
