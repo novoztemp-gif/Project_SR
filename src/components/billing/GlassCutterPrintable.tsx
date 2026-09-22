@@ -13,8 +13,15 @@ import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
-const HEADER_CELL = 'border border-[#16232e] px-1.5 py-1.5 font-semibold uppercase tracking-wide text-[10px]'
-const CELL = 'border border-gray-600 px-1.5 py-1.5'
+// Font/padding kept deliberately tight — with 10 columns (incl. the
+// fabrication detail group), the combined natural width of every
+// whitespace-nowrap column left almost no room for Product Name on A5's
+// ~140mm width, collapsing it to a few mm and wrapping product names
+// letter-by-letter (confirmed via a headless-print render: the column
+// shrank to 6.3mm and one row ballooned to 45mm tall). Smaller font/padding
+// here, plus Product Name's own min-width below, keep that from recurring.
+const HEADER_CELL = 'border border-[#16232e] px-1 py-1.5 font-semibold uppercase tracking-wide text-[9px]'
+const CELL = 'border border-gray-600 px-1 py-1.5 text-[9.5px]'
 const FILL_LINE = 'inline-block border-b border-gray-400'
 
 // Fixed hand-fill checklist of pickup/delivery points — same blank-line
@@ -96,12 +103,12 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
         </div>
       </div>
       <div className="print-content-block print-content-block--gp-cutter">
-        <table className="mt-2 w-full text-[10.5px] border-collapse">
+        <table className="mt-2 w-full text-[9.5px] border-collapse">
           <thead>
             <tr className="bg-white text-[#16232e]">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
-              <th className={`${HEADER_CELL} text-left w-full`}>Product Name</th>
+              <th className={`${HEADER_CELL} min-w-[15mm] text-left w-full`}>Product Name</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
               {/* Borderless spacer — a real gap between the item-detail and
@@ -149,7 +156,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                         {POLISH_SIDE_ICONS_SMALL[item.polishSide]}
                         <div className="leading-tight">
                           <p className="font-semibold">{POLISH_SIDE_CUTTER_LABELS[item.polishSide] ?? item.polishSide}</p>
-                          {item.polishName && <p className="text-[9.5px] text-gray-600">{item.polishName}</p>}
+                          {item.polishName && <p className="text-[8.5px] text-gray-600">{item.polishName}</p>}
                         </div>
                       </div>
                     ) : (
