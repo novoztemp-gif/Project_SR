@@ -366,9 +366,13 @@
     height: 46mm;
   }
   .print-content-block--gp-cutter {
-    /* ~2mm past the header's own height — a small visible gap, not the
-       large one the old 50mm/53mm pair left. */
-    padding-top: 48mm;
+    /* Matches the header's own reserved height almost exactly (1mm
+       safety margin against sub-pixel rounding) — the table's top
+       border sits right against the header card's bottom border, no
+       visible gap, so the whole voucher reads as one connected
+       document instead of two separate boxes stacked with daylight
+       between them. */
+    padding-top: 47mm;
   }
   .print-running-header--gp-cash {
     height: 54mm;
