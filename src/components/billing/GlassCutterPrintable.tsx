@@ -261,12 +261,18 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             {bill.writtenStaff && <span className="ml-6 font-normal">Written Staff: {bill.writtenStaff}</span>}
           </p>
 
-          {/* mt-16 (roughly double the old mt-8) leaves real room above
-              each line to physically sign, not just a sliver before the
-              label. */}
-          <div className="mt-16 flex flex-wrap justify-between gap-x-4 gap-y-3">
-            <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
-            <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
+          {/* Each box gets its own blank h-16 rectangle directly above its
+              own line — not a shared margin on the row above both, which
+              read more as "gap after Staff:" than "room to sign here". */}
+          <div className="mt-6 flex flex-wrap justify-between gap-x-4 gap-y-3">
+            <div className="w-[45%] min-w-[8rem] text-center">
+              <div className="h-16" />
+              <div className="border-t border-gray-700 pt-1">Glass Cutter Signature</div>
+            </div>
+            <div className="w-[45%] min-w-[8rem] text-center">
+              <div className="h-16" />
+              <div className="border-t border-gray-700 pt-1">Quality Inspector Signature</div>
+            </div>
           </div>
         </div>
       </div>
