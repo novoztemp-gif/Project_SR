@@ -141,7 +141,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className="w-1 border-0 bg-white p-0" />
                   <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex flex-col items-center gap-0.5">
                         {ARCH_ICONS_SMALL[item.arch]}
                         <span>{ARCH_SHORT_LABELS[item.arch] ?? item.arch}</span>
                       </div>

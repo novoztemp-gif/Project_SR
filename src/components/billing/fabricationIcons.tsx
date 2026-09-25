@@ -18,43 +18,38 @@ export function ArchTopIcon({ size = 'lg' }: IconSizeProps) {
   )
 }
 
+// A plain straight edge — no curve, unlike ArchTopIcon — same springline
+// height (y=17) as the arch's own so the two read as a matched pair: one
+// bowed, one flat.
 export function FlatSquareIcon({ size = 'lg' }: IconSizeProps) {
   return (
     <svg viewBox="0 0 32 40" className={size === 'lg' ? 'h-8 w-6' : 'h-4 w-3'} fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="2" width="26" height="36" rx="1" />
+      <line x1="3" y1="17" x2="29" y2="17" strokeLinecap="round" />
     </svg>
   )
 }
 
-// Short double-tick mark crossing one edge of a rectangle — the
-// hand-drawn sketch's way of showing "this edge is polished."
-type TickLine = [number, number, number, number]
-
-// Straight, perpendicular to the edge they cross — a slant here (tried
-// previously) made opposite/adjacent edge marks visually line up into
-// what read as one continuous diagonal stroke across the whole shape.
-function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
-  const lines: TickLine[] = {
-    top: [[16, 0, 16, 9], [22, 0, 22, 9]],
-    bottom: [[16, 23, 16, 32], [22, 23, 22, 32]],
-    left: [[0, 11, 9, 11], [0, 19, 9, 19]],
-    right: [[31, 11, 40, 11], [31, 19, 40, 19]],
-  }[edge] as TickLine[]
-  return (
-    <>
-      {lines.map(([x1, y1, x2, y2], i) => (
-        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={2.25} strokeLinecap="round" />
-      ))}
-    </>
-  )
+// Each selected edge draws as an open bracket — the edge itself plus a
+// short perpendicular tab at each end, e.g. "[" for the left edge alone —
+// rather than a filled-in tick mark over a background rectangle. With no
+// background rectangle, only the actual selected edge(s) render; select all
+// four and the brackets' tabs meet at every corner, reading as one full
+// rectangle outline.
+function EdgeBracket({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
+  const d: Record<'top' | 'bottom' | 'left' | 'right', string> = {
+    left: 'M8 4 L2 4 L2 28 L8 28',
+    right: 'M32 4 L38 4 L38 28 L32 28',
+    top: 'M2 10 L2 4 L38 4 L38 10',
+    bottom: 'M2 22 L2 28 L38 28 L38 22',
+  }
+  return <path d={d[edge]} strokeLinecap="round" strokeLinejoin="round" />
 }
 
 export function PolishRectIcon({ edges, size = 'lg' }: { edges: Array<'top' | 'bottom' | 'left' | 'right'> } & IconSizeProps) {
   return (
-    <svg viewBox="0 0 40 32" className={size === 'lg' ? 'h-7 w-9' : 'h-4 w-5'} fill="none" stroke="currentColor" strokeWidth="1.75">
-      <rect x="2" y="4" width="36" height="24" rx="1" />
+    <svg viewBox="0 0 40 32" className={size === 'lg' ? 'h-7 w-9' : 'h-4 w-5'} fill="none" stroke="currentColor" strokeWidth="2">
       {edges.map((edge) => (
-        <EdgeTicks key={edge} edge={edge} />
+        <EdgeBracket key={edge} edge={edge} />
       ))}
     </svg>
   )
