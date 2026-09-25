@@ -382,10 +382,20 @@
     padding-top: 47mm;
   }
   .print-running-header--gp-cash {
-    height: 54mm;
+    /* Rebuilt header (Bill No/Name/Address vs Booking/Delivery/Transport,
+       colon-aligned, same structure as the Cutter voucher's own header)
+       measured the same way — real PDF text-layer positions, not a live
+       DOM screenshot — landing at the same ~56mm content height as the
+       Cutter voucher, since the two headers are nearly identical in
+       content. */
+    height: 55mm;
   }
   .print-content-block--gp-cash {
-    padding-top: 54mm;
+    /* Not equal to the height above for the same reason as the Cutter
+       voucher's own rule — position:fixed and normal-flow content don't
+       share a coordinate origin. Verified against real measured border
+       positions in a generated PDF. */
+    padding-top: 47mm;
   }
   /* Keep a bill's totals/footer (or a purchase's totals/footer, or the
      Glass formats' closing boxes) together as one unit if they don't fit
