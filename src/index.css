@@ -355,23 +355,30 @@
     padding-top: 32mm;
   }
   .print-running-header--gp-cutter {
-    /* Measured the actual rendered header (date/time, company, godown,
-       title bar, Bill No/Name/Address panel) at ~44.5mm in a headless
-       Chrome print-media render with the real content — a prior blind
-       guess of 50mm reserved ~5.5mm of dead space (too big a gap below
-       it) while an earlier, tighter guess had clipped the header's own
-       bottom border via this rule's overflow:hidden. Small buffer here,
-       not a guess.
-    */
-    height: 46mm;
+    /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
+       on a plain live-DOM screenshot under print-media emulation — that
+       does NOT reflect how position:fixed actually renders in a real,
+       paginated print/PDF output. Re-measured properly this time by
+       generating an actual PDF and reading real text/border positions out
+       of it: with Address and Transport now part of the header (added in
+       a later round than when 46mm was set), the true rendered header is
+       ~52mm tall, and the old 46mm budget was silently clipping the
+       Address/Transport lines via this rule's overflow:hidden (confirmed:
+       they were entirely absent from the generated PDF's text layer, not
+       just visually cut off). This value has a real buffer against that,
+       verified the same way. */
+    height: 55mm;
   }
   .print-content-block--gp-cutter {
-    /* Matches the header's own reserved height almost exactly (1mm
-       safety margin against sub-pixel rounding) — the table's top
-       border sits right against the header card's bottom border, no
-       visible gap, so the whole voucher reads as one connected
-       document instead of two separate boxes stacked with daylight
-       between them. */
+    /* NOT equal to the header's own height above — measuring the real PDF
+       output showed a constant ~8mm offset between where the fixed
+       header's reserved box ends and where this normal-flow padding
+       starts counting from (the two live in different layout contexts:
+       one escapes flow via position:fixed, the other doesn't), so setting
+       them equal actually left a large, unexplained gap in practice. This
+       value was reverse-engineered from real measured border positions in
+       a generated PDF to sit just after the header's reserved space ends,
+       not guessed. */
     padding-top: 47mm;
   }
   .print-running-header--gp-cash {
