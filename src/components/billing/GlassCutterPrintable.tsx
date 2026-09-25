@@ -13,24 +13,28 @@ import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
-// Font/padding kept deliberately tight — with 10 columns (incl. the
-// fabrication detail group), the combined natural width of every
-// whitespace-nowrap column left almost no room for Product Name on A5's
-// ~140mm width, collapsing it to a few mm and wrapping product names
-// letter-by-letter (confirmed via a headless-print render: the column
-// shrank to 6.3mm and one row ballooned to 45mm tall). Smaller font/padding
-// here, plus Product Name's own min-width below, keep that from recurring.
-// text-black is required here, not just on the <tr> — a global `table th`
-// rule (index.css, for the app's regular on-screen tables) sets color
-// directly on every <th>, which always wins over an inherited color from
-// an ancestor no matter how that ancestor's class looks more specific.
-const HEADER_CELL = 'border border-[#16232e] px-1 py-1.5 font-semibold uppercase tracking-wide text-[9px] text-black'
-const CELL = 'border border-gray-600 px-1 py-1.5 text-[9.5px]'
-const FILL_LINE = 'inline-block border-b border-gray-400'
-
 // Fixed hand-fill checklist of pickup/delivery points — same blank-line
 // codes on every voucher, not derived from the bill's data.
 const LOGISTICS_CHECKLIST = ['K.G', 'CH.G', 'HOU.G', 'HAR.G', 'SHO.ROOM', 'Car G', 'Alapancode G']
+
+// The item table's row height is the one part of this voucher that scales
+// with the bill itself — a 2-item bill and a 20-item bill both need to
+// stay on one physical page, and there's no CSS-only "shrink to fit a
+// fixed box" primitive, so font size/cell padding step down in fixed
+// tiers as the item count grows instead. Tuned against the same ~144mm of
+// vertical room the item table actually has left after the reserved
+// header and the footer's checklist/logistics/signature blocks.
+function getTableSizeTier(itemCount: number) {
+  if (itemCount <= 6) {
+    return { header: 'text-[9px]', cell: 'text-[9.5px]', cellPad: 'px-1 py-1.5', headerPad: 'px-1 py-1.5' }
+  }
+  if (itemCount <= 12) {
+    return { header: 'text-[8px]', cell: 'text-[8.5px]', cellPad: 'px-1 py-1', headerPad: 'px-1 py-1' }
+  }
+  return { header: 'text-[7px]', cell: 'text-[7.5px]', cellPad: 'px-0.5 py-0.5', headerPad: 'px-0.5 py-0.5' }
+}
+
+const FILL_LINE = 'inline-block border-b border-gray-400'
 
 /**
  * Fixed-format print voucher for the glass cutter / fabrication counter —
@@ -40,6 +44,14 @@ const LOGISTICS_CHECKLIST = ['K.G', 'CH.G', 'HOU.G', 'HAR.G', 'SHO.ROOM', 'Car G
 export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   const voucher = bill.gpVoucherNumber ?? bill.billNumber
   const staffName = getUserName(bill.createdBy)
+  const tier = getTableSizeTier(bill.items.length)
+  // text-black is required directly on each <th>, not just the parent
+  // <tr> — a global `table th` rule (index.css, for the app's regular
+  // on-screen tables) sets color directly on every <th>, which always
+  // wins over a color inherited from an ancestor no matter how specific
+  // that ancestor's own class looks.
+  const HEADER_CELL = `border border-[#16232e] ${tier.headerPad} font-semibold uppercase tracking-wide ${tier.header} text-black`
+  const CELL = `border border-gray-600 ${tier.cellPad} ${tier.cell}`
 
   // Which godown(s) to pull stock from — every distinct godown among this
   // bill's actual products, in first-appearance order, read from live
@@ -58,7 +70,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   }
 
   return (
-    <div className="printable-gp border-2 border-[#16232e] bg-white text-[#1a1a1a]">
+    <div className="printable-gp bg-white text-[#1a1a1a]">
       {/* print-running-header is fixed-positioned in print only (see
           index.css) — the browser repeats a position:fixed element at the
           same spot on every physical page, far more reliable across
@@ -107,7 +119,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
         </div>
       </div>
       <div className="print-content-block print-content-block--gp-cutter">
-        <table className="w-full text-[9.5px] border-collapse">
+        <table className={`w-full ${tier.cell} border-collapse`}>
           <thead>
             <tr className="bg-white text-black">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
@@ -160,7 +172,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                         {POLISH_SIDE_ICONS_SMALL[item.polishSide]}
                         <div className="leading-tight">
                           <p className="font-semibold">{POLISH_SIDE_CUTTER_LABELS[item.polishSide] ?? item.polishSide}</p>
-                          {item.polishName && <p className="text-[8.5px] text-gray-600">{item.polishName}</p>}
+                          {item.polishName && <p className={`${tier.header} text-gray-600`}>{item.polishName}</p>}
                         </div>
                       </div>
                     ) : (
@@ -249,7 +261,10 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             {bill.writtenStaff && <span className="ml-6 font-normal">Written Staff: {bill.writtenStaff}</span>}
           </p>
 
-          <div className="mt-8 flex flex-wrap justify-between gap-x-4 gap-y-3">
+          {/* mt-16 (roughly double the old mt-8) leaves real room above
+              each line to physically sign, not just a sliver before the
+              label. */}
+          <div className="mt-16 flex flex-wrap justify-between gap-x-4 gap-y-3">
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Glass Cutter Signature</div>
             <div className="w-[45%] min-w-[8rem] border-t border-gray-700 pt-1 text-center">Quality Inspector Signature</div>
           </div>
