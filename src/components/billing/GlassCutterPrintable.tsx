@@ -20,7 +20,11 @@ import type { SalesBill } from '@/types'
 // letter-by-letter (confirmed via a headless-print render: the column
 // shrank to 6.3mm and one row ballooned to 45mm tall). Smaller font/padding
 // here, plus Product Name's own min-width below, keep that from recurring.
-const HEADER_CELL = 'border border-[#16232e] px-1 py-1.5 font-semibold uppercase tracking-wide text-[9px]'
+// text-black is required here, not just on the <tr> — a global `table th`
+// rule (index.css, for the app's regular on-screen tables) sets color
+// directly on every <th>, which always wins over an inherited color from
+// an ancestor no matter how that ancestor's class looks more specific.
+const HEADER_CELL = 'border border-[#16232e] px-1 py-1.5 font-semibold uppercase tracking-wide text-[9px] text-black'
 const CELL = 'border border-gray-600 px-1 py-1.5 text-[9.5px]'
 const FILL_LINE = 'inline-block border-b border-gray-400'
 
@@ -105,7 +109,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
       <div className="print-content-block print-content-block--gp-cutter">
         <table className="w-full text-[9.5px] border-collapse">
           <thead>
-            <tr className="bg-white text-[#16232e]">
+            <tr className="bg-white text-black">
               <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
               <th className={`${HEADER_CELL} min-w-[15mm] text-left w-full`}>Product Name</th>
@@ -124,20 +128,20 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           <tbody>
             {bill.items.map((item, i) => {
               const artSet = isArtWorkSet(item.artWork)
-              // The table itself stays plain black-and-white — only the
-              // fabrication text/values are colored (red when Art Work is
-              // set, green on an alternating row otherwise), not the row's
-              // own background.
+              // Only the fabrication columns (Arch through Art) are
+              // colored (red when Art Work is set, green on an
+              // alternating row otherwise) — No./Product Name/Size/Qty
+              // and the table itself stay plain black.
               const textColor = artSet ? 'text-red-700' : i % 2 === 1 ? 'text-green-700' : ''
               return (
                 <tr key={i}>
                   <td className={`${CELL} text-center`}>
                     <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
                   </td>
-                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.serialNumber || i + 1}</td>
-                  <td className={`${CELL} font-semibold ${textColor}`}>{item.productName}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.glassSize || '-'}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap ${textColor}`}>{item.quantity}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.serialNumber || i + 1}</td>
+                  <td className={`${CELL} font-semibold text-black`}>{item.productName}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.glassSize || '-'}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.quantity}</td>
                   <td className="w-1 border-0 bg-white p-0" />
                   <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
