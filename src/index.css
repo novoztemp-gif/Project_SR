@@ -352,21 +352,24 @@
     /* 32mm (this rule's long-standing value) turns out to already be too
        short for this header's real content — confirmed on an actual
        print: the header box's own closing border was being clipped by
-       this rule's overflow:hidden at every padding-top value tried, not
-       just tight ones, which is what made this whole area so hard to
-       tune. 44mm is a value directly confirmed (via a real generated PDF,
-       inspected pixel-by-pixel) to render that closing border complete. */
-    height: 44mm;
+       this rule's overflow:hidden. The extra margin used at 44mm wasn't
+       needed either — 36mm is the smallest value confirmed (via a real
+       generated PDF, inspected pixel-by-pixel) to render that closing
+       border complete (34mm still clipped it), and a smaller height here
+       is also what let the padding-top below shrink so much: the fixed
+       header's own reserved white space scales with this value, and
+       content below can't start until that space ends. */
+    height: 36mm;
   }
   .print-content-block--purchase {
-    /* Doesn't need to match the height above — that value only had to be
-       tall enough for the header's own content (fixed separately above);
-       this one only has to clear the table's own header row. Measured
-       directly at height=44mm: the table's header row (No./Particulars/
-       Price/Qty/Amount) starts disappearing behind the running header
-       somewhere between 30mm (gone) and 34mm (intact) — 35mm keeps a
-       small margin above that edge instead of sitting exactly on it. */
-    padding-top: 35mm;
+    /* Tied to the height above, not a fixed offset from it — shrinking
+       height let this shrink too. Measured directly at height=36mm: the
+       table's header row (No./Particulars/Price/Qty/Amount) is still
+       clipped at 24mm and fully intact at 26mm, with the two boxes'
+       borders sitting flush against each other with no visible gap at
+       that value — confirmed via a real generated PDF read pixel by
+       pixel, not calculated. */
+    padding-top: 26mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
