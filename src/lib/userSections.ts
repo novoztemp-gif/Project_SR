@@ -30,3 +30,19 @@ export function getUserName(userId: string): string {
   const counter = useCounterStore.getState().counters.find((c) => c.id === userId)
   return counter?.name ?? userId
 }
+
+/**
+ * The single section a bill's creator is allocated to, for the print
+ * heading ("Hardware Estimate" instead of the generic "Products Estimate")
+ * — null for admin, who isn't tied to one section and keeps the generic
+ * heading regardless of which section the bill itself is in. Each counter
+ * is restricted to exactly one process/section, so process[0] is reliable.
+ */
+export function getCreatorSectionLabel(userId: string): string | null {
+  const current = useAuthStore.getState().currentUser
+  if (current && current.id === userId) {
+    return current.role === 'admin' ? null : current.process[0] ?? null
+  }
+  const counter = useCounterStore.getState().counters.find((c) => c.id === userId)
+  return counter?.process[0] ?? null
+}

@@ -1,7 +1,7 @@
 import { COMPANY } from '@/lib/brand'
 import { amountInWords } from '@/lib/amountInWords'
 import { SECTIONS } from '@/lib/constants'
-import { getUserName } from '@/lib/userSections'
+import { getCreatorSectionLabel, getUserName } from '@/lib/userSections'
 import type { SalesBill } from '@/types'
 
 const NUM = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 })
@@ -19,6 +19,10 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
   const staffName = getUserName(bill.createdBy)
 
   const sectionLabel = SECTIONS.find((s) => s.key === bill.section)?.label ?? bill.section
+  // A counter's own allocated section names the heading ("Hardware
+  // Estimate"); admin isn't tied to one section, so it stays generic.
+  const creatorSection = getCreatorSectionLabel(bill.createdBy)
+  const estimateHeading = creatorSection ? `${creatorSection} Estimate` : 'Products Estimate'
 
   const dateTime = new Date(bill.date).toLocaleDateString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -44,7 +48,7 @@ export function PrintableBill({ bill }: { bill: SalesBill }) {
         </div>
 
         <p className="text-center font-semibold underline uppercase tracking-widest text-xs mb-2 text-[#1D546D]">
-          Products Estimate
+          {estimateHeading}
         </p>
 
         <div className="flex justify-between text-xs gap-8">

@@ -73,7 +73,7 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         <div className="border-2 border-[#16232e]">
           <div className="border-b-2 border-[#16232e] py-1.5 text-center">
             <p className="text-sm font-extrabold uppercase tracking-wide">
-              {SECTION_HEADING[bill.section]} - Purchase Details
+              {SECTION_HEADING[bill.section]} Estimate
             </p>
           </div>
           <div className="flex flex-wrap justify-between gap-x-8 gap-y-1 px-3 py-2 text-xs">
