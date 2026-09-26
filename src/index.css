@@ -356,11 +356,13 @@
        visible gap in practice — this component's box model (.printable-bill,
        not .printable-gp) has a different offset between the two than the
        Cutter/Cash voucher rules above, so "equal" doesn't mean flush here
-       either. Lowering this closes the gap; confirmed via real generated
-       PDFs that the table's header row still isn't overlapped/hidden by
-       the running header down to 22mm — this keeps a few mm of margin
-       above that edge rather than cutting it as close as possible. */
-    padding-top: 24mm;
+       either. 24mm (this rule's first attempt at closing the gap) turned
+       out too tight on a real print — the table's own header row very
+       slightly overlapped the header's last line ("Address") — even
+       though generated test PDFs showed a safety margin down to ~22mm;
+       real browser/print-pipeline rendering ran a couple mm tighter than
+       that harness did. 28mm restores a clearly visible safety gap. */
+    padding-top: 28mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
