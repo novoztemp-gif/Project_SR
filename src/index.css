@@ -352,17 +352,18 @@
     height: 32mm;
   }
   .print-content-block--purchase {
-    /* Was equal to the header's own height (32mm), which left a large
-       visible gap in practice — this component's box model (.printable-bill,
-       not .printable-gp) has a different offset between the two than the
-       Cutter/Cash voucher rules above, so "equal" doesn't mean flush here
-       either. 24mm (this rule's first attempt at closing the gap) turned
-       out too tight on a real print — the table's own header row very
-       slightly overlapped the header's last line ("Address") — even
-       though generated test PDFs showed a safety margin down to ~22mm;
-       real browser/print-pipeline rendering ran a couple mm tighter than
-       that harness did. 28mm restores a clearly visible safety gap. */
-    padding-top: 28mm;
+    /* This component (.printable-bill) has proven far more sensitive to
+       this value than the Cutter/Cash vouchers (.printable-gp) were: 24mm
+       overlapped the header's "Address" line on a real print despite a
+       margin in generated test PDFs, and growing the header box itself to
+       compensate (a pb-6 on its customer-info row) pushed the safe value
+       all the way out to ~40mm, restoring a large gap — real print
+       rendering here runs measurably tighter than this project's usual
+       test harness, by more than the small margins that worked
+       elsewhere. 27mm deliberately keeps a modest, visible gap rather
+       than chasing an exact flush fit again — overlapping text is a
+       worse failure than a few extra mm of white space. */
+    padding-top: 27mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
