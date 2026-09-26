@@ -90,6 +90,13 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
         </div>
       </div>
       <div className="print-content-block print-content-block--purchase">
+        {/* Dark sides only — the header's own bottom border closes the top
+            edge, and the totals box right below gets its own top border to
+            close the bottom edge, so the table's outer frame reads as
+            continuous dark border rather than the pale gray of its own
+            cell borders (border-collapse leaves those as the only visible
+            edge otherwise). */}
+        <div className="border-x-2 border-[#16232e]">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="bg-white">
@@ -134,12 +141,16 @@ export function PrintablePurchase({ bill }: { bill: PurchaseBill }) {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Totals + staff line move to the next page together as one block
             if they don't fit under the last item row (see print-keep-together
             in index.css). */}
         <div className="print-keep-together">
-          <div className="flex border-x-2 border-b-2 border-[#16232e] text-xs">
+          {/* border-2 (not border-x-2/border-b-2 like the boxes below) —
+              this is the first footer box, so it also needs its own top
+              border to close the table's bottom edge above it. */}
+          <div className="flex border-2 border-[#16232e] text-xs">
             <div className="flex flex-1 items-center border-r border-gray-300 p-3">
               <p>
                 <span className="font-semibold">Rupees:</span>{' '}
