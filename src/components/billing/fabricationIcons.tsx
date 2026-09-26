@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
 
 // Shared Arch/Polish-Side icon set — used both by the interactive
-// IconOptionPicker (BillLineItem.tsx) and the Glass/Plywood print
-// templates, so the on-screen picker and the printed voucher always show
-// the exact same shape for a given value. `size` picks a smaller variant
-// for the print tables without touching the picker's larger tiles.
+// IconOptionPicker (BillLineItem.tsx, size="lg") and the Cutter voucher
+// print table (size="sm"). Arch's curve and the round/oval polish icons
+// look identical at both sizes, but Flat and the rectangular Polish Side
+// shapes deliberately DON'T — the print versions were redrawn to match a
+// client-supplied reference image; the on-screen picker keeps its own
+// original shapes untouched. See FlatSquareIcon/PolishRectIcon.
 
 interface IconSizeProps {
   size?: 'sm' | 'lg'
@@ -18,20 +20,53 @@ export function ArchTopIcon({ size = 'lg' }: IconSizeProps) {
   )
 }
 
-// A plain straight edge — no curve, unlike ArchTopIcon — same springline
-// height (y=17) as the arch's own so the two read as a matched pair: one
-// bowed, one flat.
+// The on-screen picker (size="lg") and the Cutter voucher print (size="sm")
+// intentionally show DIFFERENT shapes for Flat and Polish Side — the print
+// format was matched to a client-supplied reference image (straight line;
+// open corner brackets), but the on-screen picker keeps its own original
+// look (full rounded box; tick marks over a background rectangle), which
+// the print change was never meant to touch.
 export function FlatSquareIcon({ size = 'lg' }: IconSizeProps) {
+  if (size === 'lg') {
+    return (
+      <svg viewBox="0 0 32 40" className="h-8 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="2" width="26" height="36" rx="1" />
+      </svg>
+    )
+  }
+  // Same springline height (y=17) as the arch's own so the two read as a
+  // matched pair on the print voucher: one bowed, one flat.
   return (
-    <svg viewBox="0 0 32 40" className={size === 'lg' ? 'h-8 w-6' : 'h-4 w-3'} fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 32 40" className="h-4 w-3" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="3" y1="17" x2="29" y2="17" strokeLinecap="round" />
     </svg>
   )
 }
 
+// Short double-tick mark crossing one edge of a rectangle — the on-screen
+// picker's original hand-drawn-sketch convention for "this edge is
+// polished," kept for size="lg" only.
+type TickLine = [number, number, number, number]
+
+function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
+  const lines: TickLine[] = {
+    top: [[16, 0, 16, 9], [22, 0, 22, 9]],
+    bottom: [[16, 23, 16, 32], [22, 23, 22, 32]],
+    left: [[0, 11, 9, 11], [0, 19, 9, 19]],
+    right: [[31, 11, 40, 11], [31, 19, 40, 19]],
+  }[edge] as TickLine[]
+  return (
+    <>
+      {lines.map(([x1, y1, x2, y2], i) => (
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={2.25} strokeLinecap="round" />
+      ))}
+    </>
+  )
+}
+
 // Each selected edge draws as an open bracket — the edge itself plus a
 // short perpendicular tab at each end, e.g. "[" for the left edge alone —
-// rather than a filled-in tick mark over a background rectangle. With no
+// used only for the print's size="sm" variant (see PolishRectIcon). With no
 // background rectangle, only the actual selected edge(s) render; select all
 // four and the brackets' tabs meet at every corner, reading as one full
 // rectangle outline.
@@ -46,8 +81,18 @@ function EdgeBracket({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
 }
 
 export function PolishRectIcon({ edges, size = 'lg' }: { edges: Array<'top' | 'bottom' | 'left' | 'right'> } & IconSizeProps) {
+  if (size === 'lg') {
+    return (
+      <svg viewBox="0 0 40 32" className="h-7 w-9" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <rect x="2" y="4" width="36" height="24" rx="1" />
+        {edges.map((edge) => (
+          <EdgeTicks key={edge} edge={edge} />
+        ))}
+      </svg>
+    )
+  }
   return (
-    <svg viewBox="0 0 40 32" className={size === 'lg' ? 'h-7 w-9' : 'h-4 w-5'} fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 40 32" className="h-4 w-5" fill="none" stroke="currentColor" strokeWidth="2">
       {edges.map((edge) => (
         <EdgeBracket key={edge} edge={edge} />
       ))}
