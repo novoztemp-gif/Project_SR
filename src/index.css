@@ -359,14 +359,14 @@
     height: 44mm;
   }
   .print-content-block--purchase {
-    /* Matched to the height above (both 44mm) — directly confirmed, not
-       calculated, to render both the header's own complete border AND
-       the item table's header row intact with no overlap. This leaves a
-       more noticeable gap than the Cutter/Cash voucher rules above; after
-       several rounds of chasing a tighter fit that broke on a real print
-       each time, this prioritizes "always renders correctly" over
-       "smallest possible gap" for this specific component. */
-    padding-top: 44mm;
+    /* Doesn't need to match the height above — that value only had to be
+       tall enough for the header's own content (fixed separately above);
+       this one only has to clear the table's own header row. Measured
+       directly at height=44mm: the table's header row (No./Particulars/
+       Price/Qty/Amount) starts disappearing behind the running header
+       somewhere between 30mm (gone) and 34mm (intact) — 35mm keeps a
+       small margin above that edge instead of sitting exactly on it. */
+    padding-top: 35mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
