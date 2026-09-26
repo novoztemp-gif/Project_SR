@@ -349,21 +349,24 @@
     padding-top: 58mm;
   }
   .print-running-header--purchase {
-    height: 32mm;
+    /* 32mm (this rule's long-standing value) turns out to already be too
+       short for this header's real content — confirmed on an actual
+       print: the header box's own closing border was being clipped by
+       this rule's overflow:hidden at every padding-top value tried, not
+       just tight ones, which is what made this whole area so hard to
+       tune. 44mm is a value directly confirmed (via a real generated PDF,
+       inspected pixel-by-pixel) to render that closing border complete. */
+    height: 44mm;
   }
   .print-content-block--purchase {
-    /* This component (.printable-bill) has proven far more sensitive to
-       this value than the Cutter/Cash vouchers (.printable-gp) were: 24mm
-       overlapped the header's "Address" line on a real print despite a
-       margin in generated test PDFs, and growing the header box itself to
-       compensate (a pb-6 on its customer-info row) pushed the safe value
-       all the way out to ~40mm, restoring a large gap — real print
-       rendering here runs measurably tighter than this project's usual
-       test harness, by more than the small margins that worked
-       elsewhere. 27mm deliberately keeps a modest, visible gap rather
-       than chasing an exact flush fit again — overlapping text is a
-       worse failure than a few extra mm of white space. */
-    padding-top: 27mm;
+    /* Matched to the height above (both 44mm) — directly confirmed, not
+       calculated, to render both the header's own complete border AND
+       the item table's header row intact with no overlap. This leaves a
+       more noticeable gap than the Cutter/Cash voucher rules above; after
+       several rounds of chasing a tighter fit that broke on a real print
+       each time, this prioritizes "always renders correctly" over
+       "smallest possible gap" for this specific component. */
+    padding-top: 44mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
