@@ -352,7 +352,15 @@
     height: 32mm;
   }
   .print-content-block--purchase {
-    padding-top: 32mm;
+    /* Was equal to the header's own height (32mm), which left a large
+       visible gap in practice — this component's box model (.printable-bill,
+       not .printable-gp) has a different offset between the two than the
+       Cutter/Cash voucher rules above, so "equal" doesn't mean flush here
+       either. Lowering this closes the gap; confirmed via real generated
+       PDFs that the table's header row still isn't overlapped/hidden by
+       the running header down to 22mm — this keeps a few mm of margin
+       above that edge rather than cutting it as close as possible. */
+    padding-top: 24mm;
   }
   .print-running-header--gp-cutter {
     /* A prior measurement (~44.5mm) was taken by reading getBoundingClientRect
