@@ -9,6 +9,8 @@ interface BillingState {
   hydrate: () => Promise<void>
   /** Insert a freshly-created bill (from api.bills.create) into the cache. */
   addBillToCache: (bill: SalesBill) => void
+  /** Replace a bill already in the cache with an updated copy (e.g. after a payment edit). */
+  updateBillInCache: (bill: SalesBill) => void
 
   // Synchronous getters over the cache.
   getBillById: (id: string) => SalesBill | undefined
@@ -27,6 +29,9 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
   },
 
   addBillToCache: (bill) => set((state) => ({ bills: [bill, ...state.bills] })),
+
+  updateBillInCache: (bill) =>
+    set((state) => ({ bills: state.bills.map((b) => (b.id === bill.id ? bill : b)) })),
 
   getBillById: (id) => get().bills.find((b) => b.id === id),
 

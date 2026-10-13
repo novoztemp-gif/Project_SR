@@ -391,18 +391,6 @@ export function NewBillPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="paidAmount">Paid Amount (₹)</Label>
-                    <Input
-                      id="paidAmount"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className="font-mono tabular-nums text-right"
-                      {...form.register('paidAmount')}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="discount">Discount (₹)</Label>
                     <Input
                       id="discount"
@@ -411,6 +399,27 @@ export function NewBillPage() {
                       step="0.01"
                       className="font-mono tabular-nums text-right"
                       {...form.register('discount')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="paidAmount">Paid Amount (₹)</Label>
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-brand-mid hover:underline"
+                        onClick={() => form.setValue('paidAmount', finalAmount, { shouldValidate: true })}
+                      >
+                        Full
+                      </button>
+                    </div>
+                    <Input
+                      id="paidAmount"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="font-mono tabular-nums text-right"
+                      {...form.register('paidAmount')}
                     />
                   </div>
 

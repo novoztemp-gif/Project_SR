@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
+import { PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from '@/lib/api'
@@ -51,11 +52,13 @@ function BillPreviewPanel({
   onClose,
   onPrint,
   onView,
+  onBillUpdated,
 }: {
   bill: SalesBill
   onClose: () => void
   onPrint: () => void
   onView: () => void
+  onBillUpdated: (bill: SalesBill) => void
 }) {
   const sectionLabel = SECTIONS.find((s) => s.key === bill.section)?.label ?? bill.section
   const finalAmount = bill.total + bill.transportationAmount - bill.discount
@@ -124,11 +127,7 @@ function BillPreviewPanel({
             <div className="text-right">
               <p className="text-xs text-gray-600">Final Amount</p>
               <p className="font-mono font-bold tabular-nums text-brand-dark">{INR.format(finalAmount)}</p>
-              {balanceAmount > 0 && (
-                <p className="mt-1 text-xs text-gray-600">
-                  Balance {INR.format(balanceAmount)}
-                </p>
-              )}
+              <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={onBillUpdated} />
             </div>
           </div>
         </div>
@@ -280,6 +279,7 @@ export function BillHistoryPage() {
               onClose={() => setSelectedBill(null)}
               onPrint={printSelectedBill}
               onView={viewSelectedBill}
+              onBillUpdated={setSelectedBill}
             />
           </div>
         ) : table

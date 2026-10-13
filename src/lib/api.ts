@@ -112,5 +112,12 @@ export const api = {
     today(userId?: string): SalesBill[] {
       return useBillingStore.getState().getTodaysBills(userId)
     },
+
+    /** Update how much of a bill has been paid; server recomputes status. */
+    async updatePayment(id: string, paidAmount: number): Promise<SalesBill> {
+      const bill = await http.patch<SalesBill>(`/bills/${id}/payment`, { paidAmount })
+      useBillingStore.getState().updateBillInCache(bill)
+      return bill
+    },
   },
 } as const

@@ -304,3 +304,32 @@ billsRouter.get(
     res.json(bill)
   }),
 )
+
+const updatePaymentSchema = z.object({
+  paidAmount: z.number().nonnegative(),
+})
+
+/**
+ * PATCH /api/bills/:id/payment — update how much of a bill has been paid
+ * (e.g. clearing a pending balance later, or correcting a typo'd amount).
+ * Recomputes status from the new paidAmount; nothing else about the bill
+ * changes.
+ */
+billsRouter.patch(
+  '/:id/payment',
+  asyncHandler(async (req, res) => {
+    const { paidAmount } = updatePaymentSchema.parse(req.body)
+
+    const existing = await prisma.salesBill.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Bill not found')
+    assertSectionAccess(req.user!, existing.section)
+
+    const status = getBillStatus(existing.total, existing.transportationAmount, existing.discount, paidAmount, existing.cuttingCharge)
+    const bill = await prisma.salesBill.update({
+      where: { id: req.params.id },
+      data: { paidAmount, status },
+      include: { items: true },
+    })
+    res.json(bill)
+  }),
+)

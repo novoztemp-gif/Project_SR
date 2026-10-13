@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { PrintableBill } from '@/components/billing/PrintableBill'
 import { GlassCutterPrintable } from '@/components/billing/GlassCutterPrintable'
 import { GlassCashPrintable } from '@/components/billing/GlassCashPrintable'
+import { PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
 import { api } from '@/lib/api'
 import { getUserSections } from '@/lib/userSections'
 import { useAuthStore } from '@/store/authStore'
+import type { SalesBill } from '@/types'
 
 type GPPrintMode = 'cutter' | 'cash'
 
@@ -19,7 +21,14 @@ export function BillDetailPage() {
   const currentUser = useAuthStore((s) => s.currentUser)!
   const allowedSections = getUserSections(currentUser.id)
   const rawBill = id ? api.bills.get(id) : undefined
-  const bill = id ? api.bills.get(id, allowedSections) : undefined
+  const fetchedBill = id ? api.bills.get(id, allowedSections) : undefined
+  // api.bills.get reads a non-reactive store snapshot, so a payment edit
+  // made right here (PaymentTracker) wouldn't otherwise be reflected until
+  // some unrelated re-render happened to re-run it — this override makes
+  // the edit show up immediately.
+  const [paymentOverride, setPaymentOverride] = useState<SalesBill | null>(null)
+  useEffect(() => { setPaymentOverride(null) }, [id])
+  const bill = paymentOverride ?? fetchedBill
   const shouldPrint = Boolean((location.state as { print?: boolean } | null)?.print)
   const requestedPrintType = (location.state as { printType?: GPPrintMode } | null)?.printType
   // Which Glass & Plywood format is currently shown/printed — irrelevant
@@ -87,9 +96,16 @@ export function BillDetailPage() {
   if (!bill) return <Navigate to="/billing" replace />
 
   const isGP = bill.billType === 'glass_plywood'
+  const finalAmount = bill.total + bill.transportationAmount + bill.cuttingCharge - bill.discount
+  const balanceAmount = finalAmount - bill.paidAmount
 
   return (
     <div>
+      {balanceAmount > 0 && (
+        <div className="report-screen-only flex justify-end mb-2">
+          <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={setPaymentOverride} />
+        </div>
+      )}
       <div className="report-screen-only flex items-center justify-between mb-6">
         <Link
           to="/billing"
