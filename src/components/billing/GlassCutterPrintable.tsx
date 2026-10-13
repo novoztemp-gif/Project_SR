@@ -305,7 +305,8 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               field (bill.writtenStaff), the actual person who physically
               wrote it out, is a separate name shown right next to it. */}
           <p className="font-semibold">
-            Staff: {getUserName(bill.createdBy)} {bill.writtenStaff || '-'}
+            Staff: {getUserName(bill.createdBy)}
+            <span className="ml-8">{bill.writtenStaff || '-'}</span>
           </p>
 
           {/* Each box gets its own blank h-8 rectangle directly above its
