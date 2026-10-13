@@ -90,18 +90,18 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               <h1 className="text-sm font-extrabold tracking-wide">{COMPANY.name}</h1>
               <p className="text-xs font-semibold">{COMPANY.place}</p>
             </div>
-            {/* justify-end packs this whole group flush against the
-                column's right edge — tightening the gap (vs. the previous
-                gap-2) shrinks the group's total width while that right
-                edge stays put, which is what actually shifts the circle
-                and square right relative to the center column, not a
-                bigger gap (that would push them the other way). */}
-            <div className="flex items-start justify-end gap-1.5">
+            {/* justify-center (not justify-end) — the previous flush-right
+                packing left the whole group hugging the column's right
+                edge with a large empty gap to its left. A tight gap-1
+                between circle/square/text keeps them grouped compactly,
+                and centering uses that left-side space instead of
+                stranding it, while staying clear of the company name. */}
+            <div className="flex items-start justify-center gap-1">
               {/* Unlabeled in the reference format — reproduced as-is. */}
               <span className="inline-block h-8 w-8 shrink-0 rounded-full border-2 border-[#16232e]" />
               <span className="inline-block h-8 w-8 shrink-0 border-2 border-[#16232e]" />
               {billGodowns.length > 0 && (
-                <div className="text-right font-semibold leading-tight">
+                <div className="ml-1 text-right font-semibold leading-tight">
                   {billGodowns.map((name) => (
                     <p key={name} className="whitespace-nowrap">{name}</p>
                   ))}
@@ -140,13 +140,12 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             <tr className="bg-white text-black">
               <th className={`${HEADER_CELL} w-[4%] whitespace-nowrap`}>&#10003;</th>
               <th className={`${HEADER_CELL} w-[5%] whitespace-nowrap`}>No.</th>
-              <th className={`${HEADER_CELL} w-[24%] text-left`}>Product Name</th>
+              <th className={`${HEADER_CELL} w-[26%] text-left`}>Product Name</th>
               <th className={`${HEADER_CELL} w-[14%] whitespace-nowrap`}>Size</th>
               <th className={`${HEADER_CELL} w-[6%] whitespace-nowrap`}>Qty</th>
-              {/* A real bordered gap box between the item-detail and
-                  fabrication column groups, matching the reference —
-                  previously a blank borderless spacer. */}
-              <th className="w-[2%] border border-[#16232e] bg-white p-0" />
+              {/* No spacer column — Qty's own right border and Arch's own
+                  left border are the only separation now, instead of an
+                  extra blank cell between them. */}
               <th className={`${HEADER_CELL} w-[9%] whitespace-nowrap`}>Arch</th>
               <th className={`${HEADER_CELL} w-[9%] whitespace-nowrap`}>Corner</th>
               <th className={`${HEADER_CELL} w-[13%] whitespace-nowrap`}>Polish Details</th>
@@ -171,7 +170,6 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} font-semibold text-black`}>{item.productName}</td>
                   <td className={`${CELL} text-center whitespace-nowrap font-semibold text-black`}>{item.glassSize || '-'}</td>
                   <td className={`${CELL} text-center whitespace-nowrap font-semibold text-black`}>{item.quantity}</td>
-                  <td className="w-[2%] border border-[#16232e] bg-white p-0" />
                   <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
                       <div className="flex flex-col items-center gap-0.5">
@@ -219,52 +217,60 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </div>
 
           <div className="space-y-2 rounded border border-gray-400 p-3">
-            {/* Sign's fill line is now flex-1 too (was a fixed w-28) — both
-                entry lines share the row's full width instead of the name
-                line stretching while Sign stays a short fixed box. */}
-            <p className="flex items-baseline gap-1 uppercase">
-              <span className="whitespace-nowrap font-semibold">Things Eduththavar Name:</span>
-              <span className={`${FILL_LINE} min-w-[8rem] flex-1`}>&nbsp;</span>
-              <span className="ml-4 whitespace-nowrap font-semibold">Sign:</span>
-              <span className={`${FILL_LINE} min-w-[8rem] flex-1`}>&nbsp;</span>
+            {/* grid-cols-[2fr_1fr] (not justify-between with fixed-width
+                lines) — Name gets twice Sign's column share, and each
+                line is flex-1 *within its own cell*, so it fills exactly
+                that field's allotted space (taking its own label's width
+                into account) rather than every line being stretched to
+                match the others. */}
+            <p className="grid grid-cols-[2fr_1fr] items-baseline gap-4 uppercase">
+              <span className="flex items-baseline gap-1">
+                <span className="whitespace-nowrap font-semibold">Things Eduththavar Name:</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
+              </span>
+              <span className="flex items-baseline gap-1">
+                <span className="whitespace-nowrap font-semibold">Sign:</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
+              </span>
             </p>
             {/* Fixed hand-fill checklist codes — kept in their original
                 mixed case (e.g. "Car G", "Alapancode G"), not uppercased
-                like the rest of this box. flex-nowrap keeps all seven on
-                one line like the reference; justify-between (not packed
-                left) spreads them across the row's full width. */}
-            <p className="flex flex-nowrap items-baseline justify-between text-[9px]">
+                like the rest of this box. grid-cols-7 (not justify-between
+                with fixed-width lines) gives each code an equal column
+                share, and each line is flex-1 within its own cell, so a
+                short label like "K.G" gets a longer line than a long one
+                like "Alapancode G" instead of every line matching. */}
+            <p className="grid grid-cols-7 items-baseline gap-x-2 text-[9px]">
               {LOGISTICS_CHECKLIST.map((label, i) => (
                 <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
                   <span className="font-semibold">{label}</span>
-                  <span className={`${FILL_LINE} w-9`}>&nbsp;</span>
+                  <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
                   {/* Trailing dash after the last entry, matching the reference exactly. */}
                   {i === LOGISTICS_CHECKLIST.length - 1 && <span>-</span>}
                 </span>
               ))}
             </p>
-            {/* justify-between (not manual ml-2 offsets) spreads these five
-                groups across the full row width too. */}
-            <p className="flex flex-nowrap items-baseline justify-between uppercase">
+            {/* grid-cols-5 for the same reason as the row above. */}
+            <p className="grid grid-cols-5 items-baseline gap-x-2 uppercase">
               <span className="flex items-baseline gap-1 whitespace-nowrap">
                 <span className="font-semibold">Driver Name:</span>
-                <span className={`${FILL_LINE} w-24`}>&nbsp;</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
               </span>
               <span className="flex items-baseline gap-1 whitespace-nowrap">
                 <span className="font-semibold">Sign:</span>
-                <span className={`${FILL_LINE} w-20`}>&nbsp;</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
               </span>
               <span className="flex items-baseline gap-1 whitespace-nowrap">
                 <span className="font-semibold">Key Out Time:</span>
-                <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
               </span>
               <span className="flex items-baseline gap-1 whitespace-nowrap">
                 <span className="font-semibold">Key In Time:</span>
-                <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
               </span>
               <span className="flex items-baseline gap-1 whitespace-nowrap">
                 <span className="font-semibold">Security Sign:</span>
-                <span className={`${FILL_LINE} w-20`}>&nbsp;</span>
+                <span className={`${FILL_LINE} flex-1`}>&nbsp;</span>
               </span>
             </p>
           </div>
