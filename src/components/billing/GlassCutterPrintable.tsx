@@ -9,6 +9,7 @@ import {
   POLISH_SIDE_CUTTER_LABELS,
 } from '@/lib/glassPrintFormat'
 import { COMPANY } from '@/lib/brand'
+import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
@@ -299,11 +300,12 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </span>
           </div>
 
-          {/* Bound to the Written Staff field entered on the billing form
-              (bill.writtenStaff) — the actual typed staff-name input —
-              rather than the logged-in counter's account name. */}
+          {/* "Staff" is always the logged-in counter who created the bill
+              (bill.createdBy) — automatic, never typed. The Written Staff
+              field (bill.writtenStaff), the actual person who physically
+              wrote it out, is a separate name shown right next to it. */}
           <p className="font-semibold">
-            Staff: {bill.writtenStaff || '-'}
+            Staff: {getUserName(bill.createdBy)} {bill.writtenStaff || '-'}
           </p>
 
           {/* Each box gets its own blank h-8 rectangle directly above its
