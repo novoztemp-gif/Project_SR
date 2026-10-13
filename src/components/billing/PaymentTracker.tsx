@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import type { SalesBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
@@ -22,11 +23,13 @@ export function PaymentTracker({
   finalAmount,
   balanceAmount,
   onUpdated,
+  className,
 }: {
   bill: SalesBill
   finalAmount: number
   balanceAmount: number
   onUpdated: (bill: SalesBill) => void
+  className?: string
 }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(String(bill.paidAmount))
@@ -49,7 +52,7 @@ export function PaymentTracker({
   }
 
   return (
-    <div className="mt-1 flex items-center justify-end gap-1.5">
+    <div className={cn('flex items-center justify-end gap-1.5', className)}>
       <p className="text-xs font-medium text-amber-600">Amount pending {INR.format(balanceAmount)}</p>
       <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setValue(String(bill.paidAmount)) }}>
         <PopoverTrigger asChild>
@@ -94,4 +97,18 @@ export function PaymentTracker({
       </Popover>
     </div>
   )
+}
+
+/**
+ * Table-cell variant: "Paid" when settled, otherwise the same pending
+ * amount + edit/fully-paid controls as PaymentTracker. The bills list
+ * reads from a reactive store subscription, so a successful edit here
+ * re-renders the row on its own — no onUpdated callback needed.
+ */
+export function PaymentStatusCell({ bill, finalAmount }: { bill: SalesBill; finalAmount: number }) {
+  const balanceAmount = finalAmount - bill.paidAmount
+  if (balanceAmount <= 0) {
+    return <span className="text-xs font-medium text-emerald-600">Paid</span>
+  }
+  return <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={() => {}} />
 }

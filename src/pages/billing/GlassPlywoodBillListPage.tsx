@@ -5,15 +5,15 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
-import { PaymentTracker } from '@/components/billing/PaymentTracker'
+import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { api } from '@/lib/api'
 import { SECTION_COLORS, SECTIONS } from '@/lib/constants'
 import { exportCsv } from '@/lib/exportCsv'
 import { getUserName, getUserSections } from '@/lib/userSections'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { useBillingStore } from '@/store/billingStore'
 import type { SalesBill } from '@/types'
 import { useState } from 'react'
 
@@ -129,7 +129,7 @@ function BillPreviewPanel({
             <div className="text-right">
               <p className="text-xs text-gray-600">Final Amount</p>
               <p className="font-mono font-bold tabular-nums text-brand-dark">{INR.format(finalAmount)}</p>
-              <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={onBillUpdated} />
+              <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={onBillUpdated} className="mt-1" />
             </div>
           </div>
         </div>
@@ -158,7 +158,10 @@ export function GlassPlywoodBillListPage() {
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.currentUser)!
   const allowedSections = getUserSections(currentUser.id)
-  const bills = api.bills.list({ sections: allowedSections }).filter((bill) => bill.billType === 'glass_plywood')
+  // Reactive subscription (not api.bills.list's plain getState() snapshot) so
+  // a payment edit made right in the table updates that row immediately.
+  const allBills = useBillingStore((s) => s.bills)
+  const bills = allBills.filter((bill) => allowedSections.includes(bill.section) && bill.billType === 'glass_plywood')
   const sorted = [...bills].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const [selectedBill, setSelectedBill] = useState<SalesBill | null>(null)
 
@@ -208,12 +211,14 @@ export function GlassPlywoodBillListPage() {
             <TableHead>Customer</TableHead>
             <TableHead>Section</TableHead>
             <TableHead className="text-right">Total</TableHead>
+            <TableHead className="text-right">Payment</TableHead>
             <TableHead className="text-center">Print</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sorted.map((bill) => {
             const sectionLabel = SECTIONS.find((s) => s.key === bill.section)?.label ?? bill.section
+            const finalAmount = bill.total + bill.transportationAmount + bill.cuttingCharge - bill.discount
             return (
               <TableRow
                 key={bill.id}
@@ -236,6 +241,9 @@ export function GlassPlywoodBillListPage() {
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-sm">
                   {INR.format(bill.total)}
+                </TableCell>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <PaymentStatusCell bill={bill} finalAmount={finalAmount} />
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">
