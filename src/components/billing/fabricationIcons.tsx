@@ -2,11 +2,12 @@ import type { ReactNode } from 'react'
 
 // Shared Arch/Polish-Side icon set — used both by the interactive
 // IconOptionPicker (BillLineItem.tsx, size="lg") and the Cutter voucher
-// print table (size="sm"). Arch's curve and the round/oval polish icons
-// look identical at both sizes, but Flat and the rectangular Polish Side
-// shapes deliberately DON'T — the print versions were redrawn to match a
-// client-supplied reference image; the on-screen picker keeps its own
-// original shapes untouched. See FlatSquareIcon/PolishRectIcon.
+// print table (size="sm"). Every Polish Side shape (rect/round/oval) is
+// identical at both sizes, so the printed Polish Details column always
+// matches what staff pick on screen — only pixel dimensions differ. Flat
+// is the one deliberate exception: its print shape was redrawn to match a
+// client-supplied reference image, while the on-screen picker keeps its
+// own original look. See FlatSquareIcon.
 
 interface IconSizeProps {
   size?: 'sm' | 'lg'
@@ -64,37 +65,18 @@ function EdgeTicks({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
   )
 }
 
-// Each selected edge draws as an open bracket — the edge itself plus a
-// short perpendicular tab at each end, e.g. "[" for the left edge alone —
-// used only for the print's size="sm" variant (see PolishRectIcon). With no
-// background rectangle, only the actual selected edge(s) render; select all
-// four and the brackets' tabs meet at every corner, reading as one full
-// rectangle outline.
-function EdgeBracket({ edge }: { edge: 'top' | 'bottom' | 'left' | 'right' }) {
-  const d: Record<'top' | 'bottom' | 'left' | 'right', string> = {
-    left: 'M8 4 L2 4 L2 28 L8 28',
-    right: 'M32 4 L38 4 L38 28 L32 28',
-    top: 'M2 10 L2 4 L38 4 L38 10',
-    bottom: 'M2 22 L2 28 L38 28 L38 22',
-  }
-  return <path d={d[edge]} strokeLinecap="round" strokeLinejoin="round" />
-}
-
+// Same rectangle + tick-mark shape at both sizes — the print voucher
+// previously used a different open-bracket design here (matched to a
+// client reference image), but that made the printed Polish Details
+// clipart look different from what staff pick on screen, which read as a
+// mismatch/mistake rather than a deliberate choice. Both now show the
+// picker's original design.
 export function PolishRectIcon({ edges, size = 'lg' }: { edges: Array<'top' | 'bottom' | 'left' | 'right'> } & IconSizeProps) {
-  if (size === 'lg') {
-    return (
-      <svg viewBox="0 0 40 32" className="h-7 w-9" fill="none" stroke="currentColor" strokeWidth="1.75">
-        <rect x="2" y="4" width="36" height="24" rx="1" />
-        {edges.map((edge) => (
-          <EdgeTicks key={edge} edge={edge} />
-        ))}
-      </svg>
-    )
-  }
   return (
-    <svg viewBox="0 0 40 32" className="h-4 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 40 32" className={size === 'lg' ? 'h-7 w-9' : 'h-4 w-5'} fill="none" stroke="currentColor" strokeWidth="1.75">
+      <rect x="2" y="4" width="36" height="24" rx="1" />
       {edges.map((edge) => (
-        <EdgeBracket key={edge} edge={edge} />
+        <EdgeTicks key={edge} edge={edge} />
       ))}
     </svg>
   )

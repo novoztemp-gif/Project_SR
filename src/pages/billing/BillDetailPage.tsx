@@ -30,23 +30,50 @@ export function BillDetailPage() {
   // invocation (and any later re-render that changes `bill`'s reference,
   // e.g. a cache refresh) reopens the print dialog again right after the
   // first one closes, since window.print() blocks until dismissed.
-  const hasPrintedRef = useRef(false)
+  const hasQueuedAutoPrintRef = useRef(false)
+  // Formats still waiting to auto-print, in order — for a Glass & Plywood
+  // bill this holds both 'cutter' and 'cash' so saving prints them one
+  // after the other without the counter opening each manually; for a
+  // general bill it's empty (that one-shot print is handled directly).
+  const autoPrintQueueRef = useRef<GPPrintMode[]>([])
 
   // Re-arm on every navigation to this route (id/print-type can change
   // without the component remounting) so each visit's requested format
   // and one-shot auto-print behave correctly.
   useEffect(() => {
-    hasPrintedRef.current = false
+    hasQueuedAutoPrintRef.current = false
+    autoPrintQueueRef.current = []
     setGpPrintMode(requestedPrintType ?? 'cash')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, requestedPrintType])
 
+  // Kicks off the auto-print sequence exactly once per navigation. For a
+  // Glass & Plywood bill this queues both formats and switches to the
+  // first one; the effect below actually fires window.print() once that
+  // switch has rendered.
   useEffect(() => {
-    if (bill && shouldPrint && !hasPrintedRef.current) {
-      hasPrintedRef.current = true
+    if (!bill || !shouldPrint || hasQueuedAutoPrintRef.current) return
+    hasQueuedAutoPrintRef.current = true
+    if (bill.billType === 'glass_plywood') {
+      autoPrintQueueRef.current = ['cutter', 'cash']
+      setGpPrintMode('cutter')
+    } else {
       window.setTimeout(() => window.print(), 0)
     }
-  }, [bill, shouldPrint, gpPrintMode])
+  }, [bill, shouldPrint])
+
+  // Fires only once gpPrintMode has actually settled to the queue's next
+  // format — printing right inside the effect above would still show
+  // whatever format was rendered before setGpPrintMode's update commits.
+  useEffect(() => {
+    if (autoPrintQueueRef.current[0] !== gpPrintMode) return
+    window.setTimeout(() => {
+      window.print()
+      autoPrintQueueRef.current.shift()
+      const next = autoPrintQueueRef.current[0]
+      if (next) setGpPrintMode(next)
+    }, 0)
+  }, [gpPrintMode])
 
   function printGP(mode: GPPrintMode) {
     setGpPrintMode(mode)
