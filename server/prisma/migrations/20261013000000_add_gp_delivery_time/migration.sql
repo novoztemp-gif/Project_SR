@@ -1,0 +1,12 @@
+-- Adds deliveryTime to SalesBill — Glass & Plywood billing only (general
+-- bills leave it null). Distinct from the existing transportTime (when the
+-- vehicle/transport departs) — this is when the order is expected to be
+-- delivered, shown on the Cutter voucher print under Delivery Date.
+-- Purely additive, no existing rows change.
+--
+-- Note: this project's migration history has pre-existing drift from the
+-- actual database (present before this change), so this was applied
+-- directly rather than via `prisma migrate dev`. This file documents what
+-- was run, matching the existing schema — see
+-- 20260907065427_add_hardware_section for the same pattern.
+ALTER TABLE "SalesBill" ADD COLUMN "deliveryTime" TEXT;

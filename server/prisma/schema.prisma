@@ -84,6 +84,10 @@ model SalesBill {
   customerPhone   String
   bookingDate     String?
   deliveryDate    String?
+  // Glass & Plywood billing only — when the order is expected to be
+  // delivered, distinct from transportTime (when the vehicle/transport
+  // itself departs). Nullable since general bills never set it.
+  deliveryTime    String?
   transport       String?
   transportTime   String?
   section         Section

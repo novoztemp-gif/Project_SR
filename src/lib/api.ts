@@ -47,6 +47,7 @@ export const api = {
           customerPhone: input.customerPhone ?? '',
           bookingDate: input.bookingDate,
           deliveryDate: input.deliveryDate,
+          deliveryTime: input.deliveryTime,
           transport: input.transport,
           transportTime: input.transportTime,
           writtenStaff: input.writtenStaff,

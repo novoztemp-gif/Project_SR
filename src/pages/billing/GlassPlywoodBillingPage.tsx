@@ -56,6 +56,7 @@ const billSchema = z.object({
   customerPhone:   z.string().refine((v) => !v || PHONE_RE.test(v), 'Invalid phone number'),
   bookingDate:     z.string().optional(),
   deliveryDate:    z.string().optional(),
+  deliveryTime:    z.string().optional(),
   transport:       z.string().optional(),
   transportTime:   z.string().optional(),
   writtenStaff:    z.string().optional(),
@@ -108,7 +109,7 @@ export function GlassPlywoodBillingPage() {
     resolver: zodResolver(billSchema),
     defaultValues: {
       customerName: '', customerAddress: '', customerPhone: '',
-      bookingDate: todayIso, deliveryDate: '',
+      bookingDate: todayIso, deliveryDate: '', deliveryTime: '',
       transport: '', transportTime: '',
       writtenStaff: '', priority: '', orderNumber: '', jobDescription: '',
       items: [emptyItem(1)],
@@ -155,6 +156,7 @@ export function GlassPlywoodBillingPage() {
         customerPhone:   values.customerPhone   || '',
         bookingDate:     values.bookingDate     || undefined,
         deliveryDate:    values.deliveryDate    || undefined,
+        deliveryTime:    values.deliveryTime    || undefined,
         transport:       values.transport       || undefined,
         transportTime:   values.transportTime   || undefined,
         writtenStaff:    values.writtenStaff    || undefined,
@@ -369,6 +371,11 @@ export function GlassPlywoodBillingPage() {
                     <div className="space-y-2">
                       <Label htmlFor="deliveryDate">Delivery date</Label>
                       <DateInput id="deliveryDate" registration={form.register('deliveryDate')} displayValue={watchedDeliveryDate} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="deliveryTime">Delivery time</Label>
+                      <Input id="deliveryTime" placeholder="e.g. 2 PM" {...form.register('deliveryTime')} />
                     </div>
 
                     <div className="space-y-2">

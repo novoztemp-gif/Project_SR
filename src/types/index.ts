@@ -160,6 +160,9 @@ export interface SalesBill {
   customerPhone: string
   bookingDate?: string
   deliveryDate?: string
+  /** Glass & Plywood billing only — when the order is expected to be
+   * delivered, distinct from transportTime (when the vehicle departs). */
+  deliveryTime?: string | null
   transport?: string
   transportTime?: string
   section: Section
@@ -191,6 +194,7 @@ export interface CreateBillInput {
   customerPhone: string
   bookingDate?: string
   deliveryDate?: string
+  deliveryTime?: string
   transport?: string
   transportTime?: string
   writtenStaff?: string

@@ -124,6 +124,9 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             <div className="space-y-0.5 whitespace-nowrap">
               <p className="flex"><span className="w-24 shrink-0 font-semibold">Booking Date</span><span>: {fmtGPDate(bill.bookingDate ?? bill.date)}</span></p>
               <p className="flex"><span className="w-24 shrink-0 font-semibold">Delivery Date</span><span>: {fmtGPDate(bill.deliveryDate)}</span></p>
+              {/* Glass & Plywood billing only — when the order is expected
+                  to be delivered, not when the transport itself departs. */}
+              <p className="flex"><span className="w-24 shrink-0 font-semibold">Delivery Time</span><span>: {bill.deliveryTime || '-'}</span></p>
               <p className="flex"><span className="w-24 shrink-0 font-semibold">Transport</span><span>: {bill.transport || '-'}</span></p>
             </div>
           </div>
