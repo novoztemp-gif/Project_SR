@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { api } from '@/lib/api'
 import { SECTION_COLORS, SECTIONS } from '@/lib/constants'
 import { exportCsv } from '@/lib/exportCsv'
 import { getUserName, getUserSections } from '@/lib/userSections'
@@ -129,7 +130,15 @@ function BillPreviewPanel({
             <div className="text-right">
               <p className="text-xs text-gray-600">Final Amount</p>
               <p className="font-mono font-bold tabular-nums text-brand-dark">{INR.format(finalAmount)}</p>
-              <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={onBillUpdated} className="mt-1" />
+              <PaymentTracker
+                id={bill.id}
+                paidAmount={bill.paidAmount}
+                finalAmount={finalAmount}
+                balanceAmount={balanceAmount}
+                onSave={(id, amount) => api.bills.updatePayment(id, amount)}
+                onUpdated={onBillUpdated}
+                className="mt-1"
+              />
             </div>
           </div>
         </div>
@@ -243,7 +252,12 @@ export function GlassPlywoodBillListPage() {
                   {INR.format(bill.total)}
                 </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <PaymentStatusCell bill={bill} finalAmount={finalAmount} />
+                  <PaymentStatusCell
+                    id={bill.id}
+                    paidAmount={bill.paidAmount}
+                    finalAmount={finalAmount}
+                    onSave={(id, amount) => api.bills.updatePayment(id, amount)}
+                  />
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">

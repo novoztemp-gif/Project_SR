@@ -27,6 +27,8 @@ interface PurchaseState {
   /** Backend already scopes /purchases to the user's sections, so this returns the cache. */
   getPurchasesForRole: (role: Role) => PurchaseBill[]
   applyAndPrint: (id: string) => Promise<void>
+  /** Update how much of a purchase has been paid to the vendor. */
+  updatePayment: (id: string, paidAmount: number) => Promise<PurchaseBill>
 }
 
 export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
@@ -66,5 +68,13 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
     }))
     // Stock changed — refresh the inventory cache.
     await useInventoryStore.getState().refreshProducts()
+  },
+
+  updatePayment: async (id, paidAmount) => {
+    const updated = await http.patch<PurchaseBill>(`/purchases/${id}/payment`, { paidAmount })
+    set((state) => ({
+      purchases: state.purchases.map((purchase) => (purchase.id === id ? updated : purchase)),
+    }))
+    return updated
   },
 }))

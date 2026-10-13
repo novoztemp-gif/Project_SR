@@ -5,42 +5,46 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import type { SalesBill } from '@/types'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
 /**
- * Shown wherever a bill's balance is visible (bill list previews, bill
- * detail) so a pending amount isn't just a dead number — staff can correct
- * the paid amount later (e.g. the customer clears it after delivery) or
- * mark it fully paid in one click, right from where they're already
- * looking at the bill.
+ * Shown wherever a sales bill or purchase voucher's balance is visible
+ * (list previews, detail pages) so a pending amount isn't just a dead
+ * number — staff can correct the paid amount later (e.g. the
+ * customer/vendor clears it after delivery) or mark it fully paid in one
+ * click, right from where they're already looking. `onSave` is the
+ * caller's own update call (bills vs. purchases hit different endpoints),
+ * kept generic here so this one component works for both.
  */
-export function PaymentTracker({
-  bill,
+export function PaymentTracker<T>({
+  id,
+  paidAmount,
   finalAmount,
   balanceAmount,
+  onSave,
   onUpdated,
   className,
 }: {
-  bill: SalesBill
+  id: string
+  paidAmount: number
   finalAmount: number
   balanceAmount: number
-  onUpdated: (bill: SalesBill) => void
+  onSave: (id: string, paidAmount: number) => Promise<T>
+  onUpdated: (result: T) => void
   className?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(String(bill.paidAmount))
+  const [value, setValue] = useState(String(paidAmount))
   const [saving, setSaving] = useState(false)
 
   if (balanceAmount <= 0) return null
 
-  async function save(paidAmount: number) {
+  async function save(newPaidAmount: number) {
     setSaving(true)
     try {
-      const updated = await api.bills.updatePayment(bill.id, paidAmount)
+      const updated = await onSave(id, newPaidAmount)
       onUpdated(updated)
       setOpen(false)
       toast.success('Payment updated')
@@ -54,7 +58,7 @@ export function PaymentTracker({
   return (
     <div className={cn('flex items-center justify-end gap-1.5', className)}>
       <p className="text-xs font-medium text-amber-600">Amount pending {INR.format(balanceAmount)}</p>
-      <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setValue(String(bill.paidAmount)) }}>
+      <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setValue(String(paidAmount)) }}>
         <PopoverTrigger asChild>
           <button type="button" aria-label="Edit pending amount" className="text-gray-400 hover:text-gray-700">
             <Pencil className="h-3 w-3" />
@@ -101,14 +105,35 @@ export function PaymentTracker({
 
 /**
  * Table-cell variant: "Paid" when settled, otherwise the same pending
- * amount + edit/fully-paid controls as PaymentTracker. The bills list
- * reads from a reactive store subscription, so a successful edit here
- * re-renders the row on its own — no onUpdated callback needed.
+ * amount + edit/fully-paid controls as PaymentTracker. Callers whose list
+ * reads from a reactive store subscription can pass a no-op onUpdated —
+ * a successful edit re-renders the row on its own.
  */
-export function PaymentStatusCell({ bill, finalAmount }: { bill: SalesBill; finalAmount: number }) {
-  const balanceAmount = finalAmount - bill.paidAmount
+export function PaymentStatusCell<T>({
+  id,
+  paidAmount,
+  finalAmount,
+  onSave,
+  onUpdated,
+}: {
+  id: string
+  paidAmount: number
+  finalAmount: number
+  onSave: (id: string, paidAmount: number) => Promise<T>
+  onUpdated?: (result: T) => void
+}) {
+  const balanceAmount = finalAmount - paidAmount
   if (balanceAmount <= 0) {
     return <span className="text-xs font-medium text-emerald-600">Paid</span>
   }
-  return <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={() => {}} />
+  return (
+    <PaymentTracker
+      id={id}
+      paidAmount={paidAmount}
+      finalAmount={finalAmount}
+      balanceAmount={balanceAmount}
+      onSave={onSave}
+      onUpdated={onUpdated ?? (() => {})}
+    />
+  )
 }

@@ -103,7 +103,14 @@ export function BillDetailPage() {
     <div>
       {balanceAmount > 0 && (
         <div className="report-screen-only flex justify-end mb-2">
-          <PaymentTracker bill={bill} finalAmount={finalAmount} balanceAmount={balanceAmount} onUpdated={setPaymentOverride} />
+          <PaymentTracker
+            id={bill.id}
+            paidAmount={bill.paidAmount}
+            finalAmount={finalAmount}
+            balanceAmount={balanceAmount}
+            onSave={(id, amount) => api.bills.updatePayment(id, amount)}
+            onUpdated={setPaymentOverride}
+          />
         </div>
       )}
       <div className="report-screen-only flex items-center justify-between mb-6">

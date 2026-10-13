@@ -424,7 +424,16 @@ export function NewPurchasePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="paidAmount">Paid amount (₹)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="paidAmount">Paid amount (₹)</Label>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-brand-mid hover:underline"
+                    onClick={() => form.setValue('paidAmount', finalAmount, { shouldValidate: true })}
+                  >
+                    Full
+                  </button>
+                </div>
                 <Input
                   id="paidAmount"
                   type="number"

@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { CheckCircle2, FileText, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { PaymentTracker } from '@/components/billing/PaymentTracker'
 import { PrintablePurchase } from '@/components/purchases/PrintablePurchase'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ export function PurchaseDetailPage() {
   const currentUser = useAuthStore((state) => state.currentUser)!
   const bill = usePurchaseStore((state) => (id ? state.getPurchase(id) : undefined))
   const applyAndPrint = usePurchaseStore((state) => state.applyAndPrint)
+  const updatePayment = usePurchaseStore((state) => state.updatePayment)
   const shouldPrint = Boolean((location.state as { print?: boolean } | null)?.print)
   // Guards against firing window.print() more than once for the same
   // navigation — same pattern as BillDetailPage.
@@ -47,6 +49,8 @@ export function PurchaseDetailPage() {
   if (!bill) return <Navigate to="/purchases" replace />
 
   const isApplied = bill.printedAt !== null
+  const finalAmount = bill.total + bill.transportationAmount - bill.discount
+  const balanceAmount = finalAmount - bill.paidAmount
 
   async function handleApplyStock() {
     if (!bill) return
@@ -99,6 +103,16 @@ export function PurchaseDetailPage() {
         >
           {isApplied ? 'Applied' : 'Pending'}
         </Badge>
+        {balanceAmount > 0 && (
+          <PaymentTracker
+            id={bill.id}
+            paidAmount={bill.paidAmount}
+            finalAmount={finalAmount}
+            balanceAmount={balanceAmount}
+            onSave={(purchaseId, amount) => updatePayment(purchaseId, amount)}
+            onUpdated={() => {}}
+          />
+        )}
       </div>
 
       {bill.imageUrl && (

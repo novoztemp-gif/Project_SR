@@ -239,3 +239,29 @@ purchasesRouter.post(
     res.json(updated)
   }),
 )
+
+const updatePaymentSchema = z.object({
+  paidAmount: z.number().nonnegative(),
+})
+
+/**
+ * PATCH /api/purchases/:id/payment — update how much of a purchase has been
+ * paid to the vendor (e.g. clearing a pending balance later).
+ */
+purchasesRouter.patch(
+  '/:id/payment',
+  asyncHandler(async (req, res) => {
+    const { paidAmount } = updatePaymentSchema.parse(req.body)
+
+    const existing = await prisma.purchaseBill.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw new ApiError(404, 'Purchase not found')
+    assertSectionAccess(req.user!, existing.section)
+
+    const purchase = await prisma.purchaseBill.update({
+      where: { id: req.params.id },
+      data: { paidAmount },
+      include: { items: true },
+    })
+    res.json(purchase)
+  }),
+)

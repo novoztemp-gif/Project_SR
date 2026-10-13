@@ -5,6 +5,7 @@ import { ClipboardList, Download, Plus, Printer } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
+import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SECTION_COLORS, SECTIONS } from '@/lib/constants'
@@ -78,9 +79,12 @@ function PurchasePreviewPanel({
   onView: () => void
 }) {
   const godowns = useInventoryStore((s) => s.godowns)
+  const updatePayment = usePurchaseStore((s) => s.updatePayment)
   const sectionLabel = getSectionLabel(purchase.section)
   const godownLabel = getPurchaseGodownLabel(purchase, godowns)
   const isApplied = Boolean(purchase.printedAt)
+  const finalAmount = purchase.total + purchase.transportationAmount - purchase.discount
+  const balanceAmount = finalAmount - purchase.paidAmount
 
   return (
     <aside className="w-full md:w-96 md:flex-shrink-0">
@@ -142,6 +146,16 @@ function PurchasePreviewPanel({
             <span className="text-sm text-muted-foreground">Grand total</span>
             <span className="font-mono text-xl font-medium tabular-nums text-foreground">{INR.format(purchase.total)}</span>
           </div>
+          {balanceAmount > 0 && (
+            <PaymentTracker
+              id={purchase.id}
+              paidAmount={purchase.paidAmount}
+              finalAmount={finalAmount}
+              balanceAmount={balanceAmount}
+              onSave={(id, amount) => updatePayment(id, amount)}
+              onUpdated={() => {}}
+            />
+          )}
         </div>
 
         <div className="flex gap-2 border-t border-border px-5 py-4">
@@ -233,6 +247,7 @@ export function PurchaseListPage() {
               <TableHead>Godown</TableHead>
               <TableHead className="text-right">Items</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Payment</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -241,6 +256,7 @@ export function PurchaseListPage() {
               const sectionLabel = getSectionLabel(purchase.section)
               const godownLabel = getPurchaseGodownLabel(purchase, godowns)
               const isSelected = purchase.id === selectedId
+              const finalAmount = purchase.total + purchase.transportationAmount - purchase.discount
 
               return (
                 <TableRow
@@ -260,6 +276,14 @@ export function PurchaseListPage() {
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {INR.format(purchase.total)}
+                  </TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <PaymentStatusCell
+                      id={purchase.id}
+                      paidAmount={purchase.paidAmount}
+                      finalAmount={finalAmount}
+                      onSave={(id, amount) => usePurchaseStore.getState().updatePayment(id, amount)}
+                    />
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" style={purchaseStatusStyle(Boolean(purchase.printedAt))}>
