@@ -1,4 +1,4 @@
-import { ARCH_ICONS_SMALL, POLISH_SIDE_ICONS_SMALL } from '@/components/billing/fabricationIcons'
+import { ARCH_ICONS_SMALL, POLISH_SIDE_ICONS_SMALL, renderPolishName } from '@/components/billing/fabricationIcons'
 import {
   ARCH_SHORT_LABELS,
   fmtGPDate,
@@ -190,7 +190,7 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                         {POLISH_SIDE_ICONS_SMALL[item.polishSide]}
                         <div className="leading-tight">
                           <p className="font-semibold">{POLISH_SIDE_CUTTER_LABELS[item.polishSide] ?? item.polishSide}</p>
-                          {item.polishName && <p className={`${tier.header} text-gray-600`}>{item.polishName}</p>}
+                          {item.polishName && <p className={`${tier.header} text-gray-600`}>{renderPolishName(item.polishName)}</p>}
                         </div>
                       </div>
                     ) : (

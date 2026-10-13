@@ -178,3 +178,20 @@ export const ARCH_ICONS_SMALL: Record<string, ReactNode> = {
 
 export const POLISH_SIDE_ICONS: Record<string, ReactNode> = buildPolishSideIcons('lg')
 export const POLISH_SIDE_ICONS_SMALL: Record<string, ReactNode> = buildPolishSideIcons('sm')
+
+/**
+ * "I - Polish" is a product/brand name, not a plain descriptive label like
+ * the rest of POLISH_NAME_OPTIONS — its "I" is set in a serif face (Times
+ * New Roman), not the app's regular sans-serif, wherever the value is
+ * shown: the on-screen picker's option list and the printed voucher.
+ * Every other polish name renders as plain text, unaffected.
+ */
+export function renderPolishName(value: string): ReactNode {
+  if (value !== 'I - Polish') return value
+  return (
+    <>
+      <span style={{ fontFamily: '"Times New Roman", Times, serif' }} className="italic">I</span>
+      {' - Polish'}
+    </>
+  )
+}

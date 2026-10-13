@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { MeasurementsDialog } from '@/components/billing/MeasurementsDialog'
 import { QuickAddProductDialog } from '@/components/billing/QuickAddProductDialog'
 import { SetSellingPriceDialog } from '@/components/inventory/SetSellingPriceDialog'
-import { ARCH_ICONS, POLISH_SIDE_ICONS } from '@/components/billing/fabricationIcons'
+import { ARCH_ICONS, POLISH_SIDE_ICONS, renderPolishName } from '@/components/billing/fabricationIcons'
 import { resolveManualUnitPrice } from '@/lib/productMatch'
 import { computeSqFtFromSize } from '@/lib/sqft'
 import {
@@ -124,7 +124,7 @@ function FabricationOptionPill({
         ) : (
           options.map((option) => (
             <SelectItem key={option} value={option}>
-              {option}
+              {renderPolishName(option)}
             </SelectItem>
           ))
         )}

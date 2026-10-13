@@ -159,6 +159,7 @@ export const POLISH_NAME_OPTIONS: string[] = [
   '1 1/4" Beveling',
   '4 side Grainting',
   'Half Round',
+  'I - Polish',
 ]
 export const CORNER_TYPE_OPTIONS: string[] = [
   '1/4" Corner',
@@ -176,6 +177,7 @@ export const ART_WORK_OPTIONS: string[] = [
   'Double Line Work',
   'Stone work',
   'Crystal Work',
+  'Glitter Work',
 ]
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
