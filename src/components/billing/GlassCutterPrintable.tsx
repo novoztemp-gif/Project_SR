@@ -79,16 +79,20 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           never starts underneath it, on page 1 or any later page. */}
       <div className="print-running-header print-running-header--gp-cutter">
         <div className="border-2 border-[#16232e] rounded-t-md">
-          <div className="flex items-start justify-between gap-3 px-3 py-2 text-xs">
+          {/* grid-cols-3 (not a flex row) — the date/time block and the
+              icons+godown block are different widths, which pushed the
+              centered company name off the header's true midpoint under
+              justify-between. Equal thirds keep it centered regardless. */}
+          <div className="grid grid-cols-3 items-start gap-3 px-3 py-2 text-xs">
             <div className="leading-tight whitespace-nowrap">
               <p>{fmtGPDate(bill.createdAt)}</p>
               <p>{fmtGPTime(bill.createdAt)}</p>
             </div>
             <div className="text-center">
-              <h1 className="text-base font-extrabold tracking-wide">{COMPANY.name}</h1>
-              <p className="text-sm font-semibold">{COMPANY.place}</p>
+              <h1 className="text-sm font-extrabold tracking-wide">{COMPANY.name}</h1>
+              <p className="text-xs font-semibold">{COMPANY.place}</p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start justify-end gap-2">
               {/* Unlabeled in the reference format — reproduced as-is. */}
               <span className="inline-block h-6 w-6 shrink-0 rounded-full border-2 border-[#16232e]" />
               <span className="inline-block h-6 w-6 shrink-0 border-2 border-[#16232e]" />
@@ -105,36 +109,45 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             <p className="text-sm font-extrabold tracking-wide">GLASS / PLYWOOD ESTIMATE</p>
           </div>
           <div className="flex flex-wrap justify-between gap-x-8 gap-y-1 border-t-2 border-[#16232e] px-3 py-2 text-xs">
+            {/* Fixed-width label spans, not inline text — "Bill No:",
+                "Name :" and "Address:" are different lengths, so plain
+                inline colons never land in the same column. */}
             <div className="space-y-0.5">
-              <p><span className="font-semibold">Bill No:</span> {voucher}</p>
-              <p className="truncate"><span className="font-semibold">Name :</span> {bill.customerName || '-'}</p>
-              <p className="truncate"><span className="font-semibold">Address:</span> {bill.customerAddress || '-'}</p>
+              <p className="flex"><span className="w-16 shrink-0 font-semibold">Bill No</span><span>: {voucher}</span></p>
+              <p className="flex truncate"><span className="w-16 shrink-0 font-semibold">Name</span><span className="truncate">: {bill.customerName || '-'}</span></p>
+              <p className="flex truncate"><span className="w-16 shrink-0 font-semibold">Address</span><span className="truncate">: {bill.customerAddress || '-'}</span></p>
             </div>
-            <div className="text-right space-y-0.5 whitespace-nowrap">
-              <p><span className="font-semibold">Booking Date :</span> {fmtGPDate(bill.bookingDate ?? bill.date)}</p>
-              <p><span className="font-semibold">Delivery Date :</span> {fmtGPDate(bill.deliveryDate)}</p>
-              <p><span className="font-semibold">Transport :</span> {bill.transport || '-'}</p>
+            <div className="space-y-0.5 whitespace-nowrap">
+              <p className="flex"><span className="w-24 shrink-0 font-semibold">Booking Date</span><span>: {fmtGPDate(bill.bookingDate ?? bill.date)}</span></p>
+              <p className="flex"><span className="w-24 shrink-0 font-semibold">Delivery Date</span><span>: {fmtGPDate(bill.deliveryDate)}</span></p>
+              <p className="flex"><span className="w-24 shrink-0 font-semibold">Transport</span><span>: {bill.transport || '-'}</span></p>
             </div>
           </div>
         </div>
       </div>
       <div className="print-content-block print-content-block--gp-cutter">
-        <table className={`w-full ${tier.cell} border-collapse`}>
+        {/* table-layout:fixed with explicit % widths on the header row —
+            auto layout (the previous approach) let Product Name's w-full
+            soak up almost everything while Size shrank to its own text,
+            which read as "lengthy name column, tiny size column" against
+            the reference's much more even proportions. */}
+        <table className={`w-full ${tier.cell} border-collapse [table-layout:fixed]`}>
           <thead>
             <tr className="bg-white text-black">
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>&#10003;</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>No.</th>
-              <th className={`${HEADER_CELL} min-w-[15mm] text-left w-full`}>Product Name</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Size</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Qty</th>
-              {/* Borderless spacer — a real gap between the item-detail and
-                  fabrication column groups, not just cell padding. */}
-              <th className="w-1 border-0 bg-white p-0" />
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Arch</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Corner</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Polish Details</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Hole</th>
-              <th className={`${HEADER_CELL} whitespace-nowrap`}>Art</th>
+              <th className={`${HEADER_CELL} w-[4%] whitespace-nowrap`}>&#10003;</th>
+              <th className={`${HEADER_CELL} w-[5%] whitespace-nowrap`}>No.</th>
+              <th className={`${HEADER_CELL} w-[24%] text-left`}>Product Name</th>
+              <th className={`${HEADER_CELL} w-[14%] whitespace-nowrap`}>Size</th>
+              <th className={`${HEADER_CELL} w-[6%] whitespace-nowrap`}>Qty</th>
+              {/* A real bordered gap box between the item-detail and
+                  fabrication column groups, matching the reference —
+                  previously a blank borderless spacer. */}
+              <th className="w-[2%] border border-[#16232e] bg-white p-0" />
+              <th className={`${HEADER_CELL} w-[9%] whitespace-nowrap`}>Arch</th>
+              <th className={`${HEADER_CELL} w-[9%] whitespace-nowrap`}>Corner</th>
+              <th className={`${HEADER_CELL} w-[13%] whitespace-nowrap`}>Polish Details</th>
+              <th className={`${HEADER_CELL} w-[6%] whitespace-nowrap`}>Hole</th>
+              <th className={`${HEADER_CELL} w-[8%] whitespace-nowrap`}>Art</th>
             </tr>
           </thead>
           <tbody>
@@ -150,11 +163,11 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
                   <td className={`${CELL} text-center`}>
                     <span className="inline-block h-2.5 w-2.5 border border-gray-500" />
                   </td>
-                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.serialNumber || i + 1}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold text-black`}>{item.serialNumber || i + 1}</td>
                   <td className={`${CELL} font-semibold text-black`}>{item.productName}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.glassSize || '-'}</td>
-                  <td className={`${CELL} text-center whitespace-nowrap text-black`}>{item.quantity}</td>
-                  <td className="w-1 border-0 bg-white p-0" />
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold text-black`}>{item.glassSize || '-'}</td>
+                  <td className={`${CELL} text-center whitespace-nowrap font-semibold text-black`}>{item.quantity}</td>
+                  <td className="w-[2%] border border-[#16232e] bg-white p-0" />
                   <td className={`${CELL} whitespace-nowrap ${textColor}`}>
                     {item.arch ? (
                       <div className="flex flex-col items-center gap-0.5">
@@ -210,12 +223,14 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </p>
             {/* Fixed hand-fill checklist codes — kept in their original
                 mixed case (e.g. "Car G", "Alapancode G"), not uppercased
-                like the rest of this box. */}
-            <p className="flex flex-wrap gap-x-4 gap-y-1">
+                like the rest of this box. flex-nowrap + a smaller size
+                keeps all seven on one line, matching the reference,
+                instead of wrapping across two. */}
+            <p className="flex flex-nowrap items-baseline gap-x-2 text-[9px]">
               {LOGISTICS_CHECKLIST.map((label, i) => (
                 <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
                   <span className="font-semibold">{label}</span>
-                  <span className={`${FILL_LINE} w-10`}>&nbsp;</span>
+                  <span className={`${FILL_LINE} w-7`}>&nbsp;</span>
                   {/* Trailing dash after the last entry, matching the reference exactly. */}
                   {i === LOGISTICS_CHECKLIST.length - 1 && <span>-</span>}
                 </span>
@@ -261,16 +276,18 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             {bill.writtenStaff && <span className="ml-6 font-normal">Written Staff: {bill.writtenStaff}</span>}
           </p>
 
-          {/* Each box gets its own blank h-16 rectangle directly above its
+          {/* Each box gets its own blank h-8 rectangle directly above its
               own line — not a shared margin on the row above both, which
-              read more as "gap after Staff:" than "room to sign here". */}
-          <div className="mt-6 flex flex-wrap justify-between gap-x-4 gap-y-3">
+              read more as "gap after Staff:" than "room to sign here".
+              Shorter than before (was h-16) to sit close to the end like
+              the reference, rather than pushed down the page. */}
+          <div className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-3">
             <div className="w-[45%] min-w-[8rem] text-center">
-              <div className="h-16" />
+              <div className="h-8" />
               <div className="border-t border-gray-700 pt-1">Glass Cutter Signature</div>
             </div>
             <div className="w-[45%] min-w-[8rem] text-center">
-              <div className="h-16" />
+              <div className="h-8" />
               <div className="border-t border-gray-700 pt-1">Quality Inspector Signature</div>
             </div>
           </div>
