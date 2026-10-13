@@ -9,7 +9,6 @@ import {
   POLISH_SIDE_CUTTER_LABELS,
 } from '@/lib/glassPrintFormat'
 import { COMPANY } from '@/lib/brand'
-import { getUserName } from '@/lib/userSections'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { SalesBill } from '@/types'
 
@@ -43,7 +42,6 @@ const FILL_LINE = 'inline-block border-b border-gray-400'
  */
 export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
   const voucher = bill.gpVoucherNumber ?? bill.billNumber
-  const staffName = getUserName(bill.createdBy)
   const tier = getTableSizeTier(bill.items.length)
   // text-black is required directly on each <th>, not just the parent
   // <tr> — a global `table th` rule (index.css, for the app's regular
@@ -92,10 +90,16 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
               <h1 className="text-sm font-extrabold tracking-wide">{COMPANY.name}</h1>
               <p className="text-xs font-semibold">{COMPANY.place}</p>
             </div>
-            <div className="flex items-start justify-end gap-2">
+            {/* justify-end packs this whole group flush against the
+                column's right edge — tightening the gap (vs. the previous
+                gap-2) shrinks the group's total width while that right
+                edge stays put, which is what actually shifts the circle
+                and square right relative to the center column, not a
+                bigger gap (that would push them the other way). */}
+            <div className="flex items-start justify-end gap-1.5">
               {/* Unlabeled in the reference format — reproduced as-is. */}
-              <span className="inline-block h-6 w-6 shrink-0 rounded-full border-2 border-[#16232e]" />
-              <span className="inline-block h-6 w-6 shrink-0 border-2 border-[#16232e]" />
+              <span className="inline-block h-8 w-8 shrink-0 rounded-full border-2 border-[#16232e]" />
+              <span className="inline-block h-8 w-8 shrink-0 border-2 border-[#16232e]" />
               {billGodowns.length > 0 && (
                 <div className="text-right font-semibold leading-tight">
                   {billGodowns.map((name) => (
@@ -215,38 +219,53 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
           </div>
 
           <div className="space-y-2 rounded border border-gray-400 p-3">
-            <p className="flex flex-wrap items-baseline gap-1 uppercase">
+            {/* Sign's fill line is now flex-1 too (was a fixed w-28) — both
+                entry lines share the row's full width instead of the name
+                line stretching while Sign stays a short fixed box. */}
+            <p className="flex items-baseline gap-1 uppercase">
               <span className="whitespace-nowrap font-semibold">Things Eduththavar Name:</span>
-              <span className={`${FILL_LINE} min-w-[16rem] flex-1`}>&nbsp;</span>
+              <span className={`${FILL_LINE} min-w-[8rem] flex-1`}>&nbsp;</span>
               <span className="ml-4 whitespace-nowrap font-semibold">Sign:</span>
-              <span className={`${FILL_LINE} w-28`}>&nbsp;</span>
+              <span className={`${FILL_LINE} min-w-[8rem] flex-1`}>&nbsp;</span>
             </p>
             {/* Fixed hand-fill checklist codes — kept in their original
                 mixed case (e.g. "Car G", "Alapancode G"), not uppercased
-                like the rest of this box. flex-nowrap + a smaller size
-                keeps all seven on one line, matching the reference,
-                instead of wrapping across two. */}
-            <p className="flex flex-nowrap items-baseline gap-x-2 text-[9px]">
+                like the rest of this box. flex-nowrap keeps all seven on
+                one line like the reference; justify-between (not packed
+                left) spreads them across the row's full width. */}
+            <p className="flex flex-nowrap items-baseline justify-between text-[9px]">
               {LOGISTICS_CHECKLIST.map((label, i) => (
                 <span key={label} className="flex items-baseline gap-1 whitespace-nowrap">
                   <span className="font-semibold">{label}</span>
-                  <span className={`${FILL_LINE} w-7`}>&nbsp;</span>
+                  <span className={`${FILL_LINE} w-9`}>&nbsp;</span>
                   {/* Trailing dash after the last entry, matching the reference exactly. */}
                   {i === LOGISTICS_CHECKLIST.length - 1 && <span>-</span>}
                 </span>
               ))}
             </p>
-            <p className="flex flex-wrap items-baseline gap-1 uppercase">
-              <span className="whitespace-nowrap font-semibold">Driver Name:</span>
-              <span className={`${FILL_LINE} w-24`}>&nbsp;</span>
-              <span className="ml-2 whitespace-nowrap font-semibold">Sign:</span>
-              <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
-              <span className="ml-2 whitespace-nowrap font-semibold">Key Out Time:</span>
-              <span className={`${FILL_LINE} w-14`}>&nbsp;</span>
-              <span className="ml-2 whitespace-nowrap font-semibold">Key In Time:</span>
-              <span className={`${FILL_LINE} w-14`}>&nbsp;</span>
-              <span className="ml-2 whitespace-nowrap font-semibold">Security Sign:</span>
-              <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+            {/* justify-between (not manual ml-2 offsets) spreads these five
+                groups across the full row width too. */}
+            <p className="flex flex-nowrap items-baseline justify-between uppercase">
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-semibold">Driver Name:</span>
+                <span className={`${FILL_LINE} w-24`}>&nbsp;</span>
+              </span>
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-semibold">Sign:</span>
+                <span className={`${FILL_LINE} w-20`}>&nbsp;</span>
+              </span>
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-semibold">Key Out Time:</span>
+                <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+              </span>
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-semibold">Key In Time:</span>
+                <span className={`${FILL_LINE} w-16`}>&nbsp;</span>
+              </span>
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-semibold">Security Sign:</span>
+                <span className={`${FILL_LINE} w-20`}>&nbsp;</span>
+              </span>
             </p>
           </div>
 
@@ -271,9 +290,11 @@ export function GlassCutterPrintable({ bill }: { bill: SalesBill }) {
             </span>
           </div>
 
+          {/* Bound to the Written Staff field entered on the billing form
+              (bill.writtenStaff) — the actual typed staff-name input —
+              rather than the logged-in counter's account name. */}
           <p className="font-semibold">
-            Staff: {staffName}
-            {bill.writtenStaff && <span className="ml-6 font-normal">Written Staff: {bill.writtenStaff}</span>}
+            Staff: {bill.writtenStaff || '-'}
           </p>
 
           {/* Each box gets its own blank h-8 rectangle directly above its
