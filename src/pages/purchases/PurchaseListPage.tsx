@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import * as React from 'react'
 import { ClipboardList, Download, Plus, Printer } from 'lucide-react'
+import { format } from 'date-fns'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,8 +27,10 @@ function formatDate(iso: string) {
   })
 }
 
+// format(), not .toISOString(), to match the on-screen date (local), not
+// UTC — otherwise a purchase made before ~5:30am IST exports the previous day.
 function csvDate(iso: string) {
-  return new Date(iso).toISOString().slice(0, 10)
+  return format(new Date(iso), 'yyyy-MM-dd')
 }
 
 function getSectionLabel(sectionKey: PurchaseBill['section']) {
@@ -208,17 +211,24 @@ export function PurchaseListPage() {
   function exportPurchases() {
     exportCsv(
       'purchases.csv',
-      ['Voucher#', 'Vendor', 'Date', 'Section', 'Godown', 'Items', 'Total', 'Status'],
-      sortedPurchases.map((purchase) => [
-        purchase.voucherNumber,
-        purchase.vendorName,
-        csvDate(purchase.date),
-        getSectionLabel(purchase.section),
-        getPurchaseGodownLabel(purchase, godowns),
-        purchase.items.map((item) => `${item.productName} x ${item.quantity} ${item.unit}`).join('; '),
-        purchase.total,
-        purchase.printedAt ? 'Applied' : 'Pending',
-      ])
+      ['Voucher#', 'Vendor', 'Date', 'Section', 'Godown', 'Items', 'Subtotal', 'Transportation', 'Discount', 'Final Amount', 'Paid', 'Status'],
+      sortedPurchases.map((purchase) => {
+        const finalAmount = purchase.total + purchase.transportationAmount - purchase.discount
+        return [
+          purchase.voucherNumber,
+          purchase.vendorName,
+          csvDate(purchase.date),
+          getSectionLabel(purchase.section),
+          getPurchaseGodownLabel(purchase, godowns),
+          purchase.items.map((item) => `${item.productName} x ${item.quantity} ${item.unit}`).join('; '),
+          purchase.total,
+          purchase.transportationAmount,
+          purchase.discount,
+          finalAmount,
+          purchase.paidAmount,
+          purchase.printedAt ? 'Applied' : 'Pending',
+        ]
+      })
     )
   }
 

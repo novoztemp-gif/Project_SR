@@ -35,8 +35,11 @@ const INR = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
 })
 
+// format(), not .toISOString(), so this matches the page's own local-date
+// filtering (isSameDay) instead of drifting a day for bills made before
+// ~5:30am IST, where the UTC calendar date is still the previous day.
 function csvDate(iso?: string) {
-  return iso ? new Date(iso).toISOString().slice(0, 10) : ''
+  return iso ? format(new Date(iso), 'yyyy-MM-dd') : ''
 }
 
 function displayDate(iso?: string) {

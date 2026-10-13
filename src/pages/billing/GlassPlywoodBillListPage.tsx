@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Download, FilePlus, Receipt, ReceiptText, Scissors } from 'lucide-react'
+import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -26,8 +27,10 @@ function formatDate(iso: string) {
   })
 }
 
+// format(), not .toISOString(), to match the on-screen date (local), not
+// UTC — otherwise a bill made before ~5:30am IST exports the previous day.
 function csvDate(iso?: string) {
-  return iso ? new Date(iso).toISOString().slice(0, 10) : ''
+  return iso ? format(new Date(iso), 'yyyy-MM-dd') : ''
 }
 
 function sectionBadgeStyle(sectionLabel: string) {
@@ -182,7 +185,7 @@ export function GlassPlywoodBillListPage() {
       ['Voucher#', 'Customer', 'Address', 'Items', 'Sq/-', 'Amount', 'Date', 'Delivery', 'Staff', 'Status'],
       sorted.map((bill) => {
         const sqFt = bill.items.reduce((sum, item) => sum + (Number(item.sqFt) || 0), 0)
-        const amount = bill.total + bill.transportationAmount - bill.discount
+        const amount = bill.total + bill.transportationAmount + bill.cuttingCharge - bill.discount
 
         return [
           bill.gpVoucherNumber ?? bill.billNumber,

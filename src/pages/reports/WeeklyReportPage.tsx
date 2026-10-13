@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { exportCsv } from '@/lib/exportCsv'
-import { selectSectionBreakdown, selectWeeklyRevenue } from '@/lib/reportSelectors'
+import { scopeBillsForUser, selectSectionBreakdown, selectWeeklyRevenue } from '@/lib/reportSelectors'
+import { useAuthStore } from '@/store/authStore'
 import { useBillingStore } from '@/store/billingStore'
 
 const INR = new Intl.NumberFormat('en-IN', {
@@ -18,7 +19,9 @@ const INR = new Intl.NumberFormat('en-IN', {
 })
 
 export function WeeklyReportPage() {
-  const bills = useBillingStore((state) => state.bills)
+  const currentUser = useAuthStore((state) => state.currentUser)!
+  const allBills = useBillingStore((state) => state.bills)
+  const bills = scopeBillsForUser(allBills, currentUser)
   const weekDays = selectWeeklyRevenue(bills)
   const weeklyTotal = weekDays.reduce((sum, day) => sum + day.revenue, 0)
   const avgPerDay = weeklyTotal / 7
