@@ -173,7 +173,11 @@ export function GlassPlywoodBillingPage() {
           unitPrice:   item.unitPrice,
           glassSize:   item.glassSize  || undefined,
           model:       item.model      || undefined,
-          sqFt:        item.sqFt > 0   ? item.sqFt : undefined,
+          // Always sent, even 0 — the backend now prices by `unit`, not by
+          // whether sqFt happens to be positive, so omitting a genuine 0
+          // here must still mean "price this sq.ft item as 0", not "no
+          // sqFt given, fall back to qty × rate" (see billing.ts).
+          sqFt:        item.sqFt,
           arch:        item.arch       || undefined,
           polishSide:  item.polishSide || undefined,
           polishName:  item.polishName || undefined,
