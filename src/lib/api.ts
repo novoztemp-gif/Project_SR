@@ -68,6 +68,12 @@ export const api = {
         return bill
       } catch (err) {
         if (err instanceof ApiClientError && err.status === 409) {
+          // The rejection itself means another counter's sale already
+          // moved this stock out from under the cached number this form
+          // was showing — refresh so the counter immediately sees the
+          // real (lower) stock explaining the error, instead of staring
+          // at a now-wrong figure until the next poll tick.
+          await useInventoryStore.getState().refreshProducts()
           const d = err.details as
             | { productName?: string; available?: number; requested?: number }
             | undefined

@@ -9,13 +9,17 @@ import { NAV_ITEMS } from '@/lib/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
 
-// Products/godowns are shared across every user — one counter adding a
-// product or restocking must show up for everyone else's already-open
-// session, not just theirs. There's no push/websocket layer, so poll in
-// the background and also refresh the moment a tab regains focus (covers
-// the common "switched away and came back" case immediately instead of
-// waiting for the next poll tick).
-const INVENTORY_POLL_MS = 30_000
+// Products/godowns are shared across every user — one counter's sale or
+// restock must show up for everyone else's already-open session fast
+// enough that a different counter billing the same low-stock item doesn't
+// act on numbers that are already wrong. There's no push/websocket layer,
+// so poll in the background and also refresh the moment a tab regains
+// focus (covers the common "switched away and came back" case
+// immediately instead of waiting for the next poll tick). The backend's
+// own stock decrement is already atomic and race-safe regardless of this
+// value — overselling can't happen — this interval only controls how
+// stale the on-screen number can look before that rejection.
+const INVENTORY_POLL_MS = 5_000
 
 /** Derive a human-readable page title from the current pathname */
 function useTitleFromRoute(): string {
