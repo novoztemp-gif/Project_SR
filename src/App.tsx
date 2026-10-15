@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import { AppShell } from '@/components/layout/AppShell'
 import { AllTransactionsPage } from '@/pages/admin/AllTransactionsPage'
 import { CounterManagementPage } from '@/pages/admin/CounterManagementPage'
+import { ResetDataPage } from '@/pages/admin/ResetDataPage'
 import { BillDetailPage } from '@/pages/billing/BillDetailPage'
 import { BillHistoryPage } from '@/pages/billing/BillHistoryPage'
 import { GlassPlywoodBillListPage } from '@/pages/billing/GlassPlywoodBillListPage'
@@ -105,6 +106,7 @@ export default function App() {
                 <Route path="/reports/yearly"      element={<YearlyReportPage />} />
                 <Route path="/reports/monthly"     element={<MonthlyReportPage />} />
                 <Route path="/admin/transactions"  element={<AllTransactionsPage />} />
+                <Route path="/admin/reset"         element={<ResetDataPage />} />
               </Route>
               <Route path="/reports/weekly"  element={<WeeklyReportPage />} />
             </Route>

@@ -159,6 +159,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ADMIN_ONLY,
     showInSidebar: true,
   },
+  {
+    path: '/admin/reset',
+    label: 'Reset Data',
+    iconName: 'Eraser',
+    roles: ADMIN_ONLY,
+    showInSidebar: true,
+  },
 ]
 
 /** Returns flat sidebar items the given role can see (dynamic :id routes excluded) */

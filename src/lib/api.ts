@@ -5,6 +5,7 @@
 import { ApiClientError, http } from '@/lib/apiClient'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { useBillingStore } from '@/store/billingStore'
+import { usePurchaseStore } from '@/store/purchaseStore'
 import type { CreateBillInput, SalesBill, Section } from '@/types'
 
 export class InsufficientStockError extends Error {
@@ -134,6 +135,25 @@ export const api = {
       await http.del(`/bills/${id}`)
       useBillingStore.getState().removeBillFromCache(id)
       await useInventoryStore.getState().refreshProducts()
+    },
+  },
+
+  admin: {
+    /**
+     * Permanently wipes every bill, purchase, transfer log entry, and
+     * product (admin only) — Godowns and counter accounts are untouched.
+     * Irreversible. Clears the matching client-side caches directly
+     * (not a re-hydrate) since the server just confirmed they're empty.
+     */
+    async resetAllData(): Promise<{ bills: number; purchases: number; transfers: number; products: number }> {
+      const { deleted } = await http.post<{ ok: true; deleted: { bills: number; purchases: number; transfers: number; products: number } }>(
+        '/admin/reset',
+        { confirm: 'ERASE ALL DATA' },
+      )
+      useBillingStore.setState({ bills: [] })
+      usePurchaseStore.setState({ purchases: [] })
+      useInventoryStore.setState({ products: [], transferLog: [] })
+      return deleted
     },
   },
 } as const

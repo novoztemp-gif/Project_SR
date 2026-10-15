@@ -2,6 +2,7 @@ import cors from 'cors'
 import express from 'express'
 
 import { env } from './env.js'
+import { adminRouter } from './routes/admin.routes.js'
 import { authRouter } from './routes/auth.routes.js'
 import { billsRouter } from './routes/bills.routes.js'
 import { countersRouter } from './routes/counters.routes.js'
@@ -28,6 +29,7 @@ export function createApp() {
   app.get('/health', (_req, res) => res.json({ ok: true, service: 'sr-billing-server' }))
 
   app.use('/api/auth', authRouter)
+  app.use('/api/admin', adminRouter)
   app.use('/api/counters', countersRouter)
   app.use('/api/inventory', inventoryRouter)
   app.use('/api/bills', billsRouter)

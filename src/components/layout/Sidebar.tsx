@@ -2,6 +2,7 @@ import {
   BarChart2,
   BarChart3,
   Boxes,
+  Eraser,
   FilePlus,
   FilePlus2,
   FileText,
@@ -51,6 +52,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   TrendingUp,
   Users,
   History,
+  Eraser,
 }
 
 const ROLE_LABELS: Partial<Record<Role, string>> = {
