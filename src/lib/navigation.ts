@@ -142,7 +142,7 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/reports/monthly',
     label: 'Monthly Report',
     iconName: 'BarChart3',
-    roles: ALL,
+    roles: ADMIN_ONLY,
     showInSidebar: true,
   },
   {

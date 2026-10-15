@@ -101,10 +101,10 @@ export default function App() {
               <Route path="/reports/daily" element={<DailyReportPage />} />
 
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                <Route path="/reports/yearly" element={<YearlyReportPage />} />
+                <Route path="/reports/yearly"  element={<YearlyReportPage />} />
+                <Route path="/reports/monthly" element={<MonthlyReportPage />} />
               </Route>
               <Route path="/reports/weekly"  element={<WeeklyReportPage />} />
-              <Route path="/reports/monthly" element={<MonthlyReportPage />} />
             </Route>
           </Route>
 
