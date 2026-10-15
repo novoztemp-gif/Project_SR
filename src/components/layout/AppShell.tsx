@@ -19,7 +19,7 @@ import { useInventoryStore } from '@/store/inventoryStore'
 // own stock decrement is already atomic and race-safe regardless of this
 // value — overselling can't happen — this interval only controls how
 // stale the on-screen number can look before that rejection.
-const INVENTORY_POLL_MS = 5_000
+const INVENTORY_POLL_MS = 2_000
 
 /** Derive a human-readable page title from the current pathname */
 function useTitleFromRoute(): string {

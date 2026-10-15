@@ -21,7 +21,7 @@ import type { SalesBill } from '@/types'
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 // Matches the app-wide inventory poll interval — this page exists
 // specifically so an admin can watch every counter's activity live.
-const POLL_MS = 5_000
+const POLL_MS = 2_000
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
