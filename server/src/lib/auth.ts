@@ -1,4 +1,10 @@
-import bcrypt from 'bcryptjs'
+// Native bcrypt, not bcryptjs — bcryptjs is pure JS and blocks Node's
+// single event loop thread for the ~60ms a hash/compare takes, stalling
+// every other in-flight request (including the app's frequent inventory
+// polling) for that whole window. Native bcrypt offloads the hashing to
+// libuv's threadpool, so a login no longer freezes the rest of the app.
+// Same bcrypt format either way — no migration needed for existing hashes.
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import type { User } from '@prisma/client'
 

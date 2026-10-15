@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { http } from '@/lib/apiClient'
+import { sameContent } from '@/lib/utils'
 import type { SalesBill } from '@/types'
 
 interface BillingState {
@@ -27,7 +28,10 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
 
   hydrate: async () => {
     const bills = await http.get<SalesBill[]>('/bills')
-    set({ bills, hydrated: true })
+    // Also used as the poll tick (AllTransactionsPage) — skip the set()
+    // (and the app-wide re-render it triggers) when nothing changed.
+    const state = get()
+    if (!state.hydrated || !sameContent(bills, state.bills)) set({ bills, hydrated: true })
   },
 
   addBillToCache: (bill) => set((state) => ({ bills: [bill, ...state.bills] })),

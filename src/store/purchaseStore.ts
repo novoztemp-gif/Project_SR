@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { http } from '@/lib/apiClient'
+import { sameContent } from '@/lib/utils'
 import { useInventoryStore } from '@/store/inventoryStore'
 import type { PurchaseBill, Role, Section } from '@/types'
 
@@ -39,6 +40,10 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
 
   hydrate: async () => {
     const purchases = await http.get<PurchaseBill[]>('/purchases')
+    // Also used as the poll tick (AllTransactionsPage) — skip the set()
+    // (and the app-wide re-render it triggers) when nothing changed.
+    const state = get()
+    if (state.hydrated && sameContent(purchases, state.purchases)) return
     set({ purchases, hydrated: true })
   },
 

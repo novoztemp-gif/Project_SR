@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { http } from '@/lib/apiClient'
+import { sameContent } from '@/lib/utils'
 import type { Godown, Product, Section, TransferLogEntry } from '@/types'
 
 export interface GodownInput {
@@ -88,7 +89,9 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
 
   refreshProducts: async () => {
     const products = await http.get<Product[]>('/inventory/products')
-    set({ products })
+    // Skip the set() (and the re-render it triggers everywhere products
+    // is read) when polling simply confirmed stock hasn't changed.
+    if (!sameContent(products, get().products)) set({ products })
   },
 
   refreshInventory: async () => {
@@ -96,7 +99,11 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       http.get<Product[]>('/inventory/products'),
       http.get<Godown[]>('/inventory/godowns'),
     ])
-    set({ products, godowns })
+    const state = get()
+    const next: Partial<Pick<InventoryState, 'products' | 'godowns'>> = {}
+    if (!sameContent(products, state.products)) next.products = products
+    if (!sameContent(godowns, state.godowns)) next.godowns = godowns
+    if (Object.keys(next).length > 0) set(next)
   },
 
   getBySection: (section) => get().products.filter((p) => p.section === section),
