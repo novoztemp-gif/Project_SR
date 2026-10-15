@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { http, setToken } from '@/lib/apiClient'
 import type { AuthUser, Section } from '@/types'
@@ -61,6 +61,11 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'billing-app-auth',
       partialize: (state) => ({ currentUser: state.currentUser }),
+      // sessionStorage, not the default localStorage — must match the auth
+      // token's own storage (apiClient.ts) so a tab's displayed user and
+      // the token its requests actually carry never diverge. localStorage
+      // is shared across every tab in the browser; sessionStorage isn't.
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 )

@@ -1,16 +1,24 @@
-// Thin fetch wrapper for the backend API. The auth token is kept in localStorage
-// (written by authStore) so this module has no import cycle with the store.
+// Thin fetch wrapper for the backend API. The auth token is kept in
+// sessionStorage (written by authStore), not localStorage — localStorage is
+// shared across every tab of the same browser, so two tabs logged in as
+// different users (a counter and an admin, say) would silently overwrite
+// each other's token on every login, and background polling would then
+// authenticate both tabs as whichever user logged in most recently.
+// sessionStorage is isolated per tab, so each tab keeps its own session —
+// the trade-off is that closing a tab ends that session; it won't still be
+// logged in if the tab/browser is reopened later. This module has no
+// import cycle with the store.
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
 const TOKEN_KEY = 'billing-app-token'
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  return sessionStorage.getItem(TOKEN_KEY)
 }
 
 export function setToken(token: string | null) {
-  if (token) localStorage.setItem(TOKEN_KEY, token)
-  else localStorage.removeItem(TOKEN_KEY)
+  if (token) sessionStorage.setItem(TOKEN_KEY, token)
+  else sessionStorage.removeItem(TOKEN_KEY)
 }
 
 export class ApiClientError extends Error {
