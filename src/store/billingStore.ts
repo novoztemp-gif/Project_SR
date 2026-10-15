@@ -11,6 +11,8 @@ interface BillingState {
   addBillToCache: (bill: SalesBill) => void
   /** Replace a bill already in the cache with an updated copy (e.g. after a payment edit). */
   updateBillInCache: (bill: SalesBill) => void
+  /** Drop a deleted bill from the cache — see api.bills.remove. */
+  removeBillFromCache: (id: string) => void
 
   // Synchronous getters over the cache.
   getBillById: (id: string) => SalesBill | undefined
@@ -32,6 +34,8 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
 
   updateBillInCache: (bill) =>
     set((state) => ({ bills: state.bills.map((b) => (b.id === bill.id ? bill : b)) })),
+
+  removeBillFromCache: (id) => set((state) => ({ bills: state.bills.filter((b) => b.id !== id) })),
 
   getBillById: (id) => get().bills.find((b) => b.id === id),
 

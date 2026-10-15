@@ -119,5 +119,15 @@ export const api = {
       useBillingStore.getState().updateBillInCache(bill)
       return bill
     },
+
+    /**
+     * Permanently delete a bill (admin only) — the server restores the
+     * stock it had deducted, so the inventory cache is refreshed too.
+     */
+    async remove(id: string): Promise<void> {
+      await http.del(`/bills/${id}`)
+      useBillingStore.getState().removeBillFromCache(id)
+      await useInventoryStore.getState().refreshProducts()
+    },
   },
 } as const

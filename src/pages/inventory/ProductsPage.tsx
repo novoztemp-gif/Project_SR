@@ -25,7 +25,7 @@ import { getUserSections } from '@/lib/userSections'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
-import type { Godown, Product, Section } from '@/types'
+import type { Godown, Product, SalesBill, Section } from '@/types'
 import { cn } from '@/lib/utils'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
@@ -71,6 +71,10 @@ function isLowStock(product: Product) {
   return product.stock <= product.lowStockThreshold
 }
 
+function formatBillDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
 function productRows(products: Product[]) {
   return products.map((product) => [
     product.name,
@@ -105,6 +109,8 @@ export function ProductsPage() {
   const [formKey, setFormKey] = React.useState(0)
   const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null)
   const [priceTarget, setPriceTarget] = React.useState<Product | null>(null)
+  const [blockedDelete, setBlockedDelete] = React.useState<{ product: Product; bills: SalesBill[] } | null>(null)
+  const [deletingBills, setDeletingBills] = React.useState(false)
 
   const filteredProducts = products
     .filter((product) => allowedSections.includes(product.section))
@@ -152,13 +158,30 @@ export function ProductsPage() {
     )
 
     if (matchingBills.length > 0) {
-      toast.error(
-        `${product.name} appears on ${matchingBills.length} existing bill${matchingBills.length === 1 ? '' : 's'} and cannot be deleted.`
-      )
+      setBlockedDelete({ product, bills: matchingBills })
       return
     }
 
     setDeleteTarget(product)
+  }
+
+  async function confirmDeleteBillsAndProduct() {
+    if (!blockedDelete) return
+    setDeletingBills(true)
+    try {
+      for (const bill of blockedDelete.bills) {
+        await api.bills.remove(bill.id)
+      }
+      await deleteProduct(blockedDelete.product.id)
+      toast.success(
+        `Deleted ${blockedDelete.bills.length} bill${blockedDelete.bills.length === 1 ? '' : 's'} and ${blockedDelete.product.name}`
+      )
+      setBlockedDelete(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete bills and product')
+    } finally {
+      setDeletingBills(false)
+    }
   }
 
   async function confirmDelete() {
@@ -361,6 +384,40 @@ export function ProductsPage() {
             </Button>
             <Button type="button" variant="destructive" onClick={confirmDelete}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!blockedDelete} onOpenChange={(open) => { if (!open && !deletingBills) setBlockedDelete(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Delete {blockedDelete?.product.name}?</DialogTitle>
+            <DialogDescription>
+              This product appears on {blockedDelete?.bills.length} existing bill{blockedDelete?.bills.length === 1 ? '' : 's'} listed below.
+              Deleting it also permanently deletes these bills — this cannot be undone, and removes them from reports/exports.
+              Stock these bills had deducted is restored to each affected product first.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-border p-2">
+            {blockedDelete?.bills.map((bill) => (
+              <div key={bill.id} className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-sm">
+                <div>
+                  <p className="font-mono">{bill.gpVoucherNumber ?? bill.billNumber}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatBillDate(bill.date)} · {bill.customerName || bill.customerPhone || 'No customer name'}
+                  </p>
+                </div>
+                <span className="font-mono tabular-nums text-muted-foreground">{INR.format(bill.total)}</span>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setBlockedDelete(null)} disabled={deletingBills}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={confirmDeleteBillsAndProduct} disabled={deletingBills}>
+              {deletingBills ? 'Deleting…' : `Delete ${blockedDelete?.bills.length ?? 0} bill${blockedDelete?.bills.length === 1 ? '' : 's'} & product`}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -6,7 +6,7 @@ import { prisma } from '../prisma.js'
 import { computeItemSubtotal, getBillStatus } from '../lib/billing.js'
 import { extractBillFromDataUrl } from '../lib/billExtract.js'
 import { allowedSectionsForUser } from '../lib/sections.js'
-import { assertSectionAccess, authenticate } from '../middleware/auth.js'
+import { assertSectionAccess, authenticate, requireAdmin } from '../middleware/auth.js'
 import { ApiError, asyncHandler } from '../middleware/error.js'
 
 export const billsRouter = Router()
@@ -331,5 +331,44 @@ billsRouter.patch(
       include: { items: true },
     })
     res.json(bill)
+  }),
+)
+
+/**
+ * DELETE /api/bills/:id — Admin only. Permanently removes a bill and its
+ * items (SalesItem cascades), restoring the stock it had deducted — this
+ * exists specifically so a discontinued product that's blocked from
+ * deletion by its bill history can be cleared by removing those bills
+ * first, not as a general "undo a sale" feature. A line whose product was
+ * already deleted separately is skipped (nothing left to restore stock
+ * on); every other item's stock is put back exactly as it was taken,
+ * using the same glass-is-sqFt-else-quantity rule the create route uses.
+ */
+billsRouter.delete(
+  '/:id',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const bill = await prisma.salesBill.findUnique({
+      where: { id: req.params.id },
+      include: { items: true },
+    })
+    if (!bill) throw new ApiError(404, 'Bill not found')
+    assertSectionAccess(req.user!, bill.section)
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of bill.items) {
+        if (!item.productId) continue
+        const product = await tx.product.findUnique({ where: { id: item.productId }, select: { productType: true } })
+        if (!product) continue
+        const restoreQty = product.productType === 'glass' && item.sqFt ? item.sqFt : item.quantity
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: restoreQty } },
+        })
+      }
+      await tx.salesBill.delete({ where: { id: req.params.id } })
+    })
+
+    res.json({ ok: true })
   }),
 )
