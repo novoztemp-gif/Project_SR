@@ -170,7 +170,7 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
           <table className="w-full border-collapse text-[10px]">
             <tbody>
               <tr>
-                <td colSpan={4} rowSpan={3} className="border border-gray-400 px-2 py-1 align-top">
+                <td colSpan={4} rowSpan={2} className="border border-gray-400 px-2 py-1 align-top">
                   Rupees {amountInWords(Math.max(0, finalAmount))}
                 </td>
                 <td className="border border-gray-400 px-2 py-1">Cutting Charge</td>
@@ -179,10 +179,6 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
               <tr>
                 <td className="border border-gray-400 px-2 py-1">Transportation</td>
                 <td className="border border-gray-400 px-2 py-1 text-right">{NUM.format(bill.transportationAmount)}</td>
-              </tr>
-              <tr>
-                <td className="border border-gray-400 px-2 py-1 font-bold">Total</td>
-                <td className="border border-gray-400 px-2 py-1 text-right font-bold">{NUM.format(bill.total)}</td>
               </tr>
               <tr>
                 {/* E/X/A boxes carry no data or function — reproduced as
@@ -216,8 +212,8 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
                 <td className="border border-gray-400 px-2 py-1 text-center font-semibold whitespace-nowrap">{bill.orderNumber || '-'}</td>
                 <td className="border border-gray-400 px-2 py-1 text-center font-semibold whitespace-nowrap">{bill.jobDescription || '-'}</td>
                 <td className="border border-gray-400 px-2 py-1">Camera Time:</td>
-                <td className="border border-gray-400 px-2 py-1">Balance Amount</td>
-                <td className="border border-gray-400 px-2 py-1 text-right">{NUM.format(balanceAmount)}</td>
+                <td className="border border-gray-400 px-2 py-1 font-bold">Balance Amount</td>
+                <td className="border border-gray-400 px-2 py-1 text-right font-bold">{NUM.format(balanceAmount)}</td>
               </tr>
             </tbody>
           </table>
