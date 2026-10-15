@@ -152,6 +152,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ADMIN_ONLY,
     showInSidebar: true,
   },
+  {
+    path: '/admin/transactions',
+    label: 'All Transactions',
+    iconName: 'History',
+    roles: ADMIN_ONLY,
+    showInSidebar: true,
+  },
 ]
 
 /** Returns flat sidebar items the given role can see (dynamic :id routes excluded) */

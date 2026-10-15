@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { AllTransactionsPage } from '@/pages/admin/AllTransactionsPage'
 import { CounterManagementPage } from '@/pages/admin/CounterManagementPage'
 import { BillDetailPage } from '@/pages/billing/BillDetailPage'
 import { BillHistoryPage } from '@/pages/billing/BillHistoryPage'
@@ -101,8 +102,9 @@ export default function App() {
               <Route path="/reports/daily" element={<DailyReportPage />} />
 
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                <Route path="/reports/yearly"  element={<YearlyReportPage />} />
-                <Route path="/reports/monthly" element={<MonthlyReportPage />} />
+                <Route path="/reports/yearly"      element={<YearlyReportPage />} />
+                <Route path="/reports/monthly"     element={<MonthlyReportPage />} />
+                <Route path="/admin/transactions"  element={<AllTransactionsPage />} />
               </Route>
               <Route path="/reports/weekly"  element={<WeeklyReportPage />} />
             </Route>

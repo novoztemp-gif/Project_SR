@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DeleteRecordButton } from '@/components/admin/DeleteRecordButton'
 import { EmptyState } from '@/components/EmptyState'
 import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -181,6 +182,7 @@ export function PurchaseListPage() {
   const purchases = usePurchaseStore((state) => state.purchases)
   const godowns = useInventoryStore((state) => state.godowns)
   const accessibleSections = getUserSections(currentUser.id)
+  const isAdmin = currentUser.role === 'admin'
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
   const sortedPurchases = React.useMemo(
@@ -259,6 +261,7 @@ export function PurchaseListPage() {
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Payment</TableHead>
               <TableHead>Status</TableHead>
+              {isAdmin && <TableHead className="w-10" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -300,6 +303,14 @@ export function PurchaseListPage() {
                       {purchase.printedAt ? `Applied ${formatDate(purchase.printedAt)}` : 'Pending'}
                     </Badge>
                   </TableCell>
+                  {isAdmin && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DeleteRecordButton
+                        label={`purchase ${purchase.voucherNumber}`}
+                        onDelete={() => usePurchaseStore.getState().deletePurchase(purchase.id)}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}

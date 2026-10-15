@@ -29,6 +29,8 @@ interface PurchaseState {
   applyAndPrint: (id: string) => Promise<void>
   /** Update how much of a purchase has been paid to the vendor. */
   updatePayment: (id: string, paidAmount: number) => Promise<PurchaseBill>
+  /** Permanently delete a purchase (admin only) — server reverses any stock it had applied. */
+  deletePurchase: (id: string) => Promise<void>
 }
 
 export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
@@ -76,5 +78,12 @@ export const usePurchaseStore = create<PurchaseState>()((set, get) => ({
       purchases: state.purchases.map((purchase) => (purchase.id === id ? updated : purchase)),
     }))
     return updated
+  },
+
+  deletePurchase: async (id) => {
+    await http.del(`/purchases/${id}`)
+    set((state) => ({ purchases: state.purchases.filter((purchase) => purchase.id !== id) }))
+    // Stock may have changed (reversed) — refresh the inventory cache.
+    await useInventoryStore.getState().refreshProducts()
   },
 }))

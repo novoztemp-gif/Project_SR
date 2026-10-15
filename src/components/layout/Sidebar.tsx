@@ -5,6 +5,7 @@ import {
   FilePlus,
   FilePlus2,
   FileText,
+  History,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -49,6 +50,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   BarChart3,
   TrendingUp,
   Users,
+  History,
 }
 
 const ROLE_LABELS: Partial<Record<Role, string>> = {

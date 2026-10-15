@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DeleteRecordButton } from '@/components/admin/DeleteRecordButton'
 import { EmptyState } from '@/components/EmptyState'
 import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
@@ -17,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useBillingStore } from '@/store/billingStore'
 import type { SalesBill } from '@/types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -177,7 +178,12 @@ export function GlassPlywoodBillListPage() {
   const sorted = [...bills].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const [selectedBill, setSelectedBill] = useState<SalesBill | null>(null)
 
+  useEffect(() => {
+    if (selectedBill && !bills.some((b) => b.id === selectedBill.id)) setSelectedBill(null)
+  }, [bills, selectedBill])
+
   const canCreate = currentUser.role === 'admin' || currentUser.role.startsWith('billing_')
+  const isAdmin = currentUser.role === 'admin'
 
   function exportBills() {
     exportCsv(
@@ -292,6 +298,12 @@ export function GlassPlywoodBillListPage() {
                     >
                       <Receipt className="h-4 w-4" />
                     </Button>
+                    {isAdmin && (
+                      <DeleteRecordButton
+                        label={`bill ${bill.gpVoucherNumber ?? bill.billNumber}`}
+                        onDelete={() => api.bills.remove(bill.id)}
+                      />
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

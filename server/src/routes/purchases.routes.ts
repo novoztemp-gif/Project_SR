@@ -5,7 +5,7 @@ import { Prisma, Section } from '@prisma/client'
 import { prisma } from '../prisma.js'
 import { allowedSectionsForUser } from '../lib/sections.js'
 import { extractPurchaseFromDataUrl } from '../lib/purchaseExtract.js'
-import { assertSectionAccess, authenticate } from '../middleware/auth.js'
+import { assertSectionAccess, authenticate, requireAdmin } from '../middleware/auth.js'
 import { ApiError, asyncHandler } from '../middleware/error.js'
 
 export const purchasesRouter = Router()
@@ -199,7 +199,7 @@ purchasesRouter.post(
             data: { stock: { increment: item.quantity } },
           })
         } else {
-          await tx.product.create({
+          const created = await tx.product.create({
             data: {
               name: item.productName,
               sku: `NEW-${Date.now()}-${Math.round(item.unitPrice)}`,
@@ -226,6 +226,10 @@ purchasesRouter.post(
               lowStockThreshold: 5,
             },
           })
+          // Link the new product back onto this line — without it,
+          // nothing can later trace "this purchase created that product"
+          // (e.g. to reverse its stock if the purchase is deleted).
+          await tx.purchaseItem.update({ where: { id: item.id }, data: { productId: created.id } })
         }
       }
 
@@ -263,5 +267,43 @@ purchasesRouter.patch(
       include: { items: true },
     })
     res.json(purchase)
+  }),
+)
+
+/**
+ * DELETE /api/purchases/:id — Admin only. If stock was already applied
+ * (printedAt set), reverses exactly what apply-print added — the same
+ * item.quantity increment it used, not sqFt, since that's what was
+ * actually credited — before deleting the purchase (PurchaseItem
+ * cascades). An unapplied purchase had no stock effect yet, so it's just
+ * deleted outright.
+ */
+purchasesRouter.delete(
+  '/:id',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const purchase = await prisma.purchaseBill.findUnique({
+      where: { id: req.params.id },
+      include: { items: true },
+    })
+    if (!purchase) throw new ApiError(404, 'Purchase not found')
+    assertSectionAccess(req.user!, purchase.section)
+
+    await prisma.$transaction(async (tx) => {
+      if (purchase.printedAt) {
+        for (const item of purchase.items) {
+          if (!item.productId) continue
+          const product = await tx.product.findUnique({ where: { id: item.productId }, select: { id: true } })
+          if (!product) continue
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          })
+        }
+      }
+      await tx.purchaseBill.delete({ where: { id: req.params.id } })
+    })
+
+    res.json({ ok: true })
   }),
 )

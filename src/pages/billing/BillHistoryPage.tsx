@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DeleteRecordButton } from '@/components/admin/DeleteRecordButton'
 import { EmptyState } from '@/components/EmptyState'
 import { PaymentStatusCell, PaymentTracker } from '@/components/billing/PaymentTracker'
 import { ReceiptEdge } from '@/components/billing/ReceiptEdge'
@@ -17,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useBillingStore } from '@/store/billingStore'
 import type { SalesBill } from '@/types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -171,7 +172,15 @@ export function BillHistoryPage() {
   const sorted = [...bills].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const [selectedBill, setSelectedBill] = useState<SalesBill | null>(null)
 
+  // Deleting the currently-previewed bill (admin only) removes it from
+  // `bills` on the next render — close the stale preview instead of
+  // continuing to show a bill that no longer exists.
+  useEffect(() => {
+    if (selectedBill && !bills.some((b) => b.id === selectedBill.id)) setSelectedBill(null)
+  }, [bills, selectedBill])
+
   const canCreate = currentUser.role === 'admin' || currentUser.role.startsWith('billing_')
+  const isAdmin = currentUser.role === 'admin'
 
   function exportBills() {
     exportCsv(
@@ -219,6 +228,7 @@ export function BillHistoryPage() {
             <TableHead>Section</TableHead>
             <TableHead className="text-right">Total</TableHead>
             <TableHead className="text-right">Payment</TableHead>
+            {isAdmin && <TableHead className="w-10" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -256,6 +266,11 @@ export function BillHistoryPage() {
                     onSave={(id, amount) => api.bills.updatePayment(id, amount)}
                   />
                 </TableCell>
+                {isAdmin && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DeleteRecordButton label={`bill ${bill.billNumber}`} onDelete={() => api.bills.remove(bill.id)} />
+                  </TableCell>
+                )}
               </TableRow>
             )
           })}
