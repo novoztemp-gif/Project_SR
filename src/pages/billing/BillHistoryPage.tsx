@@ -65,7 +65,7 @@ function BillPreviewPanel({
   onBillUpdated: (bill: SalesBill) => void
 }) {
   const sectionLabel = SECTIONS.find((s) => s.key === bill.section)?.label ?? bill.section
-  const finalAmount = bill.total + bill.transportationAmount - bill.discount
+  const finalAmount = bill.total + bill.transportationAmount + bill.cuttingCharge - bill.discount
   const balanceAmount = finalAmount - bill.paidAmount
 
   return (

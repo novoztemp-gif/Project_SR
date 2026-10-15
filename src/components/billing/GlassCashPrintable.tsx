@@ -170,11 +170,15 @@ export function GlassCashPrintable({ bill }: { bill: SalesBill }) {
           <table className="w-full border-collapse text-[10px]">
             <tbody>
               <tr>
-                <td colSpan={4} rowSpan={2} className="border border-gray-400 px-2 py-1 align-top">
+                <td colSpan={4} rowSpan={3} className="border border-gray-400 px-2 py-1 align-top">
                   Rupees {amountInWords(Math.max(0, finalAmount))}
                 </td>
                 <td className="border border-gray-400 px-2 py-1">Cutting Charge</td>
                 <td className="border border-gray-400 px-2 py-1 text-right">{NUM.format(bill.cuttingCharge)}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 px-2 py-1">Transportation</td>
+                <td className="border border-gray-400 px-2 py-1 text-right">{NUM.format(bill.transportationAmount)}</td>
               </tr>
               <tr>
                 <td className="border border-gray-400 px-2 py-1 font-bold">Total</td>
