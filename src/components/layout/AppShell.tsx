@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Topbar } from '@/components/layout/Topbar'
@@ -8,6 +9,14 @@ import { hydrateAll } from '@/lib/bootstrap'
 import { NAV_ITEMS } from '@/lib/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
+
+// A kiosk-style tab left open across a deploy has no reason to ever
+// re-fetch index.html on its own — it just keeps running whatever JS
+// bundle it loaded, however old, indefinitely. version.json (written at
+// build time, see vite.config.ts) lets an already-open tab notice a
+// newer build exists and prompt a refresh, instead of silently running
+// stale matching/pricing/UI logic forever.
+const VERSION_POLL_MS = 60_000
 
 // Products/godowns are shared across every user — one counter's sale or
 // restock must show up for everyone else's already-open session fast
@@ -51,6 +60,43 @@ export function AppShell() {
       active = false
     }
   }, [currentUser?.id, currentUser?.role])
+
+  useEffect(() => {
+    let notified = false
+
+    async function checkVersion() {
+      if (notified) return
+      try {
+        const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = (await res.json()) as { buildTime?: number }
+        if (typeof data.buildTime === 'number' && data.buildTime !== __BUILD_TIME__) {
+          notified = true
+          toast.message('A new version is available', {
+            description: 'Refresh to get the latest version.',
+            duration: Infinity,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          })
+        }
+      } catch {
+        // Offline/transient — try again on the next tick.
+      }
+    }
+
+    checkVersion()
+    const interval = window.setInterval(checkVersion, VERSION_POLL_MS)
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') checkVersion()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('focus', checkVersion)
+
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('focus', checkVersion)
+    }
+  }, [])
 
   useEffect(() => {
     if (!ready) return
