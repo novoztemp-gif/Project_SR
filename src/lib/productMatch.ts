@@ -106,3 +106,17 @@ export function resolveScannedUnitPrice(product: Product | undefined, extractedR
 export function resolveManualUnitPrice(product: Product): number {
   return product.salePrice ?? product.costPrice
 }
+
+/**
+ * Per-unit PURCHASE price for a scanned invoice line matched to an
+ * existing product. Unlike a sales bill (resolveScannedUnitPrice), where
+ * the business's own set selling price should win over whatever a
+ * scanned document says, a purchase invoice's rate is what was actually
+ * paid to the vendor THIS time — vendor prices change purchase to
+ * purchase, so it must always take priority over the product's
+ * last-known stored cost price. Only fall back to that stored cost when
+ * the scan genuinely couldn't read a rate for this line (0 or missing).
+ */
+export function resolveScannedPurchasePrice(product: Product | undefined, extractedRate: number): number {
+  return extractedRate || product?.costPrice || 0
+}

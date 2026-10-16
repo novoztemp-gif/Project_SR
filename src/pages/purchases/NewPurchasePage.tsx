@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SECTIONS, UNITS } from '@/lib/constants'
 import { getUserSections } from '@/lib/userSections'
-import { findBestProductMatch } from '@/lib/productMatch'
+import { findBestProductMatch, resolveScannedPurchasePrice } from '@/lib/productMatch'
 import type { ParsedPurchase } from '@/lib/purchaseScan'
 import { useAuthStore } from '@/store/authStore'
 import { useInventoryStore } from '@/store/inventoryStore'
@@ -256,7 +256,10 @@ export function NewPurchasePage() {
         // whatever the scan guessed. Brand-new item: use the scanned unit —
         // already constrained server-side to one of UNITS.
         unit: product?.unit ?? (item.unit || 'pcs'),
-        unitPrice: product?.costPrice ?? item.rate,
+        // Always prefer what THIS invoice says was paid — vendor prices
+        // change purchase to purchase, so the scanned rate must win over
+        // the product's old stored cost price, not the other way round.
+        unitPrice: resolveScannedPurchasePrice(product, item.rate),
         // Matched product: default to its current selling price. Brand-new
         // (unmatched) item: default to the scanned rate as a starting
         // point — it's editable, but this beats leaving it at 0.
