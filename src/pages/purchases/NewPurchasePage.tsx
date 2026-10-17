@@ -684,6 +684,15 @@ export function NewPurchasePage() {
                     <div className="space-y-2">
                       <Label>Godown</Label>
                       <Select
+                        // Confirmed live: react-hook-form's value here is
+                        // correct immediately after a scan auto-fills it
+                        // (replace()/append() both set it right away) —
+                        // Radix's Select just doesn't re-sync its own
+                        // displayed value when it changes programmatically
+                        // without a user interaction driving it. Keying on
+                        // the value forces a clean remount instead, which
+                        // always picks up the current value correctly.
+                        key={item?.godownId || 'empty'}
                         value={item?.godownId || undefined}
                         onValueChange={(value) => form.setValue(`items.${index}.godownId`, value, { shouldValidate: true })}
                       >
