@@ -564,10 +564,11 @@ export function NewPurchasePage() {
                             />
                             <CommandList>
                               <CommandEmpty>No products found.</CommandEmpty>
-                              <CommandGroup>
+                              <CommandGroup forceMount>
                                 <CommandItem
                                   value={NEW_PRODUCT_VALUE}
                                   keywords={['new product']}
+                                  forceMount
                                   onSelect={() => {
                                     selectProduct(index, NEW_PRODUCT_VALUE)
                                     setOpenProductIndex(null)
